@@ -1,0 +1,15 @@
+/build/
+/dist/
+.gradle/
+**/.gradle/
+**/build/
+*.class
+*.log
+*.tmp
+.idea/
+.vscode/
+run/
+**/run/
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+.DS_Store

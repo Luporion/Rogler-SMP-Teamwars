@@ -1,0 +1,26 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="MIT"
+
+[[mods]]
+modId="roglerteamwars"
+version="0.0.1-p0"
+displayName="Rogler TeamWars (P0 scaffold)"
+authors="Rogler TeamWars contributors"
+description='''
+Foundation-only development scaffold. NO base protection, shared map rendering or completed game mode.
+'''
+
+[[dependencies.roglerteamwars]]
+modId="neoforge"
+type="required"
+versionRange="[21.1.249,)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.roglerteamwars]]
+modId="minecraft"
+type="required"
+versionRange="[1.21.1]"
+ordering="NONE"
+side="BOTH"

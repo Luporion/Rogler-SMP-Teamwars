@@ -1,0 +1,16 @@
+name: P0 Core
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  test-core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Run dependency-free core tests
+        run: bash scripts/test-core.sh
