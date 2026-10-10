@@ -58,3 +58,9 @@ Create a playable team-based NeoForge 1.21.1 Minecraft server for 8–12 players
 - `BaseCoreService.info` is ADMIN ONLY. Never introduce an unprivileged command that leaks other teams' core coordinates.
 - No FTB claim protection, grace period, chunkloader, Xaero render or Sable ship controls yet. Mark these as PENDING even if mod compiles.
 - Never rename/version-bump without keeping `neoforge.mods.toml`, Gradle properties, CI artifact, release docs aligned.
+
+## v0.2.1 patch handover
+- See `docs/releases/v0.2.1.md`. Radius default is now `0..5000`; only untouched v0.2.0 generated configs migrate automatically.
+- Do not auto-reissue because an item is not visible in player inventory: it may be in an unloaded chest/offline inventory. Only genuine event-triggered hazard ESCROW or explicit OP `reclaimlost` revokes the token.
+- All auto-placement attempts use `BlockItem.place` attributed to a real nearby team player; avoid bypassing claim hooks. Fallback is persistent ESCROW with `/teamwars base recover`.
+- Real NeoForge compile and Minecraft verification are mandatory before release.

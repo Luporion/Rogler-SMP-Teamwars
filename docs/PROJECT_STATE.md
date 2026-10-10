@@ -34,6 +34,15 @@ Updated: **2026-10-10 (Europe/Berlin)** | Current milestone: **v0.1.0 source can
 - **Minecraft Gradle compile, launcher startup, 2-player gameplay and full-pack compatibility remain UNVERIFIED**.
 - Immediate next step: push the feature branch, collect real CI result, fix actual compile errors, test in staging. Do not tag release as stable yet.
 
+---
+## v0.2.1 candidate — 2026-10-10 (LATEST FOLLOW-UP)
+- Based on v0.2.0 source; updated 0–5000 radius defaults with narrowly scoped migration of unmodified old v0.2.0 generated config (backup).
+- Dropped item hazard rescue: real-player BlockItem placement in valid nearby location, ESCROW fallback, revocation of old tokens. Self-service `/teamwars base recover`, OP old-world repair `/teamwars admin reclaimlost <player>`.
+- Precise placement warnings and `OUTSIDE ALLOWED BASE ZONE`. Core ledger tests increased from 25 to 42; total **106 standalone Java assertions PASS**.
+- **UNVERIFIED:** real NeoForge compile, 2-player acceptance, lava world test. FTB claims/grace/chunkloading still NOT IMPLEMENTED. No new third-party mods.
+- Source of truth: `docs/releases/v0.2.1.md`, `docs/plans/2026-10-10-v0.2.1-rescue.md`, existing `scripts/watch-actions.ps1` from live GitHub branch.
+- Next: apply patch on `feat/v0.2.0-base-core`, push, run `scripts/watch-actions.ps1`, smoke test, then FTB protection.
+
 ## Historical P0 — Verified complete
 - [x] Initialized independent Git-ready project with AGENTS, ADRs, interface contracts and prioritized plans.
 - [x] Java 21 dependency-free deterministic rules for team membership, per-player chunk exploration and membership-sensitive union/revocation.

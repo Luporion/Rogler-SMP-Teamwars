@@ -23,3 +23,6 @@ All of the above except the new TeamWars JAR already appear enabled in the uploa
 
 ## Caveat
 The uploaded `mods.csv` describes the DEV client, not the authoritative dedicated-server file listing. Verify all required mods on both sides before launch. No upgrade of Xaero or NeoForge is authorized by v0.2.0.
+
+## v0.2.1 update (2026-10-10)
+**New third-party mods: NONE.** Required: Minecraft 1.21.1, NeoForge 21.1.249, FTB Teams 2101.1.11, compatible FTB Library (latest observed 2101.1.37), and **Rogler TeamWars v0.2.1**. Remove the old TeamWars 0.2.0 JAR; never load both. FTB Chunks/Chunky/Xaero/Sophisticated/Sable integrations remain deferred. See `docs/releases/v0.2.1.md`.

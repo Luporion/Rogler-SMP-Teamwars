@@ -14,6 +14,10 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.tags.FluidTags;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -50,6 +54,23 @@ public final class BaseCoreService {
             return Command.SINGLE_SUCCESS;
         } catch (IllegalStateException e) { say(source, e.getMessage()); return 0; }
     }
+    /** Explicit operator repair for lost v0.2.0 ISSUED items; revokes even a still-existing token. */
+    public static int reclaimLost(CommandSourceStack source, ServerPlayer player) {
+        var assignment = RoglerTeamWarsMod.assignmentFor(player);
+        if (!assignment.validParty()) { say(source, "Player needs a valid FTB party."); return 0; }
+        BaseCoreSavedData data = store(source.getServer());
+        var entry = data.ledger().get(assignment.partyId());
+        if (entry == null || entry.mode() != BaseCoreLedger.Mode.ISSUED) {
+            say(source, "Only an ISSUED (not PLACED/ESCROW) core can be reclaimed."); return 0;
+        }
+        if (!data.ledger().rescueToEscrow(entry.teamId(), entry.token(), null)) return 0;
+        data.changed();
+        say(source, "Core revoked and moved to recovery escrow. Any remaining old item is INVALID now."
+            + " Team member can run /teamwars base recover.");
+        RoglerTeamWarsMod.warn("OP explicitly reclaimed issued core for team " + entry.teamId());
+        return Command.SINGLE_SUCCESS;
+    }
+
     /** Normal players may only inspect their own FTB team's core, never enemy base locations. */
     public static int ownStatus(CommandSourceStack source) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
         ServerPlayer player = source.getPlayerOrException();
@@ -77,8 +98,100 @@ public final class BaseCoreService {
             + RoglerTeamWarsMod.baseConfig().innerRadius() + " - "
             + RoglerTeamWarsMod.baseConfig().outerRadius() + " | "
             + (zone.placementAllowed(player.blockPosition().getX(),player.blockPosition().getZ())
-                ? "INSIDE" : "OUTSIDE"));
+                ? "INSIDE ALLOWED BASE ZONE" : "OUTSIDE ALLOWED BASE ZONE"));
         return Command.SINGLE_SUCCESS;
+    }
+
+    /**
+     * Rescue is called from the actual dropped item hooks. A valid server-issued token is required.
+     * Do not scan inventories/chests and guess "missing": they can legitimately hold the core.
+     * Placement uses the real player and BlockItem.place so normal permissions still run.
+     * No online teammate close enough -> revoke old token to escrow (recoverable by the team).
+     */
+    public static void monitorDroppedCore(ItemEntity entity, boolean destroyedOrExpired) {
+        if (!(entity.level() instanceof ServerLevel level)) return;
+        ItemStack stack = entity.getItem();
+        if (!stack.is(BaseCoreRegistries.CORE_ITEM.get())) return;
+        UUID team = BaseCoreItem.team(stack), token = BaseCoreItem.token(stack);
+        if (team == null || token == null) return;
+        BaseCoreSavedData saved = store(level.getServer());
+        var entry = saved.ledger().get(team);
+        if (entry == null || entry.mode() != BaseCoreLedger.Mode.ISSUED || !token.equals(entry.token())) {
+            // Stale duplicates never grant extra bases; no mutation to the valid ledger.
+            if (!destroyedOrExpired) entity.discard();
+            return;
+        }
+        BlockPos source = entity.blockPosition();
+        boolean hazard = destroyedOrExpired || entity.isInLava() || entity.isOnFire()
+            || level.getFluidState(source).is(FluidTags.LAVA)
+            || level.getBlockState(source).is(Blocks.CACTUS)
+            || level.getBlockState(source).is(Blocks.FIRE)
+            || level.getBlockState(source).is(Blocks.SOUL_FIRE)
+            || entity.getY() < level.getMinBuildHeight() + 4
+            || entity.tickCount >= 5800;
+        if (!hazard) return;
+        // Hazard coordinates are NOT a safe respawn position, even if inside the radial zone.
+        var safe = entry.lastSafe();
+        if (!destroyedOrExpired && tryPlaceNearDroppedCore(level, team, stack, source, entry.lastSafe())) {
+            // BlockItem.place already changed the saved ledger, and consumed the item stack.
+            entity.discard();
+            notifyTeam(level.getServer(), team, "Dropped core automatically placed after environmental hazard.");
+            return;
+        }
+        if (saved.ledger().rescueToEscrow(team, token, safe)) {
+            saved.changed();
+            notifyTeam(level.getServer(), team, "Core protected from destruction: safe placement unavailable."
+                + " Use /teamwars base recover with one empty inventory slot.");
+            RoglerTeamWarsMod.warn("Core hazard rescue entered escrow for team " + team
+                + "; lastSafe=" + safe + "; destroyed=" + destroyedOrExpired);
+        }
+        if (!destroyedOrExpired) entity.discard();
+    }
+
+    private static void notifyTeam(MinecraftServer server, UUID team, String message) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            var assignment = RoglerTeamWarsMod.assignmentFor(player);
+            if (assignment.validParty() && team.equals(assignment.partyId()))
+                player.sendSystemMessage(Component.literal("[TeamWars] " + message));
+        }
+    }
+
+    private static boolean tryPlaceNearDroppedCore(ServerLevel level, UUID team, ItemStack stack,
+                                                    BlockPos dropped, BaseCoreLedger.Location fallback) {
+        if (level != level.getServer().overworld()) return false;
+        // A close-by real team member is needed so FTB/NeoForge permissions aren't circumvented.
+        for (ServerPlayer player : level.getServer().getPlayerList().getPlayers()) {
+            if (player.level() != level || player.distanceToSqr(Vec3.atCenterOf(dropped)) > 16 * 16) continue;
+            var assignment = RoglerTeamWarsMod.assignmentFor(player);
+            if (!assignment.validParty() || !team.equals(assignment.partyId())) continue;
+            if (attemptPlacementNear(level, player, stack, dropped)) return true;
+            if (fallback != null && "minecraft:overworld".equals(fallback.dimension())) {
+                BlockPos anchor = new BlockPos(fallback.x(), fallback.y(), fallback.z());
+                if (player.distanceToSqr(Vec3.atCenterOf(anchor)) <= 16 * 16
+                    && attemptPlacementNear(level, player, stack, anchor)) return true;
+            }
+        }
+        return false;
+    }
+
+    /** Does not change any block directly; attempts vanilla placement with the real player as actor. */
+    private static boolean attemptPlacementNear(ServerLevel level, ServerPlayer player,
+                                                ItemStack stack, BlockPos anchor) {
+        var zone = RoglerTeamWarsMod.baseConfig().zone(level.getServer());
+        for (int dy = 1; dy >= -2; dy--) for (int dx = -3; dx <= 3; dx++)
+            for (int dz = -3; dz <= 3; dz++) {
+                BlockPos target = anchor.offset(dx, dy, dz);
+                if (!zone.placementAllowed(target.getX(), target.getZ()) || !level.isLoaded(target)) continue;
+                if (!level.getBlockState(target).isAir() || !level.getFluidState(target).isEmpty()) continue;
+                BlockPos support = target.below();
+                if (!level.getBlockState(support).isFaceSturdy(level, support, Direction.UP)) continue;
+                if (player.distanceToSqr(Vec3.atCenterOf(target)) > 16 * 16) continue;
+                var hit = new BlockHitResult(Vec3.atCenterOf(support), Direction.UP, support, false);
+                var placement = new BlockPlaceContext(player, InteractionHand.MAIN_HAND, stack, hit);
+                if (placement.getClickedPos().equals(target)
+                    && ((BaseCoreItem) stack.getItem()).place(placement).consumesAction()) return true;
+            }
+        return false;
     }
 
     /** Uses actual vanilla BlockItem placement, including NeoForge/claim event hooks. Never calls setBlock directly. */
@@ -139,8 +252,8 @@ public final class BaseCoreService {
                     double dist = config.zone(server).distance(pos.x(), pos.z());
                     long secondsLeft = config.carrySeconds() - update.carriedSeconds();
                     String border = !config.zone(server).placementAllowed(pos.x(), pos.z())
-                        ? "OUTSIDE BASE ZONE"
-                        : config.outerRadius() - dist <= 150 ? "BOUNDARY NEAR" : "BASE ZONE";
+                        ? "OUTSIDE ALLOWED BASE ZONE"
+                        : config.outerRadius() - dist <= 150 ? "ALLOWED BASE BORDER NEAR" : "INSIDE ALLOWED BASE ZONE";
                     player.displayClientMessage(Component.literal("[TeamWars] " + border + " | spawn "
                         + Math.round(dist) + " blocks | core " + (secondsLeft / 60) + "m "
                         + (secondsLeft % 60) + "s"), true);

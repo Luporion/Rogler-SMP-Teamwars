@@ -7,6 +7,7 @@ import dev.rogler.teamwars.neoforge.base.BaseCoreService;
 import dev.rogler.teamwars.neoforge.base.BaseCoreRegistries;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.entity.item.ItemExpireEvent;
 import dev.rogler.teamwars.core.teams.TeamAssignmentPolicy;
 import dev.rogler.teamwars.neoforge.teams.TeamScoreboardSync;
 import dev.rogler.teamwars.neoforge.teams.TeamWarsSettings;
@@ -29,13 +30,13 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 /**
- * v0.2.0: FTB-owned party membership, scoreboard privacy and first server-authoritative Base Core.
+ * v0.2.1: FTB-owned party membership, scoreboard privacy and first server-authoritative Base Core.
  * Claims, raids, Xaero map and ship support are intentionally deferred.
  */
 @Mod(RoglerTeamWarsMod.MOD_ID)
 public final class RoglerTeamWarsMod {
     public static final String MOD_ID = "roglerteamwars";
-    public static final String VERSION = "0.2.0";
+    public static final String VERSION = "0.2.1";
     private static RoglerTeamWarsMod INSTANCE;
     private BaseCoreConfig baseConfig = BaseCoreConfig.DEFAULT;
 
@@ -109,6 +110,12 @@ public final class RoglerTeamWarsMod {
     }
 
     @SubscribeEvent
+    public void onCoreExpire(ItemExpireEvent event) {
+        if (event.getEntity().getItem().is(BaseCoreRegistries.CORE_ITEM.get()))
+            BaseCoreService.monitorDroppedCore(event.getEntity(), true);
+    }
+
+    @SubscribeEvent
     public void onCoreBreak(BlockEvent.BreakEvent event) {
         if (event.getState().is(BaseCoreRegistries.CORE_BLOCK.get())) {
             event.setCanceled(true); // Prevent survival/creative bypass; use future admin recovery flow.
@@ -126,9 +133,15 @@ public final class RoglerTeamWarsMod {
                 .then(Commands.literal("help").executes(ctx -> teamHelp(ctx.getSource()))))
             .then(Commands.literal("base")
                 .then(Commands.literal("status").executes(ctx -> BaseCoreService.ownStatus(ctx.getSource())))
-                .then(Commands.literal("distance").executes(ctx -> BaseCoreService.distance(ctx.getSource()))))
+                .then(Commands.literal("distance").executes(ctx -> BaseCoreService.distance(ctx.getSource())))
+                .then(Commands.literal("recover").executes(ctx -> BaseCoreService.issue(
+                    ctx.getSource(), ctx.getSource().getPlayerOrException(), true))))
             .then(Commands.literal("admin").requires(source -> source.hasPermission(2))
                 .then(Commands.literal("corelist").executes(ctx -> BaseCoreService.info(ctx.getSource())))
+                .then(Commands.literal("reclaimlost")
+                    .then(Commands.argument("player", EntityArgument.player())
+                        .executes(ctx -> BaseCoreService.reclaimLost(ctx.getSource(),
+                            EntityArgument.getPlayer(ctx, "player")))))
                 .then(Commands.literal("issuecore")
                     .then(Commands.argument("player", EntityArgument.player())
                         .executes(ctx -> BaseCoreService.issue(ctx.getSource(),

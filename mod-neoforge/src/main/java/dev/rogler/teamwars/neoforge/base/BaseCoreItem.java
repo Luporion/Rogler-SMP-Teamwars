@@ -6,6 +6,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
@@ -44,6 +46,23 @@ public final class BaseCoreItem extends BlockItem {
         return new BaseCoreLedger.Location(level.dimension().location().toString(), pos.getX(), pos.getY(), pos.getZ());
     }
 
+    /** Never let vanilla fire/lava/explosion damage silently erase the only team core. */
+    @Override
+    public boolean canBeHurtBy(ItemStack stack, DamageSource source) { return false; }
+
+    /** Native NeoForge hook, called for each dropped core entity tick. */
+    @Override
+    public boolean onEntityItemUpdate(ItemStack stack, ItemEntity entity) {
+        if (entity.level() instanceof ServerLevel) BaseCoreService.monitorDroppedCore(entity, false);
+        return false;
+    }
+
+    /** Last-resort callback for removal by sources that bypass the regular tick. */
+    @Override
+    public void onDestroyed(ItemEntity entity, DamageSource source) {
+        if (entity.level() instanceof ServerLevel) BaseCoreService.monitorDroppedCore(entity, true);
+    }
+
     @Override
     public InteractionResult place(BlockPlaceContext context) {
         if (!(context.getLevel() instanceof ServerLevel level)) return super.place(context);
@@ -58,8 +77,17 @@ public final class BaseCoreItem extends BlockItem {
         BaseCoreConfig config = RoglerTeamWarsMod.baseConfig();
         BlockPos target = context.getClickedPos();
         var data = BaseCoreSavedData.get(level.getServer(), config.zone(level.getServer()), config.carrySeconds());
-        if (!data.ledger().canPlace(team, token, position(level, target))) {
-            player.displayClientMessage(Component.literal("[TeamWars] Core already placed, expired, or outside configured base zone."), true);
+        var reason = data.ledger().placementFailure(team, token, position(level, target));
+        if (reason != BaseCoreLedger.PlacementFailure.NONE) {
+            String explanation = switch (reason) {
+                case TOO_CLOSE_TO_SPAWN -> "TOO CLOSE TO WORLD SPAWN (minimum " + config.innerRadius() + " blocks)";
+                case TOO_FAR_FROM_SPAWN -> "OUTSIDE ALLOWED BASE ZONE (maximum " + config.outerRadius() + " blocks)";
+                case WRONG_DIMENSION -> "BASE CORES ARE ONLY ALLOWED IN THE OVERWORLD";
+                case TIME_EXPIRED -> "TRANSPORT TIMER EXPIRED";
+                case TOKEN_MISMATCH -> "CORE TOKEN INVALID OR REVOKED";
+                default -> "YOUR TEAM ALREADY HAS A CORE OR IT IS IN RECOVERY";
+            };
+            player.displayClientMessage(Component.literal("[TeamWars] " + explanation), true);
             return InteractionResult.FAIL;
         }
         // Perform vanilla/NeoForge placement (includes placement callbacks) BEFORE acknowledging persistence.
@@ -67,6 +95,9 @@ public final class BaseCoreItem extends BlockItem {
         if (result.consumesAction() && level.getBlockState(target).is(BaseCoreRegistries.CORE_BLOCK.get())) {
             data.ledger().placed(team, token, position(level, target));
             data.changed();
+        }
+        if (!result.consumesAction()) {
+            player.displayClientMessage(Component.literal("[TeamWars] Placement blocked: check surface, protected claim or world border."), true);
         }
         return result;
     }

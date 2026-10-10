@@ -11,6 +11,7 @@ import java.util.UUID;
 /** Authoritative logical core ledger; no Minecraft imports. All mutations are server-thread only. */
 public final class BaseCoreLedger {
     public enum Mode { ISSUED, PLACED, ESCROW }
+    public enum PlacementFailure { NONE, NOT_ISSUED, TOKEN_MISMATCH, TIME_EXPIRED, WRONG_DIMENSION, TOO_CLOSE_TO_SPAWN, TOO_FAR_FROM_SPAWN }
     public record Location(String dimension, int x, int y, int z) {
         public Location { Objects.requireNonNull(dimension); }
     }
@@ -57,10 +58,30 @@ public final class BaseCoreLedger {
             throw new IllegalArgumentException("Invalid persisted base location");
         entries.put(entry.teamId(), entry);
     }
-    public boolean canPlace(UUID teamId, UUID token, Location location) {
+    public PlacementFailure placementFailure(UUID teamId, UUID token, Location location) {
         Entry current = entries.get(teamId);
-        return current != null && current.mode() == Mode.ISSUED && current.token().equals(token)
-            && current.carriedSeconds() < carryLimit && legal(location);
+        if (current == null || current.mode() != Mode.ISSUED) return PlacementFailure.NOT_ISSUED;
+        if (!current.token().equals(token)) return PlacementFailure.TOKEN_MISMATCH;
+        if (current.carriedSeconds() >= carryLimit) return PlacementFailure.TIME_EXPIRED;
+        if (location == null || !"minecraft:overworld".equals(location.dimension()))
+            return PlacementFailure.WRONG_DIMENSION;
+        if (zone.distance(location.x(), location.z()) < zone.minRadius())
+            return PlacementFailure.TOO_CLOSE_TO_SPAWN;
+        if (zone.distance(location.x(), location.z()) > zone.maxRadius())
+            return PlacementFailure.TOO_FAR_FROM_SPAWN;
+        return PlacementFailure.NONE;
+    }
+    public boolean canPlace(UUID teamId, UUID token, Location location) {
+        return placementFailure(teamId, token, location) == PlacementFailure.NONE;
+    }
+    /** Item destroyed, dropped in hazard or expired. Invalid/stale tokens must not alter the ledger. */
+    public boolean rescueToEscrow(UUID teamId, UUID token, Location candidateLastSafe) {
+        Entry current = entries.get(teamId);
+        if (current == null || current.mode() != Mode.ISSUED || !current.token().equals(token))
+            return false;
+        Location safe = legal(candidateLastSafe) ? candidateLastSafe : current.lastSafe();
+        entries.put(teamId, new Entry(teamId, token, Mode.ESCROW, current.carriedSeconds(), null, safe));
+        return true;
     }
     public void placed(UUID teamId, UUID token, Location location) {
         if (!canPlace(teamId, token, location)) throw new IllegalStateException("Placement rejected");

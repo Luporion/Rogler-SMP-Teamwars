@@ -16,7 +16,7 @@ public final class BaseCoreRegistries {
     public static final DeferredBlock<Block> CORE_BLOCK = BLOCKS.registerSimpleBlock("base_core",
         BlockBehaviour.Properties.of().strength(-1.0f, 3600000.0f).lightLevel(state -> 8).noOcclusion());
     public static final DeferredItem<BaseCoreItem> CORE_ITEM = ITEMS.register("base_core",
-        () -> new BaseCoreItem(CORE_BLOCK.get(), new Item.Properties().stacksTo(1)));
+        () -> new BaseCoreItem(CORE_BLOCK.get(), new Item.Properties().stacksTo(1).fireResistant()));
 
     public static void register(IEventBus bus) { BLOCKS.register(bus); ITEMS.register(bus); }
     private BaseCoreRegistries() {}

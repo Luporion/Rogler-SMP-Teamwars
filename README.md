@@ -6,6 +6,10 @@
 
 **Target:** Minecraft 1.21.1 / NeoForge 21.1.249 / FTB Teams 2101.1.11 / 2–4 teams / 8–12 players. Planned server opening: 2026-10-12.
 
+## v0.2.1 — Base Core rescue hotfix
+
+Default placement zone changed to **0–5000 blocks** from worldspawn; lava/hazard item rescue, self-service recovery, emergency OP reclaim and more precise error feedback are implemented in source. Full release/testing notes: [`docs/releases/v0.2.1.md`](docs/releases/v0.2.1.md). **No new third-party mods; real NeoForge CI/runtime still to verify.** The live GitHub branch additionally contains `scripts/watch-actions.ps1` (not part of the older source ZIP baseline): after `git push`, run `powershell -ExecutionPolicy Bypass -File .\scripts\watch-actions.ps1` to monitor and fetch the successful build artifact.
+
 ## What is implemented in v0.1.0
 
 - FTB Teams stays the **only membership authority**. Players create/join/leave teams with the existing FTB Teams GUI or `/ftbteams party ...`.
