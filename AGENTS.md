@@ -50,3 +50,11 @@ Create a playable team-based NeoForge 1.21.1 Minecraft server for 8–12 players
 - The initial nametag implementation projects online player membership to vanilla scoreboard. Other mods can interfere. **Never claim universal name hiding** until full-pack client HUD tests.
 - v0.1 `max_parties` is observational; only `max_party_size` in FTB config truly restricts party size. Enforce creation validators in a later tested feature branch.
 - Build CI is present but unrun; use the first GitHub Actions result as evidence, not as an assumed success.
+
+## v0.2.0 source branch handover
+- Read `docs/MOD_REQUIREMENTS.md` on every release and ALWAYS report REQUIRED and OPTIONAL mods with any new dependency explicitly flagged.
+- Base Core signed item + state in `BaseCoreLedger` and `BaseCoreSavedData`. Do not clone issue/create logic in another adapter.
+- The 1h carry deadline first attempts a standard `BlockItem.place` (only when hand-held on supported nearby terrain), otherwise expires into admin escrow. No raw `setBlock` claims bypass; no out-of-zone item teleport yet.
+- `BaseCoreService.info` is ADMIN ONLY. Never introduce an unprivileged command that leaks other teams' core coordinates.
+- No FTB claim protection, grace period, chunkloader, Xaero render or Sable ship controls yet. Mark these as PENDING even if mod compiles.
+- Never rename/version-bump without keeping `neoforge.mods.toml`, Gradle properties, CI artifact, release docs aligned.

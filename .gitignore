@@ -13,3 +13,6 @@
 *.log
 *.bak
 *.tmp
+
+# Temporary emailed/git-am patches, stored locally then deleted
+*.patch

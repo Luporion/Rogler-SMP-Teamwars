@@ -1,1 +1,5 @@
-{"mod.roglerteamwars.name":"Rogler TeamWars"}
+{
+  "block.roglerteamwars.base_core": "Team-Basiskern",
+  "item.roglerteamwars.base_core": "Team-Basiskern",
+  "itemGroup.roglerteamwars": "Rogler TeamWars"
+}

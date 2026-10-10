@@ -1,5 +1,26 @@
 # PROJECT_STATE — Source of truth for all subsequent sessions
 
+Updated: **2026-10-10 Europe/Berlin** | Current milestone: **v0.2.0 Base Core SOURCE CANDIDATE** | Server target: 2026-10-12
+
+## LATEST (READ FIRST)
+- Branch `feat/v0.2.0-base-core` extends v0.1.0 FTB/nametag base plus Gradle 8.14 fix. The v0.1.0 JAR was already built in GitHub Actions and user reported first runtime test 'sah gut aus', but 2-player permission testing remains open.
+- Added Base Core block/item, admin issuance + escrow recovery, Overworld radius (300–2000), team-signed item with canonical token, overworld SavedData and per-second carried time with safe-placement attempt.
+- **89 standalone Java checks pass**: 41 P0 + 15 team + 8 settings + 25 new BaseCoreLedger. NeoForge v0.2.0 compiler and real client/server are **NOT YET TESTED**.
+- **SECURITY:** regular `/teamwars base status` only shows own team; `/teamwars admin corelist` requires OP2. FTB team creation is authoritative; spoofed items rejected by ledger.
+- **NO FTB CLAIM PROTECTION / NO SEPARATE CORE CHUNKLOADING yet.** Do not expose this version as raid-ready.
+- New mod dependencies: NONE. Client diagnosis 2026-10-10 confirms FTB Teams 2101.1.11 and FTB Library 2101.1.35, plus FTB Chunks and optional tech mods. Replace TeamWars 0.1.0 JAR with v0.2.0 when actually built.
+- See `docs/MOD_REQUIREMENTS.md`, `docs/plans/2026-10-10-v0.2.0-base-core.md`, `docs/releases/v0.2.0.md`.
+
+## Remaining before Monday
+1. Run NeoForge v0.2.0 CI build, fix ALL compiler/API errors.
+2. Disposable world: admin issue, placement rings, invalid item dupe, restart, timeout to auto place / escrow, own-only diagnostics.
+3. FTB claim and grace enforcement branch, or manually manage base protection/raids until audited.
+4. Test two clients and all required mods on dedicated-server profile.
+
+---
+
+# PROJECT_STATE — Source of truth for all subsequent sessions
+
 Updated: **2026-10-10 (Europe/Berlin)** | Current milestone: **v0.1.0 source candidate (NOT a tested JAR)** | Target server day: **2026-10-12**
 
 ## START HERE (latest)

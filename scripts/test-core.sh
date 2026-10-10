@@ -6,6 +6,7 @@ find core/src/main/java core/src/test/java -name '*.java' -print > build/sources
 javac --release 21 -encoding UTF-8 -d build/classes @build/sources.txt
 java -ea -cp build/classes dev.rogler.teamwars.core.CoreTests
 java -ea -cp build/classes dev.rogler.teamwars.core.teams.TeamAssignmentTests
+java -ea -cp build/classes dev.rogler.teamwars.core.base.BaseCoreLedgerTests
 
 # Settings do not import Minecraft; verify their file/validation behaviour offline.
 javac --release 21 -encoding UTF-8 -cp build/classes -d build/classes \
