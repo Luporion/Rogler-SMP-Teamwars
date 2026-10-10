@@ -16,3 +16,6 @@
 
 # Temporary emailed/git-am patches, stored locally then deleted
 *.patch
+
+# Local GitHub Actions build downloads, never commit binary artifacts
+/artifacts/

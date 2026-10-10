@@ -1,5 +1,9 @@
 # PROJECT_STATE — Source of truth for all subsequent sessions
 
+## Developer tooling: GitHub Actions Monitor
+
+Added `scripts/watch-actions.ps1` (append-only workflow status polling and safe artifact download). Requires locally installed GitHub CLI. Does not change the NeoForge mod, CI or runtime verification status; Windows end-to-end use is pending. See `docs/plans/2026-10-10-actions-build-monitor.md` and `docs/HANDOVER_BUILD_MONITOR.md`.
+
 Updated: **2026-10-10 Europe/Berlin** | Current milestone: **v0.2.0 Base Core SOURCE CANDIDATE** | Server target: 2026-10-12
 
 ## LATEST (READ FIRST)

@@ -41,6 +41,19 @@ When the build succeeds, test in a **disposable** dedicated server and two NeoFo
 - TeamWars world config: `serverconfig/roglerteamwars.properties`, default 4 members / 4 parties / 20 ticks / teammate-only nametags / friendly fire disabled by default.
 - `/teamwars admin reload` after updating the world config.
 
+## GitHub Actions Monitor (Windows)
+
+After applying your patch, testing locally, committing and pushing your branch,
+track the two required GitHub Actions and download **only** the matching build artifact:
+
+```powershell
+.\scripts\watch-actions.ps1
+```
+
+One-time requirements: Git and [GitHub CLI](https://cli.github.com/) (`winget install --id GitHub.cli -e`, then `gh auth login`). The monitor appends timestamped state changes **without clearing or redrawing your terminal history**. It verifies that both workflows passed for the exact HEAD SHA and branch, then downloads the JAR(s) to `artifacts/run-<run-id>-<sha8>/` (ignored by Git) and records SHA-256 hashes. A CI success is **not** a Minecraft runtime test.
+
+Setup, parameters, troubleshooting, rollback and test cases: [build monitor plan](docs/plans/2026-10-10-actions-build-monitor.md).
+
 ## Multi-chat workflow
 
 1. Read [`AGENTS.md`](AGENTS.md) and [`docs/PROJECT_STATE.md`](docs/PROJECT_STATE.md).
