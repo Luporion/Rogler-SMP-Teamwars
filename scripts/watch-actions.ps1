@@ -45,19 +45,42 @@ function Clear-LiveLine {
     $script:LiveLineLength = 0
 }
 
+# GitHub's startedAt/createdAt fields are UTC. ConvertFrom-Json may turn them
+# into DateTime objects. Casting those values to [string] loses their Kind/offset
+# and DateTimeOffset.Parse then assumes the PC's local timezone (e.g. UTC+2).
+# Preserve the original date type so the monitor works across timezones/DST.
+function ConvertTo-GitHubUtc {
+    param([object]$Timestamp)
+    if ($null -eq $Timestamp) { return $null }
+    try {
+        if ($Timestamp -is [datetimeoffset]) {
+            $value = [datetimeoffset]$Timestamp
+        } elseif ($Timestamp -is [datetime]) {
+            $date = [datetime]$Timestamp
+            if ($date.Kind -eq [DateTimeKind]::Unspecified) {
+                # GitHub timestamps are UTC, including when Kind is lost.
+                $date = [datetime]::SpecifyKind($date, [DateTimeKind]::Utc)
+            }
+            $value = [datetimeoffset]$date
+        } elseif (-not [string]::IsNullOrWhiteSpace([string]$Timestamp)) {
+            $value = [datetimeoffset]::Parse(
+                [string]$Timestamp,
+                [Globalization.CultureInfo]::InvariantCulture,
+                [Globalization.DateTimeStyles]::AssumeUniversal
+            )
+        } else { return $null }
+        if ($value.Year -lt 2000) { return $null }
+        return $value.ToUniversalTime()
+    } catch { return $null }
+}
+
 function Get-ElapsedText {
     param([object]$Run)
     if ($null -eq $Run) { return '' }
-    $rawStart = if ($Run.startedAt) { [string]$Run.startedAt } else { '' }
-    try {
-        $start = [datetimeoffset]::Parse($rawStart, [Globalization.CultureInfo]::InvariantCulture)
-        if ($start.Year -lt 2000) { throw 'Uninitialized start date' }
-    } catch {
-        try {
-            $start = [datetimeoffset]::Parse([string]$Run.createdAt, [Globalization.CultureInfo]::InvariantCulture)
-        } catch { return '' }
-    }
-    $elapsed = [datetimeoffset]::UtcNow - $start.ToUniversalTime()
+    $start = ConvertTo-GitHubUtc -Timestamp $Run.startedAt
+    if ($null -eq $start) { $start = ConvertTo-GitHubUtc -Timestamp $Run.createdAt }
+    if ($null -eq $start) { return '' }
+    $elapsed = [datetimeoffset]::UtcNow - $start
     if ($elapsed.Ticks -lt 0) { $elapsed = [timespan]::Zero }
     if ($elapsed.TotalHours -ge 1) {
         return ('{0}h {1:00}m {2:00}s' -f [math]::Floor($elapsed.TotalHours), $elapsed.Minutes, $elapsed.Seconds)
