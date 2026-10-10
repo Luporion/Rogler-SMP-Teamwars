@@ -50,7 +50,7 @@ track the two required GitHub Actions and download **only** the matching build a
 .\scripts\watch-actions.ps1
 ```
 
-One-time requirements: Git and [GitHub CLI](https://cli.github.com/) (`winget install --id GitHub.cli -e`, then `gh auth login`). The monitor appends timestamped state changes **without clearing or redrawing your terminal history**. It verifies that both workflows passed for the exact HEAD SHA and branch, then downloads the JAR(s) to `artifacts/run-<run-id>-<sha8>/` (ignored by Git) and records SHA-256 hashes. A CI success is **not** a Minecraft runtime test.
+One-time requirements: Git and [GitHub CLI](https://cli.github.com/) (`winget install --id GitHub.cli -e`, then `gh auth login`). The monitor preserves the **full terminal scrollback**: status changes remain as timestamped lines, while a small spinner redraws **only its own temporary line** once per second. GitHub-style status colors: waiting **gray**, running **yellow**, success **green**, failure **red**. Running workflows show elapsed time from GitHub `startedAt` (or `createdAt` if unavailable). The GitHub API is still polled every 5 seconds; `-NoAnimation` disables the temporary line for redirected output or log capture. It verifies that both workflows passed for the exact HEAD SHA and branch, then downloads the JAR(s) to `artifacts/run-<run-id>-<sha8>/` (ignored by Git) and records SHA-256 hashes. A CI success is **not** a Minecraft runtime test.
 
 Setup, parameters, troubleshooting, rollback and test cases: [build monitor plan](docs/plans/2026-10-10-actions-build-monitor.md).
 

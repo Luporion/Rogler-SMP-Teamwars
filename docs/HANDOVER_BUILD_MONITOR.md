@@ -11,3 +11,11 @@
 **User smoke test:** Apply patch -> commit and push -> `.\scripts\watch-actions.ps1` -> expect both workflows success -> `artifacts/run-<id>-<sha8>/` with JAR and manifest. Repeat and verify it skips the download. A separate test with a failing commit should display logs without any download. Preserve existing terminal scrollback throughout.
 
 **Rollback:** `git revert` only the commit that adds the monitor. Ignored `artifacts/` can be cleaned locally when no longer needed. No game data migration.
+
+## v0.2.0 addition — live status + GitHub colors
+
+Based on the user's end-to-end v0.1.0 test (Windows PowerShell 7.6.6, runs 38052390371 and 38052390366 for SHA 4439ac7): both workflows succeeded, artifact download worked, and the original monitor took 4m 19s.
+
+New work: status transition colors match GitHub conventions (waiting gray, running yellow, success green, failed red), a rotating spinner updates only its temporary current line once per second, and elapsed wall time is computed from `startedAt` (fallback `createdAt`). Existing scrollback remains untouched. A `-NoAnimation` switch and automatic noninteractive fallback preserve append-only logging when needed. API polling is still 5 seconds.
+
+**Verification:** Script and Git patch must be reviewed/tested against the v0.1.0 committed files. Real PowerShell + GitHub CLI animation behavior remains **UNVERIFIED** until the next local test; no claim of Minecraft runtime verification. No new mods or CI changes.

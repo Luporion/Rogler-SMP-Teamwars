@@ -29,11 +29,12 @@ Optional parameters:
 
 ```powershell
 .\scripts\watch-actions.ps1 -PollSeconds 10 -TimeoutMinutes 90
+.\scripts\watch-actions.ps1 -NoAnimation
 .\scripts\watch-actions.ps1 -Commit <full-40-character-SHA> -Branch feat/v0.2.0-base-core
 .\scripts\watch-actions.ps1 -OutputDir 'C:\Minecraft\Artifacts'
 ```
 
-**Terminal behavior:** No `cls`, `Clear-Host`, ANSI cursor operations, full-screen UI, `Write-Progress` or `gh run watch`. Each changed state appends a timestamped line to the existing history. `Ctrl+C` stops the process. `gh run download` is invoked only for the matching artifact after both green checks.
+**Terminal behavior (v0.2.0):** No `cls`, `Clear-Host`, full-screen UI, `Write-Progress` or `gh run watch`. Status changes append permanent timestamped lines to the existing history. A one-line spinner (`◐ ◓ ◑ ◒`) updates every second using carriage return on **its own bottom line only**; it clears that temporary line before permanent messages and on exit. It does not touch previously completed terminal lines. Waiting = gray, in progress = yellow, success = green, failed/cancelled = red. Each running action shows its elapsed wall time from the GitHub `startedAt` timestamp with `createdAt` fallback. For redirected output or non-console hosts the spinner is disabled; `-NoAnimation` forces append-only behavior. `Ctrl+C` stops the process. `gh run download` is invoked only for the matching artifact after both green checks.
 
 **Matching:** The exact local `HEAD` SHA and current branch, `push` event only. No reliance on the newest run in a repository. Up to 3 minutes for workflow discovery and 75 minutes total by default. If a workflow fails, the monitor prints `gh run view --log-failed` output and exits nonzero. Errors are not treated as green.
 
@@ -56,3 +57,9 @@ Optional parameters:
 ## Evidence and limitations
 
 Authored against the repository's existing `core-ci.yml` and `neoforge-build.yml`, current branch `feat/v0.2.0-base-core` (2026-10-10). Structural/static and patch-application checks may be run without GitHub credentials. **The PowerShell runtime and real end-to-end GH download have not been executed in the authoring environment; Windows testing remains required.**
+
+## v0.2.0 Liveanzeige / Testnachtrag
+
+The user verified the initial v0.1.0 monitor on 2026-10-10 in PowerShell 7.6.6: run `38052390371` (P0 Core) and run `38052390366` (NeoForge) both completed successfully for `4439ac7`; the JAR was downloaded to `artifacts/run-38052390366-4439ac7d/`. This **does not** yet verify v0.2.0's animation.
+
+Additional acceptance: moving spinner is visible every second and the running duration increases at 1-second resolution even though the GitHub runs are fetched every 5 seconds. On status transitions, only the temporary bottom line gets cleared, previous shell history remains unchanged. Gray when waiting, yellow while running, green on success and red on failures. `-NoAnimation` and redirected output should contain only permanent transition lines. Test after the next push on a real Windows Terminal with PowerShell 7.6.6.

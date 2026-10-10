@@ -1,5 +1,6 @@
 # Requires Windows PowerShell 5.1 or PowerShell 7 and GitHub CLI (gh).
-# Append-only terminal output: no Clear-Host, redraw, progress bar or gh run watch.
+# Keeps terminal scrollback: only the current transient animation line is redrawn.
+# No Clear-Host, alternate screen, Write-Progress or gh run watch.
 [CmdletBinding()]
 param(
     [ValidatePattern('^[0-9a-fA-F]{40}$')]
@@ -19,14 +20,134 @@ param(
     [ValidateRange(1, 30)]
     [int]$DiscoveryMinutes = 3,
 
-    [string]$OutputDir = 'artifacts'
+    [string]$OutputDir = 'artifacts',
+
+    # Suppress carriage-return animation (useful for log files and CI).
+    [switch]$NoAnimation
 )
 
 $ErrorActionPreference = 'Stop'
 $repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+$script:LiveLineLength = 0
+$script:SpinnerIndex = 0
+$script:SpinnerFrames = @([char]0x25D0, [char]0x25D3, [char]0x25D1, [char]0x25D2)
+$script:UseAnimation = -not $NoAnimation
+try {
+    if ([Console]::IsOutputRedirected) { $script:UseAnimation = $false }
+    if ($Host.Name -ne 'ConsoleHost') { $script:UseAnimation = $false }
+} catch { $script:UseAnimation = $false }
+
+# Only erase our OWN unfinished status line using carriage return + spaces.
+# Completed log lines and any content above the cursor are never touched.
+function Clear-LiveLine {
+    if ($script:LiveLineLength -le 0) { return }
+    Write-Host -NoNewline ("`r" + (' ' * $script:LiveLineLength) + "`r")
+    $script:LiveLineLength = 0
+}
+
+function Get-ElapsedText {
+    param([object]$Run)
+    if ($null -eq $Run) { return '' }
+    $rawStart = if ($Run.startedAt) { [string]$Run.startedAt } else { '' }
+    try {
+        $start = [datetimeoffset]::Parse($rawStart, [Globalization.CultureInfo]::InvariantCulture)
+        if ($start.Year -lt 2000) { throw 'Uninitialized start date' }
+    } catch {
+        try {
+            $start = [datetimeoffset]::Parse([string]$Run.createdAt, [Globalization.CultureInfo]::InvariantCulture)
+        } catch { return '' }
+    }
+    $elapsed = [datetimeoffset]::UtcNow - $start.ToUniversalTime()
+    if ($elapsed.Ticks -lt 0) { $elapsed = [timespan]::Zero }
+    if ($elapsed.TotalHours -ge 1) {
+        return ('{0}h {1:00}m {2:00}s' -f [math]::Floor($elapsed.TotalHours), $elapsed.Minutes, $elapsed.Seconds)
+    }
+    return ('{0}m {1:00}s' -f [math]::Floor($elapsed.TotalMinutes), $elapsed.Seconds)
+}
+
+function Get-DisplayState {
+    param([object]$Run)
+    if ($null -eq $Run) {
+        return @{ Text = 'wartet auf Workflow'; CompactText = 'wartet'; Color = 'DarkGray' }
+    }
+    if ($Run.status -eq 'completed') {
+        if ($Run.conclusion -eq 'success') {
+            return @{ Text = 'success'; CompactText = ('{0} OK' -f [char]0x2713); Color = 'Green' }
+        }
+        $reason = if ($Run.conclusion) { [string]$Run.conclusion } else { 'unknown' }
+        return @{ Text = "fail ($reason)"; CompactText = ('{0} fail' -f [char]0x2717); Color = 'Red' }
+    }
+    if ($Run.status -eq 'in_progress') {
+        $elapsed = Get-ElapsedText -Run $Run
+        if (-not $elapsed) { $elapsed = 'Zeit unbekannt' }
+        return @{ Text = "in progress (seit $elapsed)"; CompactText = "laeuft $elapsed"; Color = 'Yellow' }
+    }
+    $waiting = [string]$Run.status
+    return @{ Text = "waiting ($waiting)"; CompactText = 'wartet'; Color = 'DarkGray' }
+}
+
+function Show-LiveLine {
+    param([object]$CoreRun, [object]$BuildRun)
+    if (-not $script:UseAnimation) { return }
+    $coreState = Get-DisplayState -Run $CoreRun
+    $buildState = Get-DisplayState -Run $BuildRun
+    $spinnerColor = if (($null -ne $CoreRun -and $CoreRun.status -eq 'in_progress') -or
+                       ($null -ne $BuildRun -and $BuildRun.status -eq 'in_progress')) { 'Yellow' } else { 'DarkGray' }
+    $spinner = [string]$script:SpinnerFrames[$script:SpinnerIndex % $script:SpinnerFrames.Count]
+    $script:SpinnerIndex++
+
+    # Leave two columns unused so the progress row cannot wrap onto history.
+    $width = 110
+    try { $width = [math]::Min(110, [math]::Max(1, $Host.UI.RawUI.WindowSize.Width - 2)) }
+    catch { $width = 80 }
+    $narrow = $width -lt 72
+    $coreLabel = if ($narrow) { 'Core: ' } else { 'P0 Core: ' }
+    $buildLabel = if ($narrow) { 'Build: ' } else { 'NeoForge: ' }
+    $parts = @(
+        @{ Text = ('[{0}] ' -f (Get-Date -Format 'HH:mm:ss')); Color = 'DarkGray' },
+        @{ Text = ($spinner + ' '); Color = $spinnerColor },
+        @{ Text = $coreLabel; Color = 'Gray' },
+        @{ Text = [string]$coreState.CompactText; Color = [string]$coreState.Color },
+        @{ Text = ' | '; Color = 'DarkGray' },
+        @{ Text = $buildLabel; Color = 'Gray' },
+        @{ Text = [string]$buildState.CompactText; Color = [string]$buildState.Color }
+    )
+
+    Write-Host -NoNewline "`r"
+    $written = 0
+    foreach ($part in $parts) {
+        $remaining = $width - $written
+        if ($remaining -le 0) { break }
+        $fragment = [string]$part.Text
+        if ($fragment.Length -gt $remaining) { $fragment = $fragment.Substring(0, $remaining) }
+        if ($fragment.Length -gt 0) {
+            Write-Host -NoNewline $fragment -ForegroundColor $part.Color
+            $written += $fragment.Length
+        }
+    }
+    if ($script:LiveLineLength -gt $written) {
+        Write-Host -NoNewline (' ' * ($script:LiveLineLength - $written))
+    }
+    $script:LiveLineLength = [math]::Max($written, $script:LiveLineLength)
+}
+
+function Wait-NextPoll {
+    param([object]$CoreRun, [object]$BuildRun)
+    if (-not $script:UseAnimation) {
+        Start-Sleep -Seconds $PollSeconds
+        return
+    }
+    for ($second = 0; $second -lt $PollSeconds; $second++) {
+        Show-LiveLine -CoreRun $CoreRun -BuildRun $BuildRun
+        Start-Sleep -Seconds 1
+    }
+    Clear-LiveLine
+}
+
 
 function Write-Status {
     param([string]$Message, [string]$Color = 'Gray')
+    Clear-LiveLine
     Write-Host ('[{0}] {1}' -f (Get-Date -Format 'HH:mm:ss'), $Message) -ForegroundColor $Color
 }
 
@@ -46,7 +167,7 @@ function Get-RunList {
     $data = Invoke-GhJson -Arguments @(
         'run', 'list', '-R', $Repo, '--commit', $Commit,
         '--event', 'push', '--limit', '100',
-        '--json', 'databaseId,name,workflowName,status,conclusion,headSha,headBranch,event,attempt,url'
+        '--json', 'databaseId,name,workflowName,status,conclusion,headSha,headBranch,event,attempt,url,createdAt,startedAt'
     )
     return @($data | Where-Object { $null -ne $_ })
 }
@@ -177,7 +298,7 @@ try {
     }
     $shortSha = $Commit.Substring(0, 8)
     Write-Status "Monitor fuer $Repo | Branch $Branch | Commit $shortSha" 'Cyan'
-    Write-Status 'GitHub Actions werden alle paar Sekunden geprueft; kein Loeschen des Terminal-Verlaufs.' 'DarkGray'
+    Write-Status "GitHub-Abfrage alle $PollSeconds Sekunden, Live-Anzeige sekundlich; Terminal-Verlauf bleibt erhalten." 'DarkGray'
 
     $deadline = (Get-Date).AddMinutes($TimeoutMinutes)
     $discoveryDeadline = (Get-Date).AddMinutes($DiscoveryMinutes)
@@ -210,11 +331,8 @@ try {
             $attempt = if ($null -ne $run) { [string]$run.attempt } else { '-' }
             $fingerprint = "$id/$attempt/$state"
             if ($states[$row.Key] -ne $fingerprint) {
-                $color = 'Cyan'
-                if ($state -eq 'success') { $color = 'Green' }
-                elseif ($state -like 'completed / *') { $color = 'Red' }
-                elseif ($state -eq 'waiting for workflow') { $color = 'Yellow' }
-                Write-Status ("{0} [Run {1}]: {2}" -f $row.Label, $id, $state) $color
+                $display = Get-DisplayState -Run $run
+                Write-Status ("{0} [Run {1}]: {2}" -f $row.Label, $id, $display.Text) $display.Color
                 $states[$row.Key] = $fingerprint
             }
         }
@@ -235,7 +353,7 @@ try {
         if (($null -eq $core -or $null -eq $build) -and (Get-Date) -ge $discoveryDeadline) {
             throw "Nicht beide Push-Workflows gefunden. Wurde Commit $shortSha auf '$Branch' gepusht?"
         }
-        Start-Sleep -Seconds $PollSeconds
+        Wait-NextPoll -CoreRun $core -BuildRun $build
     }
     if ($null -eq $core -or $null -eq $build -or
         $core.conclusion -ne 'success' -or $build.conclusion -ne 'success') {
@@ -296,4 +414,6 @@ try {
 } catch {
     Write-Status "ABBRUCH: $($_.Exception.Message)" 'Red'
     exit 1
+} finally {
+    Clear-LiveLine
 }
