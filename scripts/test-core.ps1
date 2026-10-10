@@ -6,3 +6,15 @@ $files = @(Get-ChildItem -Recurse core/src -Filter '*.java' | ForEach-Object { $
 if ($LASTEXITCODE -ne 0) { throw "javac failed: $LASTEXITCODE" }
 & java -ea -cp build/classes dev.rogler.teamwars.core.CoreTests
 if ($LASTEXITCODE -ne 0) { throw "tests failed: $LASTEXITCODE" }
+
+& java -ea -cp build/classes dev.rogler.teamwars.core.teams.TeamAssignmentTests
+if ($LASTEXITCODE -ne 0) { throw "team policy tests failed: $LASTEXITCODE" }
+
+$settingsFiles = @(
+    'mod-neoforge/src/main/java/dev/rogler/teamwars/neoforge/teams/TeamWarsSettings.java',
+    'mod-neoforge/src/test/java/dev/rogler/teamwars/neoforge/teams/TeamWarsSettingsTests.java'
+)
+& javac --release 21 -encoding UTF-8 -cp build/classes -d build/classes $settingsFiles
+if ($LASTEXITCODE -ne 0) { throw "settings javac failed: $LASTEXITCODE" }
+& java -ea -cp build/classes dev.rogler.teamwars.neoforge.teams.TeamWarsSettingsTests
+if ($LASTEXITCODE -ne 0) { throw "settings tests failed: $LASTEXITCODE" }

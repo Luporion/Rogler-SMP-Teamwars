@@ -1,62 +1,49 @@
-# Rogler TeamWars — P0 Foundation
+# Rogler SMP — TeamWars v0.1.0 (source candidate)
 
-**Status: P0 offline core tested; NeoForge scaffold not yet built or tested inside Minecraft. NOT A SERVER-READY MOD.**
+> **Not yet a verified Minecraft build.** The Java 21 rules are tested, but this container cannot download Gradle/NeoForge dependencies and a real NeoForge JAR/runtime pass **has not happened**. Do not install `core` JAR as a mod.
 
-Target: Minecraft **1.21.1**, **NeoForge 21.1.249**, ~8–12 players, 2–4 teams.
-Target playable server start: **Monday, 2026-10-12 (Europe/Berlin)**.
+**Target:** Minecraft 1.21.1 / NeoForge 21.1.249 / FTB Teams 2101.1.11 / 2–4 teams / 8–12 players. Planned server opening: 2026-10-12.
 
-## What is here
+## What is implemented in v0.1.0
 
-- `core/`: dependency-free Java 21 rules/data prototype, **41 passing checks** on 2026-10-09.
-  - Stable UUID-based team identities and membership.
-  - Per-player + per-dimension exploration provenance, union and revocation delta.
-  - Versioned CRC-protected atomic exploration snapshots.
-  - Safe X/Z radius math, carrying timer 3600s, mobile limit 600s.
-  - Separate core/manual chunkloading quotas and overlap accounting.
-- `mod-neoforge/`: **UNVERIFIED** NeoForge Gradle scaffold and `/teamwars status` skeleton. Not a completed adapter.
-- `docs/`: implementation contracts, architecture, independent research, game design, release gates, sprint plan.
-- `AGENTS.md`: binding directions for any follow-up GPT/LLM session.
+- FTB Teams stays the **only membership authority**. Players create/join/leave teams with the existing FTB Teams GUI or `/ftbteams party ...`.
+- Server-side **read-only FTB API adapter** (reflection to avoid bundling/copying third-party binaries).
+- Vanilla scoreboard nametag privacy: current FTB-party teammates share one scoreboard team (`hideForOtherTeams`); players without a valid party have unique solo teams. Names can still leak through other mods (e.g. HUD/Jade/voice); test separately.
+- `max_team_members` (default 4) safety guard in the mirror. **The mirror does not itself prevent oversized FTB parties**; configure FTB Teams' native `max_party_size = 4` too.
+- `/teamwars`, `/teamwars status`, `/teamwars team`, `/teamwars team info`, `/teamwars team help`, `/teamwars admin resync`, `/teamwars admin reload`, `/teamwars admin diagnostics`.
+- A per-world configuration file `serverconfig/roglerteamwars.properties` created on first start. Changes can be read with admin reload (without restart).
+- Automated reconciliation on login and every 20 server ticks (configurable). Server-side-only scoreboard management; stable identifiers derived from FTB party UUIDs.
+- Existing deterministic P0 rules for exploration provenance, base zones, timers, quotas are retained but **NOT connected to Minecraft**. 64 Java checks pass locally.
 
-## Test locally (Windows PowerShell, Java 21 installed)
+## NOT in v0.1.0
+
+**No** Base Core block, base claims, transport timer gameplay, raids, score points, Voice Chat channel automation, shared Xaero terrain, map revocation, event engine, trades, Sophisticated upgrades, Chunky Friends trigger or Sable self-destruct. These are planned, not functioning. FTB max party creation count (4) and paid renames are not enforced yet. Do not allow uncontrolled party creation/renaming if competitive fairness depends on those rules.
+
+## Build (first real compilation needed)
+
+On a development machine with **JDK 21**, **Gradle 8.10.2** and internet:
 
 ```powershell
-cd path\to\rogler-teamwars-P0
 powershell -ExecutionPolicy Bypass -File .\scripts\test-core.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\build-mod.ps1
 ```
 
-Linux/macOS: `bash scripts/test-core.sh`. A Java demo jar can be created by `bash scripts/package-core.sh`; it is **not** a Minecraft mod and must **not** be copied into `mods/`.
+Or push the `feat/v0.1.0-ftb-teams` branch to GitHub to trigger `.github/workflows/neoforge-build.yml` and download its JAR artifact if the build passes. Do not assume the workflow will pass until its actual run is checked. The official [NeoGradle MDK](https://github.com/NeoForgeMDKs/MDK-1.21.1-NeoGradle) is the build reference.
 
-## Build the NeoForge scaffold (requires an internet-connected development PC)
+When the build succeeds, test in a **disposable** dedicated server and two NeoForge clients with identical mod sets (including FTB Teams). Verify `/teamwars status`, `/teamwars team`, `admin resync`, nametag visibility from both parties, join/leave, reconnect, restart. **Do not use a production world for the first test.** Full acceptance checklist: `docs/releases/v0.1.0.md`.
 
-There is intentionally **no fake Gradle wrapper** checked in; this sandbox has no network to download Gradle and NeoForge dependencies. Starting point: official [NeoForge 1.21.1 NeoGradle MDK](https://github.com/NeoForgeMDKs/MDK-1.21.1-NeoGradle).
+## One-time configuration
 
-1. Install JDK 21 and a compatible Gradle distribution, or obtain the official MDK's genuine `gradlew`, `gradlew.bat`, and `gradle/wrapper/` files (review before copying).
-2. `cd mod-neoforge` and `gradle build` (or `./gradlew build` when the genuine wrapper is added).
-3. If build succeeds, try the produced JAR **only in a disposable NeoForge 21.1.249 test profile**.
-4. Verify `/teamwars status` reports `P0 scaffold loaded` (it intentionally performs no gameplay actions).
-5. Record the real result and logs in `docs/PROJECT_STATE.md`.
+- FTB Teams `/ftbteams serverconfig` -> set `max_party_size = 4` (built into FTB Teams 2101.1.11).
+- Prevent players creating a fifth party via moderation until a native FTB party-creation validator is implemented.
+- TeamWars world config: `serverconfig/roglerteamwars.properties`, default 4 members / 4 parties / 20 ticks / teammate-only nametags / friendly fire disabled by default.
+- `/teamwars admin reload` after updating the world config.
 
-**IMPORTANT:** The Java rules are tested; the NeoForge adapter is only an initial build skeleton. No Xaero, FTB, Sable or Sophisticated API integration is asserted to work.
+## Multi-chat workflow
 
-## First things to read, in order
+1. Read [`AGENTS.md`](AGENTS.md) and [`docs/PROJECT_STATE.md`](docs/PROJECT_STATE.md).
+2. Use a feature branch and keep one bounded task per chat.
+3. Real Minecraft compilation, testing and logs are required before a JAR can be called playable.
+4. Update state and add `docs/HANDOVER_v0.1.0.md`-style evidence with branch, tests, risks, next action.
 
-1. `AGENTS.md` — rules for other assistants and branches.
-2. `docs/PROJECT_STATE.md` — what is actually done, blocked and next.
-3. `docs/plans/2026-10-10-to-12-MVP.md` — critical path to Monday.
-4. `docs/ARCHITECTURE.md` and `docs/contracts/EXPLORATION.md` — data and adapter boundaries.
-5. `docs/TEST_MATRIX.md` — server-start gates.
-
-## GitHub setup
-
-This ZIP contains a ready-to-continue local Git repository with an initial commit (`main`). No remote has been configured, and no GitHub repo has been created by this artifact.
-
-```powershell
-cd path\to\rogler-teamwars-P0
-git status
-git remote add origin https://github.com/YOUR-ACCOUNT/rogler-teamwars.git
-git push -u origin main
-```
-
-Create an **empty private repository** first (do not generate a README there). Or use an existing private repo as remote and merge appropriately.
-
-**No third-party mod JARs or decompiled proprietary code are included.** Only filenames and versions from the submitted diagnostic snapshot are recorded.
+The repository is the source of truth. Development branches are not production releases.

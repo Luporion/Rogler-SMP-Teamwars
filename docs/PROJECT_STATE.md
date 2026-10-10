@@ -1,8 +1,15 @@
 # PROJECT_STATE — Source of truth for all subsequent sessions
 
-Updated: **2026-10-09 (Europe/Berlin)** | Current milestone: **P0** | Target server day: **2026-10-12**
+Updated: **2026-10-10 (Europe/Berlin)** | Current milestone: **v0.1.0 source candidate (NOT a tested JAR)** | Target server day: **2026-10-12**
 
-## Verified complete
+## START HERE (latest)
+- Branch `feat/v0.1.0-ftb-teams`, based on P0 `7041003`.
+- 64 Java checks succeeded: P0 core 41, FTB team assignment policy 15, settings 8.
+- Authored NeoForge FTB reader + nametag scoreboard projection + commands + GitHub compile workflow.
+- **Minecraft Gradle compile, launcher startup, 2-player gameplay and full-pack compatibility remain UNVERIFIED**.
+- Immediate next step: push the feature branch, collect real CI result, fix actual compile errors, test in staging. Do not tag release as stable yet.
+
+## Historical P0 — Verified complete
 - [x] Initialized independent Git-ready project with AGENTS, ADRs, interface contracts and prioritized plans.
 - [x] Java 21 dependency-free deterministic rules for team membership, per-player chunk exploration and membership-sensitive union/revocation.
 - [x] Negative-coordinate chunk math, radius validation with overflow-safe distance, 3600s carry budget, 600s cumulative mobile border budget.
@@ -11,7 +18,7 @@ Updated: **2026-10-09 (Europe/Berlin)** | Current milestone: **P0** | Target ser
 - [x] **41 core assertions passed locally** with Java 21, `scripts/test-core.sh`.
 - [x] Existing diagnostic ZIP inspected for modpack versions and FTB settings; no third-party JAR copied.
 
-## Scaffold, NOT verified
+## Historical P0 — Scaffold, NOT verified
 - [ ] `mod-neoforge` Gradle build against 21.1.249 (no network/Gradle wrapper here).
 - [ ] NeoForge jar launches in real test profile and `/teamwars status` works.
 
@@ -48,3 +55,21 @@ Unverified assumptions:
 Risks / rollback:
 Next task:
 ```
+
+---
+## v0.1.0 source branch update — 2026-10-10
+
+**Branch:** `feat/v0.1.0-ftb-teams` | **Delivery status: SOURCE CANDIDATE, NOT YET BUILT INTO A VERIFIED MOD JAR**.
+
+### Verified
+- [x] Java 21 deterministic TeamAssignmentPolicy (FTB party canonical UUID + team membership, out-of-party/oversized solo fail-closed, nametag keys). 15 new team assertions + 8 settings checks.
+- [x] All P0 41 assertions still pass (total 64 offline checks).
+- [x] Read-only FTB adapter, scoreboard manager, command routes, safe config and build workflow authored.
+
+### NOT verified / blocking
+- [ ] NeoForge compilation against 21.1.249 + FTB Teams 2101.1.11. Offline environment cannot fetch dependencies.
+- [ ] FTB reflection invokes expected public methods at runtime.
+- [ ] 2-client nametag visibility, join/leave, login, restart, larger modpack HUD compatibility.
+- [ ] Native 4-party creation prevention, paid rename logic, Voice groups, Base Core, Xaero terrain sharing.
+
+**Current NEXT task:** Push this branch, run `.github/workflows/neoforge-build.yml`, inspect the actual build log and fix compile errors; staging world smoke test before any release. See `docs/releases/v0.1.0.md`.

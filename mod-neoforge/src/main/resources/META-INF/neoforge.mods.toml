@@ -4,11 +4,12 @@ license="MIT"
 
 [[mods]]
 modId="roglerteamwars"
-version="0.0.1-p0"
-displayName="Rogler TeamWars (P0 scaffold)"
+version="0.1.0"
+displayName="Rogler TeamWars"
 authors="Rogler TeamWars contributors"
 description='''
-Foundation-only development scaffold. NO base protection, shared map rendering or completed game mode.
+Rogler SMP team game mode. v0.1.0 mirrors FTB Teams into private vanilla nametag teams.
+Base Core, raids, shared exploration, economy and ship mechanics are not part of this build.
 '''
 
 [[dependencies.roglerteamwars]]
@@ -23,4 +24,11 @@ modId="minecraft"
 type="required"
 versionRange="[1.21.1]"
 ordering="NONE"
+side="BOTH"
+
+[[dependencies.roglerteamwars]]
+modId="ftbteams"
+type="required"
+versionRange="[2101.1.11,)"
+ordering="AFTER"
 side="BOTH"

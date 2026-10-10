@@ -1,15 +1,15 @@
-/build/
-/dist/
-.gradle/
+# Gradle / Minecraft local runs
 **/.gradle/
 **/build/
-*.class
-*.log
-*.tmp
+**/run/
+**/runs/
+**/logs/
+**/crash-reports/
+# IDE
 .idea/
 .vscode/
-run/
-**/run/
-*.jar
-!gradle/wrapper/gradle-wrapper.jar
-.DS_Store
+*.iml
+# secrets/local archives
+*.log
+*.bak
+*.tmp

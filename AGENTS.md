@@ -43,3 +43,10 @@ Create a playable team-based NeoForge 1.21.1 Minecraft server for 8–12 players
 - Never disable all protection on a public multiplayer server to make raiding work.
 - Never connect to production world before a backup and throwaway-world acceptance test.
 - Never assume Gradle plugin binaries were obtained in this offline environment.
+
+## v0.1.0 handover requirement (2026-10-10)
+- FTB Teams 2101.1.11 owns memberships; do not let a secondary TeamDirectory override/duplicate the FTB roster.
+- Test the FTB reader reflection against the EXACT running version; source-level verification is not runtime proof.
+- The initial nametag implementation projects online player membership to vanilla scoreboard. Other mods can interfere. **Never claim universal name hiding** until full-pack client HUD tests.
+- v0.1 `max_parties` is observational; only `max_party_size` in FTB config truly restricts party size. Enforce creation validators in a later tested feature branch.
+- Build CI is present but unrun; use the first GitHub Actions result as evidence, not as an assumed success.

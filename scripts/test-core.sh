@@ -5,3 +5,10 @@ mkdir -p build/classes
 find core/src/main/java core/src/test/java -name '*.java' -print > build/sources.txt
 javac --release 21 -encoding UTF-8 -d build/classes @build/sources.txt
 java -ea -cp build/classes dev.rogler.teamwars.core.CoreTests
+java -ea -cp build/classes dev.rogler.teamwars.core.teams.TeamAssignmentTests
+
+# Settings do not import Minecraft; verify their file/validation behaviour offline.
+javac --release 21 -encoding UTF-8 -cp build/classes -d build/classes \
+  mod-neoforge/src/main/java/dev/rogler/teamwars/neoforge/teams/TeamWarsSettings.java \
+  mod-neoforge/src/test/java/dev/rogler/teamwars/neoforge/teams/TeamWarsSettingsTests.java
+java -ea -cp build/classes dev.rogler.teamwars.neoforge.teams.TeamWarsSettingsTests

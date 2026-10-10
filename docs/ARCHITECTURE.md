@@ -62,3 +62,11 @@ Never synchronously rewrite a huge map on every player movement. Persist changed
 
 ## Live config contract
 Authoritative server config model, versioned & validated; admin commands update values transactionally, with audit log. Vanilla/FTB UI may need an addon. Unsafe parameters (registry, block entities, datapacks) remain restart-gated.
+
+## v0.1.0: FTB-as-authority read-only projection (2026-10-10)
+
+`FTBTeamsAPI.api().getManager().getTeamForPlayerID(UUID)` is read reflectively by the NeoForge adapter only; its team ID and member UUID set flow to dependency-free `TeamAssignmentPolicy`. No P0 `TeamDirectory` duplicate is written from FTB. `TeamWarsSettings` is stored under the active world `serverconfig/` for staged rollout. All mutations of the vanilla scoreboard happen on the main server thread on login/tick.
+
+`TeamScoreboardSync` uses a deterministic, namespaced 16-character team key from SHA-256(UUID). It detects visible key collisions, makes solos isolated, and removes only its own stale scoreboard members/teams. The compatibility risk is that other mods also own the same single vanilla scoreboard team per player. This must be covered by multiplayer staging tests; the v0.1 privacy guarantee is restricted to vanilla nametags (not arbitrary mod HUDs).
+
+The FTB party creation restriction (`addPartyCreationValidator` added in 2101.1.11), global 4-party cap, paid renames and client voice team channels are deliberately **not** part of this vertical slice. FTB has its own `max_party_size` server config; enable it in the installed pack. Do not conflate this with the mirror's 4-member quarantine guard. If FTB reflection is incompatible, fail closed (everyone isolated) and log warning.
