@@ -81,6 +81,40 @@ public final class BaseCoreLedgerTests {
         yes(inner.placementFailure(x,t,atSpawn) == BaseCoreLedger.PlacementFailure.TOO_CLOSE_TO_SPAWN);
         yes(!inner.rescueToEscrow(x, UUID.randomUUID(), null));
         yes(inner.get(x).mode() == BaseCoreLedger.Mode.ISSUED);
-        System.out.println("v0.2.1 BaseCoreLedgerTests: " + checks + " checks OK");
+        // v0.2.2: safe relocation, token invalidation, time preservation, persistence.
+        var moving = new BaseCoreLedger(new BaseZone(0, 0, 0, 5000), 3600);
+        UUID mover = UUID.randomUUID(), first = UUID.randomUUID(), next = UUID.randomUUID();
+        moving.issue(mover, first);
+        moving.advanceCarrier(mover, first, 60, base);
+        moving.advanceCarrier(mover, first, 15, base);
+        moving.placed(mover, first, base);
+        reject(() -> moving.pack(blue, first, base, UUID.randomUUID()));
+        reject(() -> moving.pack(mover, UUID.randomUUID(), base, UUID.randomUUID()));
+        reject(() -> moving.pack(mover, first, atSpawn, UUID.randomUUID()));
+        reject(() -> moving.pack(mover, first, base, first));
+        var moved = moving.pack(mover, first, base, next);
+        yes(moved.mode() == BaseCoreLedger.Mode.ISSUED);
+        yes(moved.location() == null);
+        yes(moved.carriedSeconds() == 75);
+        yes(base.equals(moved.lastSafe()));
+        yes(!moving.canPlace(mover, first, atBorder));
+        yes(moving.canPlace(mover, next, atBorder));
+        reject(() -> moving.pack(mover, first, base, UUID.randomUUID()));
+        var movedReboot = new BaseCoreLedger(new BaseZone(0,0,0,5000), 3600);
+        movedReboot.restore(moving.get(mover));
+        yes(movedReboot.get(mover).token().equals(next));
+        movedReboot.placed(mover, next, atBorder);
+        yes(movedReboot.get(mover).mode() == BaseCoreLedger.Mode.PLACED);
+        reject(() -> movedReboot.rescueMissingPlaced(mover, first, atBorder));
+        reject(() -> movedReboot.rescueMissingPlaced(mover, next, base));
+        yes(movedReboot.rescueMissingPlaced(mover, next, atBorder).mode() == BaseCoreLedger.Mode.ESCROW);
+        yes(atBorder.equals(movedReboot.get(mover).lastSafe()));
+        reject(() -> movedReboot.rescueMissingPlaced(mover, next, atBorder));
+        UUID rescued = UUID.randomUUID();
+        movedReboot.reissueFromEscrow(mover, rescued);
+        yes(!movedReboot.canPlace(mover, next, base));
+        yes(movedReboot.canPlace(mover, rescued, base));
+        yes(movedReboot.get(mover).carriedSeconds() == 0);
+        System.out.println("v0.2.2 BaseCoreLedgerTests: " + checks + " checks OK");
     }
 }

@@ -64,3 +64,10 @@ Create a playable team-based NeoForge 1.21.1 Minecraft server for 8–12 players
 - Do not auto-reissue because an item is not visible in player inventory: it may be in an unloaded chest/offline inventory. Only genuine event-triggered hazard ESCROW or explicit OP `reclaimlost` revokes the token.
 - All auto-placement attempts use `BlockItem.place` attributed to a real nearby team player; avoid bypassing claim hooks. Fallback is persistent ESCROW with `/teamwars base recover`.
 - Real NeoForge compile and Minecraft verification are mandatory before release.
+
+## v0.2.2 handover (2026-10-11)
+- `docs/ROADMAP.md` ist die aktuelle Produkt-/Prioritäten-Roadmap. `docs/plans/2026-10-11-v0.2.2-relocation.md` ist der konkrete Plan.
+- Basiskern bleibt unzerstörbar: **kein** gewöhnliches Mining, sondern serverseitig autorisiertes `Shift+Rechtsklick` bzw. `/teamwars base pack`. Nicht durch normale Drops ersetzen.
+- Bei Umzug `PLACED -> ISSUED`, immer neuer Token, Transportzeit erhalten; `/teamwars admin salvagemissing` ist nur für fehlenden physischen Block. Admin darf damit keine echte gegnerische Base zerstören.
+- Beim späteren Raidmodul den TODO-Guard in `BaseCoreService.pack` für *aktive Raids* implementieren, bevor Raids öffentlich freigegeben werden.
+- V0.2.2 gilt erst mit CI- und Minecraft-Laufzeitbeleg als releasefähig.

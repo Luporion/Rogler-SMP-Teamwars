@@ -26,3 +26,9 @@ The uploaded `mods.csv` describes the DEV client, not the authoritative dedicate
 
 ## v0.2.1 update (2026-10-10)
 **New third-party mods: NONE.** Required: Minecraft 1.21.1, NeoForge 21.1.249, FTB Teams 2101.1.11, compatible FTB Library (latest observed 2101.1.37), and **Rogler TeamWars v0.2.1**. Remove the old TeamWars 0.2.0 JAR; never load both. FTB Chunks/Chunky/Xaero/Sophisticated/Sable integrations remain deferred. See `docs/releases/v0.2.1.md`.
+
+## v0.2.2 Update (2026-10-11)
+- **Neue Drittanbieter-Mods: keine.**
+- Pflicht (Server und Client): Minecraft **1.21.1**, NeoForge **21.1.249**, **FTB Teams 2101.1.11**, dazu eine kompatible **FTB Library** (im letzten Diagnoseprofil 2101.1.37), **Rogler TeamWars v0.2.2** statt der alten JAR.
+- Schon vorhanden, aber in v0.2.2 noch nicht als Basis-Kern-Adapter verwendet: FTB Chunks 2101.1.22, Chunky, Xaero, Sophisticated Core, Simple Voice Chat, Sable/Create Aeronautics.
+- **Achtung:** Die Version v0.2.2 ist zunächst ein Quellcode-Kandidat; eine CI-grüne JAR ersetzt keine Laufzeit- und Server-Abnahmetests.

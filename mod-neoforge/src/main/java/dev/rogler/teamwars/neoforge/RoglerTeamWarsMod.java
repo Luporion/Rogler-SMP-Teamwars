@@ -7,6 +7,9 @@ import dev.rogler.teamwars.neoforge.base.BaseCoreService;
 import dev.rogler.teamwars.neoforge.base.BaseCoreRegistries;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.neoforged.neoforge.event.entity.item.ItemExpireEvent;
 import dev.rogler.teamwars.core.teams.TeamAssignmentPolicy;
 import dev.rogler.teamwars.neoforge.teams.TeamScoreboardSync;
@@ -30,13 +33,13 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 /**
- * v0.2.1: FTB-owned party membership, scoreboard privacy and first server-authoritative Base Core.
+ * v0.2.2: FTB-owned party membership, scoreboard privacy and first server-authoritative Base Core.
  * Claims, raids, Xaero map and ship support are intentionally deferred.
  */
 @Mod(RoglerTeamWarsMod.MOD_ID)
 public final class RoglerTeamWarsMod {
     public static final String MOD_ID = "roglerteamwars";
-    public static final String VERSION = "0.2.1";
+    public static final String VERSION = "0.2.2";
     private static RoglerTeamWarsMod INSTANCE;
     private BaseCoreConfig baseConfig = BaseCoreConfig.DEFAULT;
 
@@ -115,6 +118,19 @@ public final class RoglerTeamWarsMod {
             BaseCoreService.monitorDroppedCore(event.getEntity(), true);
     }
 
+    /** Sneak-right-click on the registered block (server authoritative). */
+    @SubscribeEvent
+    public void onCorePickup(PlayerInteractEvent.RightClickBlock event) {
+        if (event.getHand() != InteractionHand.MAIN_HAND || !event.getEntity().isShiftKeyDown()
+            || !event.getLevel().getBlockState(event.getPos()).is(BaseCoreRegistries.CORE_BLOCK.get())) return;
+        if (event.getEntity() instanceof ServerPlayer player) {
+            BaseCoreService.pack(player, event.getPos());
+        }
+        // Also consume client use action, preventing held items from interfering.
+        event.setCanceled(true);
+        event.setCancellationResult(InteractionResult.sidedSuccess(event.getLevel().isClientSide));
+    }
+
     @SubscribeEvent
     public void onCoreBreak(BlockEvent.BreakEvent event) {
         if (event.getState().is(BaseCoreRegistries.CORE_BLOCK.get())) {
@@ -134,10 +150,15 @@ public final class RoglerTeamWarsMod {
             .then(Commands.literal("base")
                 .then(Commands.literal("status").executes(ctx -> BaseCoreService.ownStatus(ctx.getSource())))
                 .then(Commands.literal("distance").executes(ctx -> BaseCoreService.distance(ctx.getSource())))
+                .then(Commands.literal("pack").executes(ctx -> BaseCoreService.packCommand(ctx.getSource())))
                 .then(Commands.literal("recover").executes(ctx -> BaseCoreService.issue(
                     ctx.getSource(), ctx.getSource().getPlayerOrException(), true))))
             .then(Commands.literal("admin").requires(source -> source.hasPermission(2))
                 .then(Commands.literal("corelist").executes(ctx -> BaseCoreService.info(ctx.getSource())))
+                .then(Commands.literal("salvagemissing")
+                    .then(Commands.argument("player", EntityArgument.player())
+                        .executes(ctx -> BaseCoreService.salvageMissing(ctx.getSource(),
+                            EntityArgument.getPlayer(ctx, "player")))))
                 .then(Commands.literal("reclaimlost")
                     .then(Commands.argument("player", EntityArgument.player())
                         .executes(ctx -> BaseCoreService.reclaimLost(ctx.getSource(),
@@ -176,7 +197,7 @@ public final class RoglerTeamWarsMod {
             + " | quarantined: " + scoreboard.quarantinedCount()
             + " | FTB API errors: " + scoreboard.apiFailures()), false);
         source.sendSuccess(() -> Component.literal("Features: FTB team sync, private nametags, /teamwars team; "
-            + "base core issue/place enabled; NO claim/raid/Xaero share yet."), false);
+            + "base core issue/place/pack enabled; NO claim/raid/Xaero share yet."), false);
         return Command.SINGLE_SUCCESS;
     }
 

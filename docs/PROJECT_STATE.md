@@ -107,3 +107,13 @@ Next task:
 - [ ] Native 4-party creation prevention, paid rename logic, Voice groups, Base Core, Xaero terrain sharing.
 
 **Current NEXT task:** Push this branch, run `.github/workflows/neoforge-build.yml`, inspect the actual build log and fix compile errors; staging world smoke test before any release. See `docs/releases/v0.1.0.md`.
+
+---
+## LATEST — 2026-10-11, v0.2.2 CORE RELOCATION SOURCE CANDIDATE
+- Aktueller Entwicklungsstand: v0.2.1 wurde in Minecraft erfolgreich platziert (Screenshot, Session); v0.2.1 NeoForge-CI grün. Laden/Abbauen fehlte absichtlich (Blockhärte -1).
+- v0.2.2 implementiert autorisierten Team-Bergungsvorgang durch Shift+Rechtsklick oder `/teamwars base pack`, Tokenrotation, bewahrte Transportzeit, Fallback bei vollem Inventar, fehlender-Block-Admin-Recovery und Logging.
+- Java-Tests des Core-Regelmoduls erfolgreich; **NeoForge-CI- und Multiplayer-Laufzeit-Ergebnis v0.2.2 steht noch aus**.
+- **NICHT IMPLEMENTIERT:** FTB Claim/Grace/Force-Load, Raid/Kriegspunkte, Xaero-Mapsharing, Simple Voice Chat Teamkanal, Sophisticated Core, Sable, Handel, Events, UI.
+- Keine neuen Drittanbieter-Mods erforderlich; `docs/MOD_REQUIREMENTS.md` lesen.
+- Nächste Schritte: CI Compile, 2-Team-Rechtsklick-Tests, Weltbackup/Restart/Lava, danach Claims+Grace bzw. Admin-MVP-Fallback für 12.10.2026.
+- Gesamtplanung: `docs/ROADMAP.md` | Umzug: `docs/plans/2026-10-11-v0.2.2-relocation.md`.

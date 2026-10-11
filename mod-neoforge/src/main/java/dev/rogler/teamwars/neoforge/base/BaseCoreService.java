@@ -3,6 +3,7 @@ package dev.rogler.teamwars.neoforge.base;
 import com.mojang.brigadier.Command;
 import dev.rogler.teamwars.core.base.BaseCoreLedger;
 import dev.rogler.teamwars.neoforge.RoglerTeamWarsMod;
+import dev.rogler.teamwars.neoforge.teams.RoglerTeamWarsLogger;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.core.BlockPos;
@@ -68,6 +69,123 @@ public final class BaseCoreService {
         say(source, "Core revoked and moved to recovery escrow. Any remaining old item is INVALID now."
             + " Team member can run /teamwars base recover.");
         RoglerTeamWarsMod.warn("OP explicitly reclaimed issued core for team " + entry.teamId());
+        return Command.SINGLE_SUCCESS;
+    }
+
+    /**
+     * Safe core pickup (sneak + right click, or /teamwars base pack).
+     * Deliberately NOT a block drop: ownership, location, inventory and team
+     * are verified before removing the world block. Old tokens become invalid.
+     */
+    public static boolean pack(ServerPlayer player, BlockPos pos) {
+        var assignment = RoglerTeamWarsMod.assignmentFor(player);
+        if (!assignment.validParty()) { tell(player, "Join a valid FTB party before moving a base."); return false; }
+        if (player.isSpectator()) { tell(player, "Spectators cannot pack a base core."); return false; }
+        if (!(player.level() instanceof ServerLevel level) || level != player.getServer().overworld()) {
+            tell(player, "The base core can only be moved in the Overworld."); return false;
+        }
+        if (player.distanceToSqr(Vec3.atCenterOf(pos)) > 8 * 8) {
+            tell(player, "Move closer to your base core (max 8 blocks)."); return false;
+        }
+        var data = store(player.getServer());
+        var entry = data.ledger().get(assignment.partyId());
+        if (entry == null || entry.mode() != BaseCoreLedger.Mode.PLACED || entry.location() == null) {
+            tell(player, "Your team has no placed base core to pack."); return false;
+        }
+        var target = BaseCoreItem.position(level, pos);
+        if (!target.equals(entry.location())) {
+            tell(player, "This is not the registered base core of your team."); return false;
+        }
+        if (!level.isLoaded(pos) || !level.getBlockState(pos).is(BaseCoreRegistries.CORE_BLOCK.get())) {
+            tell(player, "Registered core block is missing; ask an admin to inspect recovery."); return false;
+        }
+        if (player.getInventory().getFreeSlot() < 0) {
+            tell(player, "Your inventory is full. Free a slot before packing the core."); return false;
+        }
+        // Future raid integration MUST reject pickup during active raids here.
+        UUID newToken = UUID.randomUUID();
+        UUID oldToken = entry.token();
+        if (!level.removeBlock(pos, false)) {
+            tell(player, "World refused to remove the core. Nothing changed."); return false;
+        }
+        // All identity checks above precede world mutation. One server thread owns both mutations.
+        BaseCoreLedger.Entry packed;
+        try {
+            packed = data.ledger().pack(assignment.partyId(), oldToken, target, newToken);
+        } catch (IllegalStateException unexpected) {
+            // World block was removed, but ledger transition failed. Do not leave a
+            // persistent phantom PLACED block without a recovery path.
+            data.ledger().rescueMissingPlaced(assignment.partyId(), oldToken, target);
+            data.changed();
+            RoglerTeamWarsMod.warn("Core pack ledger failure -> ESCROW for team="
+                + assignment.partyId() + " reason=" + unexpected.getMessage());
+            tell(player, "Core protected in recovery after an internal failure. Use /teamwars base recover.");
+            return false;
+        }
+        data.changed();
+        if (!player.getInventory().add(BaseCoreItem.authorized(assignment.partyId(), newToken))) {
+            // Extremely unlikely after free-slot check. Prefer recoverable escrow to dropping
+            // a second live token or overwriting another player's items.
+            data.ledger().rescueToEscrow(assignment.partyId(), newToken, packed.lastSafe());
+            data.changed();
+            RoglerTeamWarsMod.warn("Core pack delivery failed for team " + assignment.partyId()
+                + "; saved in ESCROW, original token revoked");
+            tell(player, "Inventory delivery failed; core is safe in recovery. Use /teamwars base recover.");
+            return false;
+        }
+        long remaining = Math.max(0, RoglerTeamWarsMod.baseConfig().carrySeconds() - packed.carriedSeconds());
+        RoglerTeamWarsLogger.info("CORE_PACK team=" + assignment.partyId() + " player=" + player.getUUID()
+            + " oldToken=" + oldToken + " newToken=" + newToken + " pos=" + target
+            + " elapsed=" + packed.carriedSeconds());
+        tell(player, "Base core packed safely. " + remaining / 60 + "m " + remaining % 60
+            + "s of your 1-hour transport budget remain. Your old position is no longer a base.");
+        notifyTeam(player.getServer(), assignment.partyId(), "Base core packed for relocation.");
+        return true;
+    }
+
+    private static void tell(ServerPlayer player, String message) {
+        player.sendSystemMessage(Component.literal("[TeamWars] " + message));
+    }
+
+    public static int packCommand(CommandSourceStack source) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer player = source.getPlayerOrException();
+        var assignment = RoglerTeamWarsMod.assignmentFor(player);
+        if (!assignment.validParty()) { tell(player, "You are not in a valid FTB party."); return 0; }
+        var entry = store(source.getServer()).ledger().get(assignment.partyId());
+        if (entry == null || entry.mode() != BaseCoreLedger.Mode.PLACED || entry.location() == null) {
+            tell(player, "No placed core registered for your team."); return 0;
+        }
+        if (!"minecraft:overworld".equals(entry.location().dimension())) return 0;
+        return pack(player, new BlockPos(entry.location().x(),entry.location().y(),entry.location().z()))
+            ? Command.SINGLE_SUCCESS : 0;
+    }
+
+    /** OP-only repair: fail closed if physical core exists or location is not loaded. */
+    public static int salvageMissing(CommandSourceStack source, ServerPlayer teamMember) {
+        var assignment = RoglerTeamWarsMod.assignmentFor(teamMember);
+        if (!assignment.validParty()) { say(source, "Target player must be in an FTB party."); return 0; }
+        var saved = store(source.getServer());
+        var entry = saved.ledger().get(assignment.partyId());
+        if (entry == null || entry.mode() != BaseCoreLedger.Mode.PLACED || entry.location() == null) {
+            say(source, "Team has no PLACED core; nothing salvaged."); return 0;
+        }
+        if (!"minecraft:overworld".equals(entry.location().dimension())) {
+            say(source, "Core is not registered in overworld; manual investigation needed."); return 0;
+        }
+        ServerLevel level = source.getServer().overworld();
+        BlockPos pos = new BlockPos(entry.location().x(),entry.location().y(),entry.location().z());
+        if (!level.hasChunkAt(pos)) {
+            say(source, "Chunk is not loaded; visit core position before salvage. No change made."); return 0;
+        }
+        if (level.getBlockState(pos).is(BaseCoreRegistries.CORE_BLOCK.get())) {
+            say(source, "Physical core still exists; refuse salvage. Use sneak-right-click or /teamwars base pack.");
+            return 0;
+        }
+        saved.ledger().rescueMissingPlaced(assignment.partyId(), entry.token(), entry.location());
+        saved.changed();
+        RoglerTeamWarsMod.warn("OP salvaged missing core to ESCROW for team=" + entry.teamId()
+            + " missingPosition=" + entry.location());
+        say(source, "Missing physical core moved to ESCROW; /teamwars base recover can reissue a fresh token.");
         return Command.SINGLE_SUCCESS;
     }
 

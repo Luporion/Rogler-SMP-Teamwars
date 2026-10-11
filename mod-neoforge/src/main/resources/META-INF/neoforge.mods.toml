@@ -4,11 +4,11 @@ license="MIT"
 
 [[mods]]
 modId="roglerteamwars"
-version="0.2.1"
+version="0.2.2"
 displayName="Rogler TeamWars"
 authors="Rogler TeamWars contributors"
 description='''
-Rogler SMP team game mode. v0.2.1 adds team-authenticated Base Core item, Overworld placement limits and server SavedData.
+Rogler SMP team game mode. v0.2.2 adds team-authenticated Base Core item, Overworld placement limits and server SavedData.
 FTB claims, raids, shared exploration, economy and ship mechanics are not part of this build.
 '''
 

@@ -74,6 +74,38 @@ public final class BaseCoreLedger {
     public boolean canPlace(UUID teamId, UUID token, Location location) {
         return placementFailure(teamId, token, location) == PlacementFailure.NONE;
     }
+    /**
+     * Authoritative PLACED -> ISSUED move, preserving elapsed transport time.
+     * A new token invalidates any creative-mode or copied pre-placement item.
+     * The world adapter must verify and remove the physical block first, on the server thread.
+     */
+    public Entry pack(UUID teamId, UUID placedToken, Location expectedLocation, UUID newToken) {
+        Entry current = entries.get(teamId);
+        if (current == null || current.mode() != Mode.PLACED)
+            throw new IllegalStateException("No placed core for this team");
+        if (!current.token().equals(placedToken) || !current.location().equals(expectedLocation))
+            throw new IllegalStateException("Stored core identity or location mismatch");
+        Objects.requireNonNull(newToken, "newToken");
+        if (current.token().equals(newToken) || entries.values().stream().anyMatch(e -> e.token().equals(newToken)))
+            throw new IllegalStateException("Replacement token must be fresh");
+        Entry moved = new Entry(teamId, newToken, Mode.ISSUED, current.carriedSeconds(),
+            null, current.location());
+        entries.put(teamId, moved);
+        return moved;
+    }
+
+    /** Explicit OP recovery for PLACED records only if the physical block is confirmed missing. */
+    public Entry rescueMissingPlaced(UUID teamId, UUID placedToken, Location expectedLocation) {
+        Entry current = entries.get(teamId);
+        if (current == null || current.mode() != Mode.PLACED || !current.token().equals(placedToken)
+            || !current.location().equals(expectedLocation))
+            throw new IllegalStateException("Not the registered placed core");
+        Entry escrow = new Entry(teamId, placedToken, Mode.ESCROW, current.carriedSeconds(),
+            null, current.location());
+        entries.put(teamId, escrow);
+        return escrow;
+    }
+
     /** Item destroyed, dropped in hazard or expired. Invalid/stale tokens must not alter the ledger. */
     public boolean rescueToEscrow(UUID teamId, UUID token, Location candidateLastSafe) {
         Entry current = entries.get(teamId);
