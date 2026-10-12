@@ -1,0 +1,10 @@
+# LLM Developer Handover – Rogler TeamWars v0.5.1
+
+- Base: v0.5.0 SOURCE candidate, *not installed/tested by user* at time of request. User demands full source ZIP with `AGENTS.md`, all LLM docs and scripts in **every** update, plus git-format patch and commands.
+- Read `AGENTS.md`, `docs/PROJECT_STATE_v0.5.0.md`, `docs/releases/v0.5.0.md`, `docs/PROJECT_STATE_v0.5.1.md`, `docs/releases/v0.5.1.md`.
+- New persisted TEAM-ID data `CoreInfrastructureSavedData`: separate from existing core ledger, 9-slot `SimpleContainer`, FE tier/buffer. Only valid FTB UUID team + placed core + proximity may access UI. Save via registry-aware ItemStack NBT; no free item access through capabilities.
+- Energy: `CoreInfrastructureService` exposes read/extract-only NeoForge FE block capability, native 20/40/80 FE/t bounded config + 20k store + output max 160/t. AE2 Energy Acceptor is possible consumer **not tested**. Kinetic Create SU and AE2 ME-grid intentionally excluded until pinned APIs available, audited and tested.
+- Durability: saveddata keyed by canonical UUID survives move/escrow/recovery. Explicit orphan adoption transfers inventory and FE only if recipient data empty. On failure, do not partially transfer. Raids/FTB protection logic unchanged.
+- Build gates: local pure Java tests, Git patch `git apply --check`, upstream GitHub NeoForge CI, then actual DEV-client/server tests. Never call this verified merely due to pure core tests.
+- Outstanding mandatory next integrations: Create tiny kinetic generator with dedicated KineticBlockEntity + output at 16 RPM; AE2 IGridNode and terminal/ME Drive; Sophisticated Core selective upgrade handlers with GUI and persistent serialization. Prevent hostile machine-based extraction; generic item capability offers no team identity.
+- Existing source ZIP contains 3 historical v0.4 bootstrap substitutes for original GitHub watcher/doc paths. Always prefer the **exact full-source snapshot created by the user's `PATCH.cmd` via `git archive HEAD`** after applying to the real clone. Do not overwrite the real original files with substitutes.

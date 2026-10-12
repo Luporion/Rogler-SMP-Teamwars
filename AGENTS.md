@@ -95,3 +95,10 @@ Create a playable team-based NeoForge 1.21.1 Minecraft server for 8–12 players
 - Always deliver a complete source ZIP including tracked scripts/LLM files in addition to Git patch. The local `PATCH.cmd` creates the exact tracked snapshot after patch.
 - Team UUIDs are canonical; never auto-claim orphan ownership by recreated display name.
 - FTB Chunks `PRIVATE` is a stock map UI protection, not an unmodified-packet location confidentiality guarantee.
+
+## v0.5.1 LLM contract (2026-10-13)
+- Start with `docs/PROJECT_STATE_v0.5.1.md`, `docs/releases/v0.5.1.md`, and `docs/research/CORE_CREATE_AE2_SOPHISTICATED_DESIGN.md`.
+- Nine-slot core inventory is SERVER/UUID-owned SavedData, never in movable item NBT; no generic item capability until machine caller authorization is solved.
+- Native FE output 20/40/80 FE/t with world config, 20k buffer and 160/t max push; do not claim actual AE2 ME-grid terminal or Create rotational API integration.
+- Build remains UNVERIFIED until CI green, and runtime remains UNVERIFIED until user tests. No silent new dependencies or unsanctioned server world modifications.
+- Every release: downloadable full-source ZIP incl. AGENTS and all LLM/docs/scripts; Git patch; installation/verification instructions; list partial/unimplemented integrations honestly.

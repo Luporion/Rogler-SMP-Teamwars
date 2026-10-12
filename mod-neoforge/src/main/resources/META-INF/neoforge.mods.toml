@@ -4,11 +4,11 @@ license="MIT"
 
 [[mods]]
 modId="roglerteamwars"
-version="0.5.0"
+version="0.5.1"
 displayName="Rogler TeamWars"
 authors="Rogler TeamWars contributors"
 description='''
-Rogler SMP TeamWars v0.5.0: team UUID admin controls, core armor upgrade, automatic private FTB claims, configurable safe raid windows and persistent war scores.
+Rogler SMP TeamWars v0.5.1: team-owned nine-slot core inventory, bounded FE generation and upgrades, stable team controls, private FTB claims and core-only raiding.
 General destructive raids, separate chunk loader quotas, Xaero sync, and Sable integrations are not active.
 '''
 

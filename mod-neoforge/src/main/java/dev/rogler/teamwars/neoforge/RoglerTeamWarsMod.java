@@ -33,19 +33,21 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 /**
- * v0.4.0: FTB-owned teams, private auto-claims, core protection, and core-only raid MVP.
+ * v0.5.1: stable teams/claims, core-only raids, persistent core inventory and bounded FE.
  * Destructive general raiding, Xaero and Sable integrations are not enabled.
  */
 @Mod(RoglerTeamWarsMod.MOD_ID)
 public final class RoglerTeamWarsMod {
     public static final String MOD_ID = "roglerteamwars";
-    public static final String VERSION = "0.5.0";
+    public static final String VERSION = "0.5.1";
     private static RoglerTeamWarsMod INSTANCE;
     private BaseCoreConfig baseConfig = BaseCoreConfig.DEFAULT;
+    private dev.rogler.teamwars.neoforge.base.CorePowerConfig powerConfig = dev.rogler.teamwars.neoforge.base.CorePowerConfig.DEFAULT;
     private dev.rogler.teamwars.neoforge.protection.BaseProtectionConfig protectionConfig =
         dev.rogler.teamwars.neoforge.protection.BaseProtectionConfig.DEFAULT;
 
     public static BaseCoreConfig baseConfig() { return INSTANCE.baseConfig; }
+    public static dev.rogler.teamwars.neoforge.base.CorePowerConfig powerConfig() {return INSTANCE.powerConfig;}
     public static dev.rogler.teamwars.neoforge.protection.BaseProtectionConfig protectionConfig() {
         return INSTANCE.protectionConfig;
     }
@@ -62,6 +64,7 @@ public final class RoglerTeamWarsMod {
     public RoglerTeamWarsMod(IEventBus modBus) {
         INSTANCE = this;
         BaseCoreRegistries.register(modBus);
+        modBus.addListener(dev.rogler.teamwars.neoforge.base.CoreInfrastructureService::registerCapabilities);
         NeoForge.EVENT_BUS.register(this);
     }
 
@@ -77,6 +80,9 @@ public final class RoglerTeamWarsMod {
         try { protectionConfig = dev.rogler.teamwars.neoforge.protection.BaseProtectionConfig.load(activeServer); }
         catch (IOException e) { protectionConfig = dev.rogler.teamwars.neoforge.protection.BaseProtectionConfig.DEFAULT;
             RoglerTeamWarsLogger.warn("Protection config invalid, safe defaults: " + e.getMessage()); }
+        try { powerConfig = dev.rogler.teamwars.neoforge.base.CorePowerConfig.load(activeServer); }
+        catch(IOException e) {powerConfig=dev.rogler.teamwars.neoforge.base.CorePowerConfig.DEFAULT;
+            RoglerTeamWarsLogger.warn("Invalid FE configuration; safe defaults: "+e.getMessage());}
         scoreboard.refresh(activeServer, settings);
         dev.rogler.teamwars.neoforge.protection.BaseGuardService.reconcile(activeServer);
         RoglerTeamWarsLogger.info("v" + VERSION + " loaded. FTB Teams is authoritative. "
@@ -99,6 +105,7 @@ public final class RoglerTeamWarsMod {
     @SubscribeEvent
     public void tick(ServerTickEvent.Post event) {
         if (activeServer == null) return;
+        dev.rogler.teamwars.neoforge.base.CoreInfrastructureService.tick(activeServer);
         if (activeServer.getTickCount() % settings.refreshIntervalTicks() == 0)
             scoreboard.refresh(activeServer, settings);
         if (activeServer.getTickCount() % 20 == 0)
@@ -136,10 +143,11 @@ public final class RoglerTeamWarsMod {
     /** Sneak-right-click on the registered block (server authoritative). */
     @SubscribeEvent
     public void onCorePickup(PlayerInteractEvent.RightClickBlock event) {
-        if (event.getHand() != InteractionHand.MAIN_HAND || !event.getEntity().isShiftKeyDown()
+        if (event.getHand() != InteractionHand.MAIN_HAND
             || !event.getLevel().getBlockState(event.getPos()).is(BaseCoreRegistries.CORE_BLOCK.get())) return;
         if (event.getEntity() instanceof ServerPlayer player) {
-            BaseCoreService.pack(player, event.getPos());
+            if (player.isShiftKeyDown()) BaseCoreService.pack(player, event.getPos());
+            else dev.rogler.teamwars.neoforge.base.CoreInfrastructureService.open(player, event.getPos());
         }
         // Also consume client use action, preventing held items from interfering.
         event.setCanceled(true);
@@ -205,7 +213,11 @@ public final class RoglerTeamWarsMod {
                     .then(Commands.literal("status").executes(ctx ->
                         dev.rogler.teamwars.neoforge.base.CoreUpgradeService.status(ctx.getSource())))
                     .then(Commands.literal("armor").executes(ctx ->
-                        dev.rogler.teamwars.neoforge.base.CoreUpgradeService.buyArmor(ctx.getSource()))))
+                        dev.rogler.teamwars.neoforge.base.CoreUpgradeService.buyArmor(ctx.getSource())))
+                    .then(Commands.literal("energy").executes(ctx ->
+                        dev.rogler.teamwars.neoforge.base.CoreUpgradeService.buyEnergy(ctx.getSource()))))
+                .then(Commands.literal("energy").executes(ctx ->
+                    dev.rogler.teamwars.neoforge.base.CoreInfrastructureService.status(ctx.getSource())))
                 .then(Commands.literal("protection").executes(ctx ->
                     dev.rogler.teamwars.neoforge.protection.BaseGuardService.ownStatus(ctx.getSource())))
                 .then(Commands.literal("recover").executes(ctx -> BaseCoreService.issue(
@@ -299,6 +311,8 @@ public final class RoglerTeamWarsMod {
                     reloadSettings(server);
                     try { protectionConfig = dev.rogler.teamwars.neoforge.protection.BaseProtectionConfig.load(server); }
                     catch (IOException e) { RoglerTeamWarsLogger.warn("Protection reload failed: " + e.getMessage()); }
+                    try { powerConfig=dev.rogler.teamwars.neoforge.base.CorePowerConfig.load(server); }
+                    catch(IOException e) { RoglerTeamWarsLogger.warn("FE reload refused: "+e.getMessage()); }
                     scoreboard.refresh(server, settings);
                     dev.rogler.teamwars.neoforge.protection.BaseGuardService.reconcile(server);
                     ctx.getSource().sendSuccess(() -> Component.literal("TeamWars config: " + configResult), false);

@@ -106,6 +106,7 @@ public final class BaseCoreItem extends BlockItem {
         if (result.consumesAction() && level.getBlockState(target).is(BaseCoreRegistries.CORE_BLOCK.get())) {
             data.ledger().placed(team, token, position(level, target));
             data.changed();
+            level.invalidateCapabilities(target);
             // Creative placement normally retains the stack. A Base Core is a unique
             // server-issued bearer token and must be consumed in ALL game modes.
             if (player.getAbilities().instabuild && !context.getItemInHand().isEmpty()) {

@@ -138,6 +138,8 @@ public final class RaidService {
             raids.close(team);return;
         }
         saved.changed();
+        level.invalidateCapabilities(target);
+        // Retain team inventory & stored FE in saveddata during ESCROW/recovery.
         // Unclaim ONLY TeamWars-created chunks. Never touch manually created claims.
         BaseGuardService.packed(level,attacker,team);
         var protection=BaseProtectionSavedData.get(server);

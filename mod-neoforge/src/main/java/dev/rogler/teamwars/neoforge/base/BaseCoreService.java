@@ -129,6 +129,7 @@ public final class BaseCoreService {
             return false;
         }
         data.changed();
+        level.invalidateCapabilities(pos);
         dev.rogler.teamwars.neoforge.protection.BaseGuardService.packed(level, player, assignment.partyId());
         if (!player.getInventory().add(BaseCoreItem.authorized(assignment.partyId(), newToken))) {
             // Extremely unlikely after free-slot check. Prefer recoverable escrow to dropping

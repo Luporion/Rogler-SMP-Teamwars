@@ -239,10 +239,16 @@ public final class BaseGuardService {
                 src.sendSuccess(()->Component.literal("[TeamWars] Missing block identified; recovering orphan as ESCROW."),false);
             }
         }
+        var infrastructure=dev.rogler.teamwars.neoforge.base.CoreInfrastructureSavedData.get(server);
+        if(!infrastructure.canTransfer(oldTeam,newTeam)) {
+            src.sendFailure(Component.literal("[TeamWars] Target team has existing core inventory/energy. Adoption refused to avoid item loss."));
+            return 0;
+        }
         try {
             // Transfer protection data first; pure ledger transfer cannot fail after preflight.
             protection.transferOrphanRecord(oldTeam,newTeam);
             var updated=saved.ledger().transferOrphan(oldTeam,newTeam,UUID.randomUUID());
+            infrastructure.transfer(oldTeam,newTeam);
             saved.changed();
             RoglerTeamWarsLogger.info("ORPHAN_ADOPT old="+oldTeam+" new="+newTeam+" mode="+updated.mode());
             src.sendSuccess(()->Component.literal("[TeamWars] Adopted core for team="+newTeam

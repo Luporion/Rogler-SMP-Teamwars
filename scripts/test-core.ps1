@@ -20,6 +20,8 @@ if ($LASTEXITCODE -ne 0) { throw "protection policy tests failed: $LASTEXITCODE"
 if ($LASTEXITCODE -ne 0) { throw "raid policy tests failed: $LASTEXITCODE" }
 & java -ea -cp build/classes dev.rogler.teamwars.core.base.CoreUpgradePolicyTests
 if ($LASTEXITCODE -ne 0) { throw "core upgrade policy tests failed: $LASTEXITCODE" }
+& java -ea -cp build/classes dev.rogler.teamwars.core.base.CorePowerPolicyTests
+if ($LASTEXITCODE -ne 0) { throw "core energy tests failed: $LASTEXITCODE" }
 
 $settingsFiles = @(
     'mod-neoforge/src/main/java/dev/rogler/teamwars/neoforge/teams/TeamWarsSettings.java',

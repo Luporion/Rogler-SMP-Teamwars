@@ -10,6 +10,7 @@ java -ea -cp build/classes dev.rogler.teamwars.core.base.BaseCoreLedgerTests
 java -ea -cp build/classes dev.rogler.teamwars.core.base.BaseProtectionPolicyTests
 java -ea -cp build/classes dev.rogler.teamwars.core.base.RaidPolicyTests
 java -ea -cp build/classes dev.rogler.teamwars.core.base.CoreUpgradePolicyTests
+java -ea -cp build/classes dev.rogler.teamwars.core.base.CorePowerPolicyTests
 
 # Settings do not import Minecraft; verify their file/validation behaviour offline.
 javac --release 21 -encoding UTF-8 -cp build/classes -d build/classes \

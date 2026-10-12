@@ -4,6 +4,7 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dev.rogler.teamwars.core.base.BaseCoreLedger;
 import dev.rogler.teamwars.core.base.CoreUpgradePolicy;
+import dev.rogler.teamwars.core.base.CorePowerPolicy;
 import dev.rogler.teamwars.neoforge.RoglerTeamWarsMod;
 import dev.rogler.teamwars.neoforge.protection.BaseProtectionSavedData;
 import dev.rogler.teamwars.neoforge.raid.RaidService;
@@ -55,7 +56,9 @@ public final class CoreUpgradeService {
         var rec=BaseProtectionSavedData.get(player.getServer()).team(a.partyId());
         int lvl=rec==null?0:rec.armorLevel;
         String next=lvl>=2?"MAX":CoreUpgradePolicy.diamondsForNext(lvl)+" diamonds + "+CoreUpgradePolicy.netheriteForNext(lvl)+" netherite ingots";
-        say(player,"Core armor tier "+lvl+"/2; raid HP "+CoreUpgradePolicy.maxHealth(lvl)+"; next cost: "+next);
+        int energyLevel=CoreInfrastructureSavedData.get(player.getServer()).getOrCreate(a.partyId()).energyLevel;
+        say(player,"Core armor tier "+lvl+"/2; raid HP "+CoreUpgradePolicy.maxHealth(lvl)+"; next armor cost: "+next
+            +" | energy tier "+energyLevel+"/2, "+RoglerTeamWarsMod.powerConfig().rate(energyLevel)+" FE/t.");
         return Command.SINGLE_SUCCESS;
     }
     public static int buyArmor(CommandSourceStack source) throws CommandSyntaxException {
@@ -76,4 +79,27 @@ public final class CoreUpgradeService {
         say(p,"Armor tier "+(lvl+1)+" purchased; next raid core starts with "+CoreUpgradePolicy.maxHealth(lvl+1)+" HP.");
         return Command.SINGLE_SUCCESS;
     }
+    /** One bounded utility upgrade at a time; no creative purchases or raid-time modifications. */
+    public static int buyEnergy(CommandSourceStack source) throws CommandSyntaxException {
+        ServerPlayer p=source.getPlayerOrException();var core=ownPlaced(p);
+        if(core==null) {say(p,"Your placed, loaded core must be within 8 blocks.");return 0;}
+        if(p.isCreative() || p.isSpectator()) {say(p,"Core power must be purchased in Survival.");return 0;}
+        if(RaidService.active(p.getServer(),core.teamId())) {say(p,"No upgrades during raids.");return 0;}
+        var record=CoreInfrastructureSavedData.get(p.getServer()).getOrCreate(core.teamId());
+        int tier=record.energyLevel;
+        if(tier>=CorePowerPolicy.MAX_LEVEL) {say(p,"Core generator is at maximum tier.");return 0;}
+        int red=CorePowerPolicy.redstoneForNext(tier),iron=CorePowerPolicy.ironForNext(tier),gold=CorePowerPolicy.goldForNext(tier);
+        if(!CorePowerPolicy.canUpgrade(tier,count(p,Items.REDSTONE),count(p,Items.IRON_INGOT),
+            count(p,Items.GOLD_INGOT),true,false)) {
+            say(p,"Insufficient materials: "+red+" redstone, "+iron+" iron, "+gold+" gold.");return 0;
+        }
+        // All deductions and the tier change are on the authoritative server thread.
+        consume(p,Items.REDSTONE,red);
+        if(iron>0) consume(p,Items.IRON_INGOT,iron);
+        if(gold>0) consume(p,Items.GOLD_INGOT,gold);
+        if(!record.upgradeEnergy(tier)) throw new IllegalStateException("Energy upgrade tier changed mid-purchase");
+        say(p,"Power upgraded to tier "+(tier+1)+" ("+RoglerTeamWarsMod.powerConfig().rate(tier+1)+" FE/t).");
+        return Command.SINGLE_SUCCESS;
+    }
+
 }
