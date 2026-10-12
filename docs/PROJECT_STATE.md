@@ -1,3 +1,15 @@
+# LATEST — v0.3.0 SOURCE CANDIDATE (2026-10-12)
+
+Branch base: `feat/v0.2.2-core-relocation`, commit `545eca8` upstream. Do NOT assume runtime is verified. See `docs/releases/v0.3.0.md`.
+
+- NeoForge 21.1.249, FTB Teams 2101.1.11, Library 2101.1.37, Chunks 2101.1.22 confirmed in user session mods.csv (client, not yet dedicated-server inventory).
+- Fixed Creative item re-use and recovery-time reset. Configurable 3×3 CoreGuard + persisted 24h first-base Grace + FTB claim bridge + safe cleanup/diagnostic commands.
+- **Offline Java policy tests passing**; NeoForge Gradle CI build and 2-client runtime tests still PENDING. Destructive raiding, separate FTB chunkloader quota, Xaero exploration, voice, Sable and scoring NOT implemented.
+- New scripts: `PATCH.cmd` automatically calls `VERIFY.cmd`, optionally pushes and calls existing `scripts/watch-actions.ps1` from upstream repo. Downloads can be redirected to `M:\Downloads`.
+- Next: Push patch, inspect CI; run full 2-client safeguards test BEFORE production. Keep `raids_enabled=false`.
+
+---
+
 # PROJECT_STATE — Source of truth for all subsequent sessions
 
 ## Developer tooling: GitHub Actions Monitor

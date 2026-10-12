@@ -51,7 +51,8 @@ public final class BaseCoreService {
                 say(source,"ERROR: issued in ledger, but inventory refused item. Inspect before recovery."); return 0;
             }
             say(source, (recovery ? "Recovered" : "Issued") + " core to " + player.getName().getString()
-                + " | team " + team + " | token " + token);
+                + " | team " + team + " | token " + token
+                + " | transport already used: " + data.ledger().get(team).carriedSeconds() + "s");
             return Command.SINGLE_SUCCESS;
         } catch (IllegalStateException e) { say(source, e.getMessage()); return 0; }
     }
@@ -123,6 +124,7 @@ public final class BaseCoreService {
             return false;
         }
         data.changed();
+        dev.rogler.teamwars.neoforge.protection.BaseGuardService.packed(level, player, assignment.partyId());
         if (!player.getInventory().add(BaseCoreItem.authorized(assignment.partyId(), newToken))) {
             // Extremely unlikely after free-slot check. Prefer recoverable escrow to dropping
             // a second live token or overwriting another player's items.
@@ -258,6 +260,9 @@ public final class BaseCoreService {
         }
         if (saved.ledger().rescueToEscrow(team, token, safe)) {
             saved.changed();
+            RoglerTeamWarsLogger.info("CORE_RESCUE team=" + team + " source=" + source
+                + " state=ESCROW outOfZone="
+                + !RoglerTeamWarsMod.baseConfig().zone(level.getServer()).placementAllowed(source.getX(), source.getZ()));
             notifyTeam(level.getServer(), team, "Core protected from destruction: safe placement unavailable."
                 + " Use /teamwars base recover with one empty inventory slot.");
             RoglerTeamWarsMod.warn("Core hazard rescue entered escrow for team " + team

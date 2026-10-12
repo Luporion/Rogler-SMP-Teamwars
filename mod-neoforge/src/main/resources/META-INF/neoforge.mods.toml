@@ -4,12 +4,12 @@ license="MIT"
 
 [[mods]]
 modId="roglerteamwars"
-version="0.2.2"
+version="0.3.0"
 displayName="Rogler TeamWars"
 authors="Rogler TeamWars contributors"
 description='''
-Rogler SMP team game mode. v0.2.2 adds team-authenticated Base Core item, Overworld placement limits and server SavedData.
-FTB claims, raids, shared exploration, economy and ship mechanics are not part of this build.
+Rogler SMP TeamWars v0.3.0: FTB Teams, Base Core, 3x3 claims, safe Core Guard and Grace Period.
+Destructive raids, scoreboards, separate chunk loader quotas, Xaero sync and Sable are not active.
 '''
 
 [[dependencies.roglerteamwars]]
@@ -30,5 +30,12 @@ side="BOTH"
 modId="ftbteams"
 type="required"
 versionRange="[2101.1.11,)"
+ordering="AFTER"
+side="BOTH"
+
+[[dependencies.roglerteamwars]]
+modId="ftbchunks"
+type="required"
+versionRange="[2101.1.22,)"
 ordering="AFTER"
 side="BOTH"

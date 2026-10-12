@@ -66,3 +66,9 @@ Setup, parameters, troubleshooting, rollback and test cases: [build monitor plan
 4. Update state and add `docs/HANDOVER_v0.1.0.md`-style evidence with branch, tests, risks, next action.
 
 The repository is the source of truth. Development branches are not production releases.
+
+## v0.3.0 source candidate
+
+**New:** CoreGuard (3x3 core chunks), FTB Chunks claim adapter, 24h first-base Grace, repair for v0.2.2 Creative duplicate and escrow transport timer. See `docs/releases/v0.3.0.md`.
+
+To apply a new patch placed directly in your Windows Downloads folder, run `PATCH.cmd` in the repository on a feature branch. It calls `VERIFY.cmd`, pushes, and (when installed) launches the existing Actions download monitor. This script is NEW in v0.3.0; for the first installation of v0.3.0 apply the patch manually. Do not install the mod on production before a real CI build and 2-client smoke test.

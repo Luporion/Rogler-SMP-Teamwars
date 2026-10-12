@@ -90,11 +90,30 @@ public final class BaseCoreItem extends BlockItem {
             player.displayClientMessage(Component.literal("[TeamWars] " + explanation), true);
             return InteractionResult.FAIL;
         }
+        // Keep bases separated by at least one non-overlapping guarded chunk square.
+        int radius = RoglerTeamWarsMod.protectionConfig().claimRadiusChunks();
+        for (var other : data.ledger().all()) {
+            if (!other.teamId().equals(team) && other.mode() == BaseCoreLedger.Mode.PLACED
+                && other.location() != null &&
+                dev.rogler.teamwars.core.base.BaseProtectionPolicy.overlaps(
+                    other.location().x(), other.location().z(), target.getX(), target.getZ(), radius)) {
+                player.displayClientMessage(Component.literal("[TeamWars] Another team's protected base is too close."), true);
+                return InteractionResult.FAIL;
+            }
+        }
         // Perform vanilla/NeoForge placement (includes placement callbacks) BEFORE acknowledging persistence.
         InteractionResult result = super.place(context);
         if (result.consumesAction() && level.getBlockState(target).is(BaseCoreRegistries.CORE_BLOCK.get())) {
             data.ledger().placed(team, token, position(level, target));
             data.changed();
+            // Creative placement normally retains the stack. A Base Core is a unique
+            // server-issued bearer token and must be consumed in ALL game modes.
+            if (player.getAbilities().instabuild && !context.getItemInHand().isEmpty()) {
+                context.getItemInHand().shrink(1);
+                player.getInventory().setChanged();
+                player.containerMenu.broadcastChanges();
+            }
+            dev.rogler.teamwars.neoforge.protection.BaseGuardService.placed(level, player, team, target);
         }
         if (!result.consumesAction()) {
             player.displayClientMessage(Component.literal("[TeamWars] Placement blocked: check surface, protected claim or world border."), true);

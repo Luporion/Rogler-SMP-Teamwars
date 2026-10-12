@@ -114,7 +114,19 @@ public final class BaseCoreLedgerTests {
         movedReboot.reissueFromEscrow(mover, rescued);
         yes(!movedReboot.canPlace(mover, next, base));
         yes(movedReboot.canPlace(mover, rescued, base));
-        yes(movedReboot.get(mover).carriedSeconds() == 0);
-        System.out.println("v0.2.2 BaseCoreLedgerTests: " + checks + " checks OK");
+        yes(movedReboot.get(mover).carriedSeconds() == 75);
+        // Recovering after full transport expiry gives one last placement tick, NOT 3600 seconds.
+        var expired=new BaseCoreLedger(new BaseZone(0,0,0,5000),3600);
+        UUID expiredTeam=UUID.randomUUID(), expiredToken=UUID.randomUUID();
+        expired.issue(expiredTeam,expiredToken);
+        expired.advanceCarrier(expiredTeam,expiredToken,60,base);
+        for(int n=0;n<59;n++) expired.advanceCarrier(expiredTeam,expiredToken,60,base);
+        yes(expired.get(expiredTeam).mode()==BaseCoreLedger.Mode.ESCROW);
+        UUID recoveredToken=UUID.randomUUID();
+        expired.reissueFromEscrow(expiredTeam,recoveredToken);
+        yes(expired.get(expiredTeam).carriedSeconds()==3599);
+        yes(expired.canPlace(expiredTeam,recoveredToken,base));
+        yes(!expired.canPlace(expiredTeam,expiredToken,base));
+        System.out.println("v0.3.0 BaseCoreLedgerTests: " + checks + " checks OK");
     }
 }

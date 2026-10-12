@@ -32,3 +32,12 @@ The uploaded `mods.csv` describes the DEV client, not the authoritative dedicate
 - Pflicht (Server und Client): Minecraft **1.21.1**, NeoForge **21.1.249**, **FTB Teams 2101.1.11**, dazu eine kompatible **FTB Library** (im letzten Diagnoseprofil 2101.1.37), **Rogler TeamWars v0.2.2** statt der alten JAR.
 - Schon vorhanden, aber in v0.2.2 noch nicht als Basis-Kern-Adapter verwendet: FTB Chunks 2101.1.22, Chunky, Xaero, Sophisticated Core, Simple Voice Chat, Sable/Create Aeronautics.
 - **Achtung:** Die Version v0.2.2 ist zunächst ein Quellcode-Kandidat; eine CI-grüne JAR ersetzt keine Laufzeit- und Server-Abnahmetests.
+
+## v0.3.0 additions – required on client and dedicated server
+- Minecraft 1.21.1, NeoForge 21.1.249, Rogler TeamWars 0.3.0 (replace 0.2.2).
+- FTB Teams 2101.1.11, compatible FTB Library (user 2101.1.37), **FTB Chunks 2101.1.22 now REQUIRED**.
+- All dependencies present in latest uploaded DEV client `mods.csv` (2026-10-12); server profile not yet verified.
+- No NEW download needed on this DEV client; FTB Chunks changed from optional to a required dependency in v0.3.0.
+- Xaero, Chunky Friends, Simple Voice Chat, Sable, Sophisticated upgrades remain OPTIONAL for this code; integration not yet present.
+
+IMPORTANT: uploaded FTB config `def_claim_visibility="public"`. CoreGuard works with auto_ftb_claims=false; change FTB visibility to private before enabling FTB auto claims.

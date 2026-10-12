@@ -71,3 +71,13 @@ Create a playable team-based NeoForge 1.21.1 Minecraft server for 8–12 players
 - Bei Umzug `PLACED -> ISSUED`, immer neuer Token, Transportzeit erhalten; `/teamwars admin salvagemissing` ist nur für fehlenden physischen Block. Admin darf damit keine echte gegnerische Base zerstören.
 - Beim späteren Raidmodul den TODO-Guard in `BaseCoreService.pack` für *aktive Raids* implementieren, bevor Raids öffentlich freigegeben werden.
 - V0.2.2 gilt erst mit CI- und Minecraft-Laufzeitbeleg als releasefähig.
+
+## v0.3.0 handover (2026-10-12)
+- CoreGuard native block/interact/explosion rules are supplemental to FTB Chunks, NOT a claim of universal modded explosion/automation protection.
+- FTB claim bridge uses reflected upstream methods and records only chunks it created; on relocation only those may be automatically unclaimed. Never delete manual/team pre-existing claims.
+- Grace timers are persisted UTC epochMillis per team and cannot refresh on pack/recover.
+- Never enable destructive raids in v0.3.0. `raids_enabled=true` intentionally fails config parsing.
+- Claim snapshot and core snapshot persist in different SavedData files. Back up both and FTB Chunk claim files together.
+- Read `docs/releases/v0.3.0.md` and complete acceptance checks before editing v0.4.
+
+- SECURITY: FTB claim visibility in user-provided config is PUBLIC. `auto_ftb_claims=false` by default. Never enable until per-team visibility is verified PRIVATE in two-client test.

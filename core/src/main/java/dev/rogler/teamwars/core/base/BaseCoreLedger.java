@@ -139,7 +139,10 @@ public final class BaseCoreLedger {
         if (current == null || current.mode() != Mode.ESCROW) throw new IllegalStateException("Not in escrow");
         if (entries.values().stream().anyMatch(e -> e.token().equals(replacementToken)))
             throw new IllegalStateException("Duplicate replacement token");
-        Entry next = new Entry(teamId, replacementToken, Mode.ISSUED, 0, null, current.lastSafe());
+        // Escrow must not refresh the one-hour carry budget. An expired core gets
+        // exactly one placement attempt before the timer returns to escrow.
+        long restoredElapsed = Math.min((long) carryLimit - 1L, current.carriedSeconds());
+        Entry next = new Entry(teamId, replacementToken, Mode.ISSUED, restoredElapsed, null, current.lastSafe());
         entries.put(teamId, next);
         return next;
     }

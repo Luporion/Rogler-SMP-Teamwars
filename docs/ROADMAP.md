@@ -1,3 +1,11 @@
+# Update 2026-10-12: v0.3.0 source candidate
+
+**Implemented in source, NOT yet tested in Minecraft:** FTB opt-in auto-claims 3×3 (privacy default OFF), native CoreGuard, persistent 24h first-base Grace, Creative unique Core item fix, recovery without resetting transport hour. Still pending CI compile and two-client PvP/explosion/FTB acceptance. Do not enable raids.
+
+**Next:** v0.3.0 multiplayer stability gate → v0.4 raid windows, war scoring and core damage after protection audits → v0.5 core upgrades/AE2, v0.6 Xaero revocable team map, v0.7 team voice/rename, v0.8 market, v0.9 events, future Sable mobile base. See release docs for exact contracts.
+
+---
+
 # Rogler TeamWars – Produkt-Roadmap (Stand 2026-10-11)
 
 > Die Stufen sind **Planung**, nicht automatisch implementierte Funktionen. Für Minecraft-Laufzeit gilt nur, was im Testprofil nachgewiesen wurde. Zielserverstart: Montag, 12.10.2026, mit bewusst reduziertem Funktionsumfang.
