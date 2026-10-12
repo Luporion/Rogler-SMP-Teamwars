@@ -1,4 +1,4 @@
-name: NeoForge v0.3.0 Compile
+name: NeoForge v0.3.1 Compile
 on:
   push:
     branches: [main, 'feat/**', 'fix/**']
@@ -24,7 +24,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: success()
         with:
-          name: roglerteamwars-0.3.0-unverified-runtime
+          name: roglerteamwars-0.3.1-unverified-runtime
           path: mod-neoforge/build/libs/*.jar
           if-no-files-found: error
           retention-days: 14

@@ -127,6 +127,36 @@ public final class BaseCoreLedgerTests {
         yes(expired.get(expiredTeam).carriedSeconds()==3599);
         yes(expired.canPlace(expiredTeam,recoveredToken,base));
         yes(!expired.canPlace(expiredTeam,expiredToken,base));
-        System.out.println("v0.3.0 BaseCoreLedgerTests: " + checks + " checks OK");
+        // v0.3.1: orphan transfer requires a new identity and never revives an old token.
+        var orphans = new BaseCoreLedger(new BaseZone(0,0,0,5000),3600);
+        UUID oldParty=UUID.randomUUID(), newParty=UUID.randomUUID(), oldBearer=UUID.randomUUID();
+        orphans.issue(oldParty, oldBearer);
+        orphans.advanceCarrier(oldParty, oldBearer, 60, base);
+        orphans.advanceCarrier(oldParty, oldBearer, 60, base);
+        orphans.advanceCarrier(oldParty, oldBearer, 15, base);
+        reject(() -> orphans.transferOrphan(oldParty, oldParty, UUID.randomUUID()));
+        reject(() -> orphans.transferOrphan(UUID.randomUUID(), newParty, UUID.randomUUID()));
+        reject(() -> orphans.transferOrphan(oldParty, newParty, oldBearer));
+        UUID adoptedBearer=UUID.randomUUID();
+        var orphanEscrow=orphans.transferOrphan(oldParty,newParty,adoptedBearer);
+        yes(orphanEscrow.mode()==BaseCoreLedger.Mode.ESCROW);
+        yes(orphanEscrow.carriedSeconds()==135);
+        yes(orphans.get(oldParty)==null);
+        yes(orphans.get(newParty).token().equals(adoptedBearer));
+        reject(() -> orphans.transferOrphan(oldParty, UUID.randomUUID(),UUID.randomUUID()));
+        UUID recoveredBearer=UUID.randomUUID();
+        orphans.reissueFromEscrow(newParty,recoveredBearer);
+        yes(orphans.canPlace(newParty,recoveredBearer,base));
+        yes(!orphans.canPlace(newParty,oldBearer,base));
+        orphans.placed(newParty,recoveredBearer,base);
+        UUID thirdParty=UUID.randomUUID(), placedBearer=UUID.randomUUID();
+        reject(() -> orphans.transferOrphan(newParty,newParty,placedBearer));
+        yes(orphans.transferOrphan(newParty,thirdParty,placedBearer).mode()==BaseCoreLedger.Mode.PLACED);
+        yes(orphans.get(thirdParty).location().equals(base));
+        yes(orphans.get(thirdParty).carriedSeconds()==135);
+        yes(!orphans.canPlace(thirdParty,recoveredBearer,base));
+        orphans.issue(UUID.randomUUID(),UUID.randomUUID());
+        reject(() -> orphans.transferOrphan(thirdParty,orphans.get(thirdParty).teamId(),UUID.randomUUID()));
+        System.out.println("v0.3.1 BaseCoreLedgerTests: " + checks + " checks OK");
     }
 }

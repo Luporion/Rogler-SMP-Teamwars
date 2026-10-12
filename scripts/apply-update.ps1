@@ -44,8 +44,17 @@ if ([IO.Path]::GetFileName($PatchPath) -match 'Rogler-TeamWars-(v[0-9]+\.[0-9]+\
 }
 if ($branch -eq 'main') { throw 'Refusing to apply patch directly to main.' }
 Write-Host "Applying patch $PatchPath to $branch"
-& git am --3way -- $PatchPath
+& git apply --check -- $PatchPath
+if($LASTEXITCODE -ne 0) { throw 'Patch is incompatible with this repository; NOTHING was applied. Check source branch and patch version.' }
+# Avoid fake-ancestor hash failures and unexpected opportunistic Git GC on Windows.
+& git -c gc.auto=0 am --no-3way -- $PatchPath
 if($LASTEXITCODE -ne 0) { throw 'git am failed. DO NOT push or retry; inspect git status. The patch was preserved in Downloads.' }
+# The patch commit must actually carry the expected Gradle/mod version.
+if ([IO.Path]::GetFileName($PatchPath) -match 'Rogler-TeamWars-(v[0-9]+\.[0-9]+\.[0-9]+)-update\.patch') {
+  $expected = $Matches[1].Substring(1)
+  $actual = (Get-Content (Join-Path $repo 'mod-neoforge/gradle.properties') | Where-Object { $_ -match '^mod_version=' } | Select-Object -First 1)
+  if ($actual -ne "mod_version=$expected") { throw "Patch committed but mod_version is $actual, expected $expected. Do NOT push!" }
+}
 & cmd /c (Join-Path $repo 'VERIFY.cmd')
 if ($LASTEXITCODE -ne 0) { throw 'Core tests failed; not pushing.' }
 if (-not $SkipPush) {

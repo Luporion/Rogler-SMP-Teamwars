@@ -28,6 +28,23 @@ public final class BaseProtectionSavedData extends SavedData {
         }
         return result;
     }
+    /** Transfer grace without refreshing it. Claimed chunks must be dealt with separately. */
+    public void transferOrphanRecord(UUID from, UUID to) {
+        if (from.equals(to)) throw new IllegalStateException("Same team UUID");
+        Record previous = teams.get(from), next = teams.get(to);
+        if (previous != null && !previous.createdClaims.isEmpty())
+            throw new IllegalStateException("Old TeamWars-managed FTB claims must be audited before adoption");
+        if (next != null && !next.createdClaims.isEmpty())
+            throw new IllegalStateException("Destination has existing TeamWars-managed claims");
+        // Never grant a fresh 24h timer when an orphan never had a protection record.
+        long until = previous == null ? (next == null ? 0L : next.graceUntilMillis)
+            : next == null ? previous.graceUntilMillis
+            : Math.min(previous.graceUntilMillis, next.graceUntilMillis);
+        teams.put(to, new Record(to, until));
+        teams.remove(from);
+        setDirty();
+    }
+
     public void setGrace(UUID id,long until) {
         Record r=ensure(id,0,0);r.graceUntilMillis=until;setDirty();
     }

@@ -4,11 +4,11 @@ license="MIT"
 
 [[mods]]
 modId="roglerteamwars"
-version="0.3.0"
+version="0.3.1"
 displayName="Rogler TeamWars"
 authors="Rogler TeamWars contributors"
 description='''
-Rogler SMP TeamWars v0.3.0: FTB Teams, Base Core, 3x3 claims, safe Core Guard and Grace Period.
+Rogler SMP TeamWars v0.3.1: FTB Teams, Base Core, 3x3 Core Guard, Grace Period, orphan recovery and early physics guards.
 Destructive raids, scoreboards, separate chunk loader quotas, Xaero sync and Sable are not active.
 '''
 

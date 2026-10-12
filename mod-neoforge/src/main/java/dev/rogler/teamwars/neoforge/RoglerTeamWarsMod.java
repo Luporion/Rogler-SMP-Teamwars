@@ -39,7 +39,7 @@ import java.nio.file.Path;
 @Mod(RoglerTeamWarsMod.MOD_ID)
 public final class RoglerTeamWarsMod {
     public static final String MOD_ID = "roglerteamwars";
-    public static final String VERSION = "0.3.0";
+    public static final String VERSION = "0.3.1";
     private static RoglerTeamWarsMod INSTANCE;
     private BaseCoreConfig baseConfig = BaseCoreConfig.DEFAULT;
     private dev.rogler.teamwars.neoforge.protection.BaseProtectionConfig protectionConfig =
@@ -103,6 +103,8 @@ public final class RoglerTeamWarsMod {
             scoreboard.refresh(activeServer, settings);
         if (activeServer.getTickCount() % 20 == 0)
             BaseCoreService.oneSecond(activeServer);
+        if (activeServer.getTickCount() % 20 == 0)
+            BaseCoreService.cleanupCreativeGhosts(activeServer);
     }
 
     private Path configPath(MinecraftServer server) {
@@ -140,7 +142,17 @@ public final class RoglerTeamWarsMod {
         event.setCancellationResult(InteractionResult.sidedSuccess(event.getLevel().isClientSide));
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = net.neoforged.bus.api.EventPriority.HIGHEST)
+    public void onProtectedLeftClick(PlayerInteractEvent.LeftClickBlock event) {
+        dev.rogler.teamwars.neoforge.protection.BaseGuardService.onLeftClick(event);
+    }
+
+    @SubscribeEvent(priority = net.neoforged.bus.api.EventPriority.HIGHEST)
+    public void onProtectedBreakSpeed(PlayerEvent.BreakSpeed event) {
+        dev.rogler.teamwars.neoforge.protection.BaseGuardService.onBreakSpeed(event);
+    }
+
+    @SubscribeEvent(priority = net.neoforged.bus.api.EventPriority.HIGHEST)
     public void onCoreBreak(BlockEvent.BreakEvent event) {
         if (event.getState().is(BaseCoreRegistries.CORE_BLOCK.get())) {
             event.setCanceled(true); // Only authorized core pack changes the core lifecycle.
@@ -188,6 +200,22 @@ public final class RoglerTeamWarsMod {
                     ctx.getSource(), ctx.getSource().getPlayerOrException(), true))))
             .then(Commands.literal("admin").requires(source -> source.hasPermission(2))
                 .then(Commands.literal("corelist").executes(ctx -> BaseCoreService.info(ctx.getSource())))
+                .then(Commands.literal("orphanlist").executes(ctx ->
+                    dev.rogler.teamwars.neoforge.protection.BaseGuardService.orphanList(ctx.getSource())))
+                .then(Commands.literal("adoptcore")
+                    .then(Commands.argument("oldTeam", com.mojang.brigadier.arguments.StringArgumentType.word())
+                        .then(Commands.argument("player", EntityArgument.player())
+                            .executes(ctx -> {
+                                String text = com.mojang.brigadier.arguments.StringArgumentType.getString(ctx,"oldTeam");
+                                try {
+                                    java.util.UUID old = java.util.UUID.fromString(text);
+                                    return dev.rogler.teamwars.neoforge.protection.BaseGuardService.adoptOrphan(
+                                        ctx.getSource(), old, EntityArgument.getPlayer(ctx,"player"));
+                                } catch (IllegalArgumentException badUUID) {
+                                    ctx.getSource().sendFailure(Component.literal("[TeamWars] Invalid UUID: " + text));
+                                    return 0;
+                                }
+                            }))))
                 .then(Commands.literal("syncclaims")
                     .then(Commands.argument("player", EntityArgument.player())
                         .executes(ctx -> dev.rogler.teamwars.neoforge.protection.BaseGuardService.claimSync(

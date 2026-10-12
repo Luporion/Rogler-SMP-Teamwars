@@ -18,6 +18,6 @@ public class BaseProtectionPolicyTests {
         test(!BaseProtectionPolicy.canEdit(a,null));
         test(BaseProtectionPolicy.graceRemainingMillis(100L,200L)==100L);
         test(BaseProtectionPolicy.graceRemainingMillis(200L,100L)==0L);
-        System.out.println("v0.3.0 BaseProtectionPolicyTests: "+count+" checks OK");
+        System.out.println("v0.3.1 BaseProtectionPolicyTests: "+count+" checks OK");
     }
 }

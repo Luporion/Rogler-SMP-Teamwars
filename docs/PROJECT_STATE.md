@@ -129,3 +129,10 @@ Next task:
 - Keine neuen Drittanbieter-Mods erforderlich; `docs/MOD_REQUIREMENTS.md` lesen.
 - Nächste Schritte: CI Compile, 2-Team-Rechtsklick-Tests, Weltbackup/Restart/Lava, danach Claims+Grace bzw. Admin-MVP-Fallback für 12.10.2026.
 - Gesamtplanung: `docs/ROADMAP.md` | Umzug: `docs/plans/2026-10-11-v0.2.2-relocation.md`.
+
+## v0.3.1 source candidate (2026-10-12)
+- OP orphanlist/adoptcore transfer for verified deleted FTB UUID, no automatic name takeover, grace/timer preserved. FTB last-member deletion NOT prevented.
+- Higher-priority left-click & break-speed guard for physics compatibility (runtime unverified).
+- Creative placed-token inventory sweep once per second (runtime unverified).
+- No new dependencies; claims remain opt-in, raids disabled.
+- See docs/releases/v0.3.1.md and docs/plans/2026-10-12-v0.3.1-stability.md.

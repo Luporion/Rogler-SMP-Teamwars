@@ -149,6 +149,34 @@ public final class BaseCoreService {
         player.sendSystemMessage(Component.literal("[TeamWars] " + message));
     }
 
+    /** Server-authoritative purge for Creative-created ghosts AFTER the core was placed.
+     * Only stale copies whose exact token was already placed are removed. This runs after
+     * client inventory updates to tolerate vanilla/Creative slot resynchronisation.
+     */
+    public static void cleanupCreativeGhosts(MinecraftServer server) {
+        var saved=store(server);
+        for(ServerPlayer player:server.getPlayerList().getPlayers()) {
+            boolean touched=false;
+            var inv=player.getInventory();
+            for(int slot=0;slot<inv.getContainerSize();slot++) {
+                ItemStack item=inv.getItem(slot);
+                if(!item.is(BaseCoreRegistries.CORE_ITEM.get()))continue;
+                UUID team=BaseCoreItem.team(item), token=BaseCoreItem.token(item);
+                if(team==null || token==null)continue;
+                var entry=saved.ledger().get(team);
+                if(entry==null || entry.mode()!=BaseCoreLedger.Mode.PLACED || !token.equals(entry.token()))continue;
+                inv.setItem(slot,ItemStack.EMPTY);
+                touched=true;
+                RoglerTeamWarsLogger.info("CORE_CREATIVE_GHOST_REMOVED player="+player.getUUID()+" team="+team);
+            }
+            if(touched) {
+                inv.setChanged();
+                player.inventoryMenu.broadcastFullState();
+                player.containerMenu.broadcastChanges();
+            }
+        }
+    }
+
     public static int packCommand(CommandSourceStack source) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
         ServerPlayer player = source.getPlayerOrException();
         var assignment = RoglerTeamWarsMod.assignmentFor(player);

@@ -133,6 +133,27 @@ public final class BaseCoreLedger {
         entries.put(teamId, next);
         return next;
     }
+    /**
+     * OP-authorized ownership transfer after FTB confirms the old party no longer exists.
+     * Callers MUST verify FTB ownership, physical core (if placed), and claim bookkeeping.
+     * Transfer keeps location, spent transport time and safe position, rotates the bearer
+     * token, and quarantines any outstanding old-party item in ESCROW.
+     */
+    public Entry transferOrphan(UUID oldTeam, UUID newTeam, UUID replacementToken) {
+        Objects.requireNonNull(oldTeam); Objects.requireNonNull(newTeam); Objects.requireNonNull(replacementToken);
+        if (oldTeam.equals(newTeam)) throw new IllegalStateException("A team cannot adopt itself");
+        Entry old = entries.get(oldTeam);
+        if (old == null) throw new IllegalStateException("Old team has no core");
+        if (entries.containsKey(newTeam)) throw new IllegalStateException("Destination team already has a core");
+        if (old.token().equals(replacementToken) || entries.values().stream().anyMatch(e -> e.token().equals(replacementToken)))
+            throw new IllegalStateException("Replacement token must be fresh");
+        Mode mode = old.mode() == Mode.ISSUED ? Mode.ESCROW : old.mode();
+        Entry transferred = new Entry(newTeam, replacementToken, mode, old.carriedSeconds(), old.location(), old.lastSafe());
+        entries.remove(oldTeam);
+        entries.put(newTeam, transferred);
+        return transferred;
+    }
+
     /** Admin recovery after timeout. Old token is invalidated; no replacement before explicit authorization. */
     public Entry reissueFromEscrow(UUID teamId, UUID replacementToken) {
         Entry current = entries.get(teamId);

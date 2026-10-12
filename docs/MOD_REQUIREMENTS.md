@@ -41,3 +41,6 @@ The uploaded `mods.csv` describes the DEV client, not the authoritative dedicate
 - Xaero, Chunky Friends, Simple Voice Chat, Sable, Sophisticated upgrades remain OPTIONAL for this code; integration not yet present.
 
 IMPORTANT: uploaded FTB config `def_claim_visibility="public"`. CoreGuard works with auto_ftb_claims=false; change FTB visibility to private before enabling FTB auto claims.
+
+## v0.3.1
+No new runtime dependency relative to v0.3.0. FTB Teams 2101.1.11, FTB Library 2101.1.37, FTB Chunks 2101.1.22, NeoForge 21.1.249 and MC 1.21.1 remain required. FTB Ranks permissions are OPTIONAL if operators choose to restrict player-initiated disband/leave actions.
