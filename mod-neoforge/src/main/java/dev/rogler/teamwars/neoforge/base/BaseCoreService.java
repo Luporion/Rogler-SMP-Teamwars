@@ -103,7 +103,9 @@ public final class BaseCoreService {
         if (player.getInventory().getFreeSlot() < 0) {
             tell(player, "Your inventory is full. Free a slot before packing the core."); return false;
         }
-        // Future raid integration MUST reject pickup during active raids here.
+        if (dev.rogler.teamwars.neoforge.raid.RaidService.active(player.getServer(),assignment.partyId())) {
+            tell(player,"You cannot pack the base core during an active raid.");return false;
+        }
         UUID newToken = UUID.randomUUID();
         UUID oldToken = entry.token();
         if (!level.removeBlock(pos, false)) {

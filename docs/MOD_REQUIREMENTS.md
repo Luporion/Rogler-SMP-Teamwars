@@ -44,3 +44,6 @@ IMPORTANT: uploaded FTB config `def_claim_visibility="public"`. CoreGuard works 
 
 ## v0.3.1
 No new runtime dependency relative to v0.3.0. FTB Teams 2101.1.11, FTB Library 2101.1.37, FTB Chunks 2101.1.22, NeoForge 21.1.249 and MC 1.21.1 remain required. FTB Ranks permissions are OPTIONAL if operators choose to restrict player-initiated disband/leave actions.
+
+## v0.4.0
+No new mods vs v0.3.1: NeoForge 21.1.249, Minecraft 1.21.1, FTB Teams 2101.1.11, FTB Library 2101.1.37, FTB Chunks 2101.1.22, Rogler TeamWars 0.4.0. Replace the previous TeamWars JAR; client and server must agree. Xaero, Tree Physics, Create, Sable and other mods are not required by the new code, but must be regression-tested when installed.

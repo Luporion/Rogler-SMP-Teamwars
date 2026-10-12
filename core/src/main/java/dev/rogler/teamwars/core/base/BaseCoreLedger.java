@@ -154,6 +154,20 @@ public final class BaseCoreLedger {
         return transferred;
     }
 
+    /** Server-only authorized raid victory. Converts the placed core into recoverable
+     * escrow exactly once. A successful kill always revokes active placement and
+     * grants the defeated team a fresh transport budget AFTER explicit recovery.
+     */
+    public Entry defeatPlaced(UUID defender, UUID expectedToken, Location expectedLocation) {
+        Entry old=entries.get(defender);
+        if(old==null || old.mode()!=Mode.PLACED || !old.token().equals(expectedToken)
+            || !old.location().equals(expectedLocation))
+            throw new IllegalStateException("Core already defeated, missing or replaced");
+        Entry next=new Entry(defender,old.token(),Mode.ESCROW,0L,null,old.location());
+        entries.put(defender,next);
+        return next;
+    }
+
     /** Admin recovery after timeout. Old token is invalidated; no replacement before explicit authorization. */
     public Entry reissueFromEscrow(UUID teamId, UUID replacementToken) {
         Entry current = entries.get(teamId);

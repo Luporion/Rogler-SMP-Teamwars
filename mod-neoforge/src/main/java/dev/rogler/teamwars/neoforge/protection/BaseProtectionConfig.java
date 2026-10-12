@@ -6,14 +6,14 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.Properties;
 
-/** World-specific, conservative defaults. Destructive raids intentionally unsupported. */
+/** World-specific defaults. Core-only raids must still be explicitly opt-in. */
 public record BaseProtectionConfig(int claimRadiusChunks, int newTeamGraceHours,
                                    boolean autoFtbClaims, boolean baseGuard, boolean raidsEnabled) {
-    public static final BaseProtectionConfig DEFAULT = new BaseProtectionConfig(1, 24, false, true, false);
+    public static final BaseProtectionConfig DEFAULT = new BaseProtectionConfig(1, 24, true, true, false);
     public BaseProtectionConfig {
         if (claimRadiusChunks < 0 || claimRadiusChunks > 3) throw new IllegalArgumentException("claim_radius_chunks 0..3");
         if (newTeamGraceHours < 0 || newTeamGraceHours > 168) throw new IllegalArgumentException("new_team_grace_hours 0..168");
-        if (raidsEnabled) throw new IllegalArgumentException("raids_enabled unsupported in v0.3.0 (must be false)");
+        // v0.4: raids are opt-in and require explicit OP activation per defender.
     }
     public static BaseProtectionConfig load(MinecraftServer server) throws IOException {
         Path file = server.getWorldPath(LevelResource.ROOT).resolve("serverconfig/roglerteamwars-protection.properties");
@@ -22,11 +22,11 @@ public record BaseProtectionConfig(int claimRadiusChunks, int newTeamGraceHours,
             Properties defaults = new Properties();
             defaults.setProperty("claim_radius_chunks", "1");
             defaults.setProperty("new_team_grace_hours", "24");
-            defaults.setProperty("auto_ftb_claims", "false");
+            defaults.setProperty("auto_ftb_claims", "true");
             defaults.setProperty("base_guard_enabled", "true");
             defaults.setProperty("raids_enabled", "false");
             try (OutputStream out = Files.newOutputStream(file)) {
-                defaults.store(out, "TeamWars v0.3.0: 3x3 core zone, no destructive raiding");
+                defaults.store(out, "TeamWars v0.4.0: private FTB claims auto-created, core-only raids opt-in");
             }
         }
         Properties p = new Properties();
@@ -34,7 +34,7 @@ public record BaseProtectionConfig(int claimRadiusChunks, int newTeamGraceHours,
         try {
             return new BaseProtectionConfig(Integer.parseInt(p.getProperty("claim_radius_chunks", "1")),
                 Integer.parseInt(p.getProperty("new_team_grace_hours", "24")),
-                bool(p,"auto_ftb_claims",false), bool(p,"base_guard_enabled",true),
+                bool(p,"auto_ftb_claims",true), bool(p,"base_guard_enabled",true),
                 bool(p,"raids_enabled",false));
         } catch (IllegalArgumentException ex) { throw new IOException("Invalid protection config: " + ex.getMessage(), ex); }
     }

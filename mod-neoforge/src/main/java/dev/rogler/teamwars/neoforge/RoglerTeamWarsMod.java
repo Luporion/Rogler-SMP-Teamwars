@@ -33,13 +33,13 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 /**
- * v0.3.0: FTB-owned teams, core + conservative claim protection and grace.
- * Raids, Xaero and Sable integrations are not yet enabled.
+ * v0.4.0: FTB-owned teams, private auto-claims, core protection, and core-only raid MVP.
+ * Destructive general raiding, Xaero and Sable integrations are not enabled.
  */
 @Mod(RoglerTeamWarsMod.MOD_ID)
 public final class RoglerTeamWarsMod {
     public static final String MOD_ID = "roglerteamwars";
-    public static final String VERSION = "0.3.1";
+    public static final String VERSION = "0.4.0";
     private static RoglerTeamWarsMod INSTANCE;
     private BaseCoreConfig baseConfig = BaseCoreConfig.DEFAULT;
     private dev.rogler.teamwars.neoforge.protection.BaseProtectionConfig protectionConfig =
@@ -81,7 +81,7 @@ public final class RoglerTeamWarsMod {
         dev.rogler.teamwars.neoforge.protection.BaseGuardService.reconcile(activeServer);
         RoglerTeamWarsLogger.info("v" + VERSION + " loaded. FTB Teams is authoritative. "
             + "Team name tags: " + (settings.nametagsForTeammatesOnly() ? "teammates only" : "vanilla")
-            + ". Base Core placement, FTB claims and Core Guard enabled; raids remain disabled.");
+            + ". Base Core, private FTB auto-claims and Core Guard enabled; core-only raids opt-in.");
     }
 
     @SubscribeEvent
@@ -103,8 +103,12 @@ public final class RoglerTeamWarsMod {
             scoreboard.refresh(activeServer, settings);
         if (activeServer.getTickCount() % 20 == 0)
             BaseCoreService.oneSecond(activeServer);
-        if (activeServer.getTickCount() % 20 == 0)
+        if (activeServer.getTickCount() % 20 == 0) {
             BaseCoreService.cleanupCreativeGhosts(activeServer);
+            dev.rogler.teamwars.neoforge.raid.RaidService.tick(activeServer);
+        }
+        if (activeServer.getTickCount() % 1200 == 0)
+            dev.rogler.teamwars.neoforge.protection.BaseGuardService.reconcile(activeServer);
     }
 
     private Path configPath(MinecraftServer server) {
@@ -190,6 +194,9 @@ public final class RoglerTeamWarsMod {
                 .executes(ctx -> ownTeam(ctx.getSource()))
                 .then(Commands.literal("info").executes(ctx -> ownTeam(ctx.getSource())))
                 .then(Commands.literal("help").executes(ctx -> teamHelp(ctx.getSource()))))
+            .then(Commands.literal("war")
+                .then(Commands.literal("status").executes(ctx -> dev.rogler.teamwars.neoforge.raid.RaidService.status(ctx.getSource())))
+                .then(Commands.literal("scores").executes(ctx -> dev.rogler.teamwars.neoforge.raid.RaidService.scores(ctx.getSource()))))
             .then(Commands.literal("base")
                 .then(Commands.literal("status").executes(ctx -> BaseCoreService.ownStatus(ctx.getSource())))
                 .then(Commands.literal("distance").executes(ctx -> BaseCoreService.distance(ctx.getSource())))
@@ -200,6 +207,16 @@ public final class RoglerTeamWarsMod {
                     ctx.getSource(), ctx.getSource().getPlayerOrException(), true))))
             .then(Commands.literal("admin").requires(source -> source.hasPermission(2))
                 .then(Commands.literal("corelist").executes(ctx -> BaseCoreService.info(ctx.getSource())))
+                .then(Commands.literal("raidstart")
+                    .then(Commands.argument("player", EntityArgument.player())
+                        .then(Commands.argument("minutes", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1,30))
+                            .executes(ctx -> dev.rogler.teamwars.neoforge.raid.RaidService.open(ctx.getSource(),
+                                EntityArgument.getPlayer(ctx,"player"),
+                                com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx,"minutes"))))))
+                .then(Commands.literal("raidstop")
+                    .then(Commands.argument("player", EntityArgument.player())
+                        .executes(ctx -> dev.rogler.teamwars.neoforge.raid.RaidService.stop(ctx.getSource(),
+                            EntityArgument.getPlayer(ctx,"player")))))
                 .then(Commands.literal("orphanlist").executes(ctx ->
                     dev.rogler.teamwars.neoforge.protection.BaseGuardService.orphanList(ctx.getSource())))
                 .then(Commands.literal("adoptcore")
@@ -248,6 +265,7 @@ public final class RoglerTeamWarsMod {
                     try { protectionConfig = dev.rogler.teamwars.neoforge.protection.BaseProtectionConfig.load(server); }
                     catch (IOException e) { RoglerTeamWarsLogger.warn("Protection reload failed: " + e.getMessage()); }
                     scoreboard.refresh(server, settings);
+                    dev.rogler.teamwars.neoforge.protection.BaseGuardService.reconcile(server);
                     ctx.getSource().sendSuccess(() -> Component.literal("TeamWars config: " + configResult), false);
                     return Command.SINGLE_SUCCESS;
                 }))
@@ -270,7 +288,7 @@ public final class RoglerTeamWarsMod {
             + " | quarantined: " + scoreboard.quarantinedCount()
             + " | FTB API errors: " + scoreboard.apiFailures()), false);
         source.sendSuccess(() -> Component.literal("Features: FTB team sync, private nametags, /teamwars team; "
-            + "core guard & FTB auto-claims enabled; raids OFF by default; NO separate chunk quota/Xaero share yet."), false);
+            + "core guard, private automatic FTB claims; OP-controlled core-only raids (opt-in), scores; NO Xaero share yet."), false);
         return Command.SINGLE_SUCCESS;
     }
 

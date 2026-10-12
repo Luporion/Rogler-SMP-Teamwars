@@ -47,9 +47,12 @@ public final class BaseGuardService {
     /** Early cancellation stops most physics mods before the normal break event. */
     public static void onLeftClick(PlayerInteractEvent.LeftClickBlock ev) {
         if(!(ev.getEntity() instanceof ServerPlayer player) || !(player.level() instanceof ServerLevel level))return;
-        if(enemy(player,owner(player.getServer(),level,ev.getPos()))) {
-            ev.setCanceled(true);
+        if(level.getBlockState(ev.getPos()).is(BaseCoreRegistries.CORE_BLOCK.get())) {
+            if(ev.getAction()==PlayerInteractEvent.LeftClickBlock.Action.START)
+                dev.rogler.teamwars.neoforge.raid.RaidService.hit(player,ev.getPos());
+            ev.setCanceled(true);return;
         }
+        if(enemy(player,owner(player.getServer(),level,ev.getPos())))ev.setCanceled(true);
     }
     public static void onBreakSpeed(net.neoforged.neoforge.event.entity.player.PlayerEvent.BreakSpeed ev) {
         if(!(ev.getEntity() instanceof ServerPlayer player) || !(player.level() instanceof ServerLevel level))return;
@@ -76,7 +79,7 @@ public final class BaseGuardService {
     }
     public static void onExplosion(ExplosionEvent.Detonate ev) {
         if(!(ev.getLevel() instanceof ServerLevel level))return;
-        // Raids are OFF in v0.3.0: never allow native explosions to destroy a base.
+        // v0.4.0 raid only allows direct valid core hits: never let TNT destroy claimed base blocks.
         ev.getAffectedBlocks().removeIf(p->owner(level.getServer(),level,p)!=null);
     }
     public static void onDamage(LivingIncomingDamageEvent ev) {
@@ -103,7 +106,7 @@ public final class BaseGuardService {
                 actor.sendSystemMessage(Component.literal("[TeamWars] FTB claim sync incomplete ("+result.detail()+")! Native core guard is active. Inform an admin."));
         }
         actor.sendSystemMessage(Component.literal("[TeamWars] Core protection active. Grace until "
-            +new java.util.Date(r.graceUntilMillis)+"; raids disabled."));
+            +new java.util.Date(r.graceUntilMillis)+"; raids are OP-controlled, normal block protection stays."));
     }
     public static void packed(ServerLevel level,ServerPlayer actor,UUID team) {
         var saved=BaseProtectionSavedData.get(level.getServer());
@@ -132,7 +135,8 @@ public final class BaseGuardService {
         long left=r==null?0:Math.max(0,r.graceUntilMillis-System.currentTimeMillis());
         src.sendSuccess(()->Component.literal("[TeamWars] Core Guard: "
             +RoglerTeamWarsMod.protectionConfig().baseGuard()+" | grace left: "+(left/60000)+"m"
-            +" | recorded FTB auto claims: "+(r==null?0:r.createdClaims.size())+" | raids DISABLED"),false);
+            +" | recorded FTB auto claims: "+(r==null?0:r.createdClaims.size())+" | raids enabled: "
+            +RoglerTeamWarsMod.protectionConfig().raidsEnabled()),false);
         return Command.SINGLE_SUCCESS;
     }
     public static int setGrace(CommandSourceStack src,ServerPlayer p,int minutes) {

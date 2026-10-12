@@ -15,7 +15,7 @@ public final class FtbClaimBridge {
     private FtbClaimBridge() {}
     private static final Set<String> loggedFailures=new HashSet<>();
     public record Result(int created,int existing,int failed,String detail) {}
-    private record Api(Object manager,Object teamData,Class<?> chunkDimPos,Method getChunk,Method claim,Method unclaim) {}
+    private record Api(Object manager,Object teamData,Object team,Class<?> chunkDimPos,Method getChunk,Method claim,Method unclaim) {}
     private static Object call(Object obj,String name,Object... args) throws ReflectiveOperationException {
         for(Method m:obj.getClass().getMethods()) {
             if(m.getName().equals(name) && m.getParameterCount()==args.length) {
@@ -40,7 +40,28 @@ public final class FtbClaimBridge {
         Object claims=mgr.getMethod("getInstance").invoke(null);
         Object data=call(claims,"getOrCreateData",team);
         Class<?> cdp=Class.forName("dev.ftb.mods.ftblibrary.math.ChunkDimPos");
-        return new Api(claims,data,cdp,method(claims,"getChunk",1),method(data,"claim",3),method(data,"unclaim",4));
+        return new Api(claims,data,team,cdp,method(claims,"getChunk",1),method(data,"claim",3),method(data,"unclaim",4));
+    }
+    /** Fail-closed map privacy: force PRIVATE before making any new claims.
+     * Uses the exact FTB Teams/Chunks 2101.1.x TeamProperty API by reflection.
+     * Never assume a server-side default changed existing party preferences.
+     */
+    private static void requirePrivateClaimVisibility(Api api, CommandSourceStack src)
+        throws ReflectiveOperationException {
+        Class<?> props=Class.forName("dev.ftb.mods.ftbchunks.api.FTBChunksProperties");
+        Object property=props.getField("CLAIM_VISIBILITY").get(null);
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        Object privateValue=Enum.valueOf((Class)Class.forName("dev.ftb.mods.ftbteams.api.property.PrivacyMode"),"PRIVATE");
+        Object current=call(api.team(),"getProperty",property);
+        if(!privateValue.equals(current)) {
+            call(api.team(),"setProperty",property,privateValue);
+            call(api.team(),"markDirty");
+            if(!privateValue.equals(call(api.team(),"getProperty",property)))
+                throw new IllegalStateException("FTB claim visibility is not PRIVATE");
+            // FTB Chunks sync logic must invalidate prior claim packets when visibility changes.
+            call(api.teamData(),"syncChunksToAll",src.getServer());
+            RoglerTeamWarsLogger.info("FTB_CLAIM_PRIVACY forced PRIVATE for team="+call(api.team(),"getId"));
+        }
     }
     private static Object pos(Api api,ServerLevel level,int cx,int cz) throws ReflectiveOperationException {
         for(Constructor<?> ctor:api.chunkDimPos().getConstructors()) {
@@ -64,6 +85,7 @@ public final class FtbClaimBridge {
         int created=0,existing=0,failed=0;
         try {
             Api api=bind(team);
+            requirePrivateClaimVisibility(api,src);
             for(int x=cx-radius;x<=cx+radius;x++)for(int z=cz-radius;z<=cz+radius;z++) {
                 long k=BaseProtectionSavedData.key(x,z);
                 Object cdp=pos(api,level,x,z);

@@ -57,6 +57,19 @@ if ([IO.Path]::GetFileName($PatchPath) -match 'Rogler-TeamWars-(v[0-9]+\.[0-9]+\
 }
 & cmd /c (Join-Path $repo 'VERIFY.cmd')
 if ($LASTEXITCODE -ne 0) { throw 'Core tests failed; not pushing.' }
+# Always produce an EXACT full tracked-source ZIP from the real user repository.
+# This includes all original GitHub scripts, LLM handovers and historical docs,
+# unlike older offline source snapshots with omitted monitor files.
+$versionLine=(Get-Content (Join-Path $repo 'mod-neoforge/gradle.properties') |
+    Where-Object { $_ -match '^mod_version=' } | Select-Object -First 1)
+if(-not $versionLine) { throw 'Missing mod_version in gradle.properties.' }
+$releaseVersion=($versionLine -split '=',2)[1].Trim()
+$releasePath=(Resolve-Path -LiteralPath $PatchPath).Path
+$sourceZip=Join-Path (Split-Path -Parent $releasePath) "Rogler-TeamWars-v$releaseVersion-full-source-exact.zip"
+if(Test-Path -LiteralPath $sourceZip) { throw "Refusing to overwrite existing source snapshot: $sourceZip" }
+& git archive --format=zip "--output=$sourceZip" HEAD
+if ($LASTEXITCODE -ne 0) { throw 'Exact full-source ZIP generation failed; not pushing.' }
+Write-Host "Exact full tracked-source ZIP: $sourceZip"
 if (-not $SkipPush) {
   & git push -u origin $branch
   if ($LASTEXITCODE -ne 0) { throw 'Push failed; patch was committed locally but not uploaded.' }

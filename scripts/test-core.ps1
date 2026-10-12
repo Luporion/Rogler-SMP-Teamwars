@@ -16,6 +16,9 @@ if ($LASTEXITCODE -ne 0) { throw "base core ledger tests failed: $LASTEXITCODE" 
 & java -ea -cp build/classes dev.rogler.teamwars.core.base.BaseProtectionPolicyTests
 if ($LASTEXITCODE -ne 0) { throw "protection policy tests failed: $LASTEXITCODE" }
 
+& java -ea -cp build/classes dev.rogler.teamwars.core.base.RaidPolicyTests
+if ($LASTEXITCODE -ne 0) { throw "raid policy tests failed: $LASTEXITCODE" }
+
 $settingsFiles = @(
     'mod-neoforge/src/main/java/dev/rogler/teamwars/neoforge/teams/TeamWarsSettings.java',
     'mod-neoforge/src/test/java/dev/rogler/teamwars/neoforge/teams/TeamWarsSettingsTests.java'

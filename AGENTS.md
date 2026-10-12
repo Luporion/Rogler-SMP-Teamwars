@@ -81,3 +81,11 @@ Create a playable team-based NeoForge 1.21.1 Minecraft server for 8–12 players
 - Read `docs/releases/v0.3.0.md` and complete acceptance checks before editing v0.4.
 
 - SECURITY: FTB claim visibility in user-provided config is PUBLIC. `auto_ftb_claims=false` by default. Never enable until per-team visibility is verified PRIVATE in two-client test.
+
+## v0.4.0 contract (2026-10-12)
+- For the latest handover FIRST read `docs/PROJECT_STATE_V0.4.0.md`, `README_v0.4.0.md`, and `docs/LLM_HANDOVER_v0.4.0.md`; upstream historical README/PROJECT_STATE differ from the offline baseline and must not be overwritten by an old-blob Git patch.
+- Deliver TWO artifacts every future build: complete source ZIP containing *all* tracked source, AGENTS/LLM/docs/workflows and a Git-format update patch. JAR only after actual NeoForge CI success.
+- Never assume claims are secret merely because `def_claim_visibility=private`. Team-specific Claim Visibility is authoritative. New automatic FTB claims are fail-closed unless FTB property PRIVATE can be confirmed. Two opposing clients must validate map and packet behavior.
+- Raids have ONLY direct registered-core hits during OP-approved windows. BaseGuard and native explosion protection remain ON even for active raids. No automatic general block destruction or offline raids.
+- Core victory -> recoverable ESCROW -> new token upon team recovery. Exactly one persisted score per unique successful victory, preserved after restart. Preserve legacy SavedData and avoid fake team names as identities.
+- Windows Git object folder locking remains unrooted. Never repeat blind `git am`, delete `.git/objects`, or run aggressive GC on user's machine.

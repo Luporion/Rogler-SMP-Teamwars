@@ -29,3 +29,11 @@
 
 ## Regressions must be tested when...
 Membership changes; Xaero map cache/schema changes; FTB claim settings change; ship is assembled/disassembled; Game rules change during operation; any migration updates persistent UUID mappings.
+
+## v0.4.0 new acceptance gates (NOT YET TESTED IN MINECRAFT)
+- Private claim visibility checked from two FTB parties, on both map and claim manager; changed from PUBLIC to PRIVATE on existing team.
+- Automatic initial 3x3 claim after core placement, reconcile after restart/reload and after permissions fixed, existing manual claims kept, pack releases only tracked TeamWars claims.
+- Ops cannot open raid when `raids_enabled=false`, defender Grace active, no physical core or defender offline. Raids require explicit OP start; no auto enable.
+- Valid enemy survival clicks reduce core HP every 750ms; own team, Creative, spectator, third team, out-of-range and stale block have no effect.
+- Exactly one persisted war point on tenth valid core hit. Core to ESCROW, grace reset, claims handled conservatively. Stop/timeout/offline cancels raid. Re-login, restart and recover tested.
+- During open raid normal guarded blocks still immune to ordinary mining, TNT and Tree Physics; modded explosions remain separate security audit.

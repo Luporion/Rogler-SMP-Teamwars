@@ -68,3 +68,6 @@ Wenn 2–3 nicht vollständig getestet sind: **MVP-Fallback** mit FTB Teams + FT
 - Features strikt in Docs, Java-Unit-Tests, NeoForge-CI und Multiplayer-Tests getrennt bewerten.
 - Pro Patch: gesamte Repository-Version optional als ZIP + `git am`-Patch, Datei nach Anwendung löschen, `scripts/test-core.ps1`, Push, `scripts/watch-actions.ps1`, Diagnose.
 - Release immer mit `docs/MOD_REQUIREMENTS.md` und kurzer Pflicht-/Optional-Liste, inklusive **keine neuen Mods**, wenn zutreffend.
+
+## v0.4.0 source implementation (2026-10-12)
+Core-only OP-controlled raids and persistent war score added in source, not yet NeoForge/runtime verified. Auto claims default TRUE for new-world config and reconcile with PRIVATE forced via FTB API; existing config values preserved. General siege permissions, cross-mod weapons, offline raid windows, map secrecy and two-player proof remain pending. Next v0.4.x is actual NeoForge runtime and FTB-privacy testing, then wider raid weapon compatibility.
