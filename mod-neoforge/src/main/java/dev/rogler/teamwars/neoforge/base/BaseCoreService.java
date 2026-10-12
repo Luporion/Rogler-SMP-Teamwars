@@ -60,8 +60,11 @@ public final class BaseCoreService {
     public static int reclaimLost(CommandSourceStack source, ServerPlayer player) {
         var assignment = RoglerTeamWarsMod.assignmentFor(player);
         if (!assignment.validParty()) { say(source, "Player needs a valid FTB party."); return 0; }
+        return reclaimLostTeam(source,assignment.partyId());
+    }
+    public static int reclaimLostTeam(CommandSourceStack source,UUID team) {
         BaseCoreSavedData data = store(source.getServer());
-        var entry = data.ledger().get(assignment.partyId());
+        var entry = data.ledger().get(team);
         if (entry == null || entry.mode() != BaseCoreLedger.Mode.ISSUED) {
             say(source, "Only an ISSUED (not PLACED/ESCROW) core can be reclaimed."); return 0;
         }

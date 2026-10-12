@@ -89,3 +89,9 @@ Create a playable team-based NeoForge 1.21.1 Minecraft server for 8–12 players
 - Raids have ONLY direct registered-core hits during OP-approved windows. BaseGuard and native explosion protection remain ON even for active raids. No automatic general block destruction or offline raids.
 - Core victory -> recoverable ESCROW -> new token upon team recovery. Exactly one persisted score per unique successful victory, preserved after restart. Preserve legacy SavedData and avoid fake team names as identities.
 - Windows Git object folder locking remains unrooted. Never repeat blind `git am`, delete `.git/objects`, or run aggressive GC on user's machine.
+
+## v0.5.0 LLM handover (2026-10-13)
+- Read `docs/PROJECT_STATE_v0.5.0.md`, `docs/releases/v0.5.0.md` and `docs/HANDOVER_v0.5.0.md` for the newest milestone before relying on old historical roadmaps.
+- Always deliver a complete source ZIP including tracked scripts/LLM files in addition to Git patch. The local `PATCH.cmd` creates the exact tracked snapshot after patch.
+- Team UUIDs are canonical; never auto-claim orphan ownership by recreated display name.
+- FTB Chunks `PRIVATE` is a stock map UI protection, not an unmodified-packet location confidentiality guarantee.

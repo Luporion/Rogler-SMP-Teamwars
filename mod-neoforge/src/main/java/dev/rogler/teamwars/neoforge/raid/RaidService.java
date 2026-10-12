@@ -3,6 +3,8 @@ package dev.rogler.teamwars.neoforge.raid;
 import com.mojang.brigadier.Command;
 import dev.rogler.teamwars.core.base.BaseCoreLedger;
 import dev.rogler.teamwars.core.base.RaidPolicy;
+import dev.rogler.teamwars.core.base.CoreUpgradePolicy;
+import dev.rogler.teamwars.neoforge.teams.FtbTeamLookup;
 import dev.rogler.teamwars.neoforge.RoglerTeamWarsMod;
 import dev.rogler.teamwars.neoforge.base.*;
 import dev.rogler.teamwars.neoforge.protection.*;
@@ -55,7 +57,16 @@ public final class RaidService {
         }
         var assignment=RoglerTeamWarsMod.assignmentFor(defender);
         if(!assignment.validParty()){src.sendFailure(Component.literal("[TeamWars] Defender needs an FTB party."));return 0;}
-        UUID team=assignment.partyId();
+        return openTeam(src,assignment.partyId(),minutes);
+    }
+    public static int openTeam(CommandSourceStack src,UUID team,int minutes){
+        MinecraftServer server=src.getServer();
+        if(!RoglerTeamWarsMod.protectionConfig().raidsEnabled()) {
+            src.sendFailure(Component.literal("[TeamWars] Raids are disabled.")); return 0;
+        }
+        if(FtbTeamLookup.state(team)!=FtbTeamLookup.State.EXISTS || !onlineDefender(server,team)) {
+            src.sendFailure(Component.literal("[TeamWars] Team missing or no defender online.")); return 0;
+        }
         var entry=cores(server).ledger().get(team);
         if(entry==null || entry.mode()!=BaseCoreLedger.Mode.PLACED || entry.location()==null){
             src.sendFailure(Component.literal("[TeamWars] Defender has no placed core."));return 0;
@@ -67,18 +78,23 @@ public final class RaidService {
         }
         var data=RaidSavedData.get(server);
         if(data.raid(team)!=null){src.sendFailure(Component.literal("[TeamWars] Raid already open. End it first."));return 0;}
-        data.open(new RaidPolicy.Window(team,null,now+minutes*60000L,RaidPolicy.CORE_HP,0L));
+        int armor=rec==null?0:rec.armorLevel;
+        int hp=CoreUpgradePolicy.maxHealth(armor);
+        data.open(new RaidPolicy.Window(team,null,now+minutes*60000L,hp,0L));
         RoglerTeamWarsLogger.info("RAID_OPEN defender="+team+" duration_minutes="+minutes);
         for(ServerPlayer p:server.getPlayerList().getPlayers())p.sendSystemMessage(
             Component.literal("[TeamWars] An OP has opened a core-only raid window for a team. Regular blocks remain protected."));
-        msg(src,"Raid started for "+team+"; " + minutes+"m; core health="+RaidPolicy.CORE_HP);
+        msg(src,"Raid started for "+team+"; " + minutes+"m; core health="+hp);
         return Command.SINGLE_SUCCESS;
     }
     public static int stop(CommandSourceStack src,ServerPlayer defender){
         var a=RoglerTeamWarsMod.assignmentFor(defender);
         if(!a.validParty())return 0;
-        RaidSavedData.get(src.getServer()).close(a.partyId());
-        msg(src,"Raid closed for "+a.partyId());return Command.SINGLE_SUCCESS;
+        return stopTeam(src,a.partyId());
+    }
+    public static int stopTeam(CommandSourceStack src,UUID team){
+        RaidSavedData.get(src.getServer()).close(team);
+        msg(src,"Raid closed for "+team);return Command.SINGLE_SUCCESS;
     }
     /** Called for a single server-side START attack against the actual core block. */
     public static void hit(ServerPlayer attacker,BlockPos target){
@@ -106,7 +122,7 @@ public final class RaidService {
         try{next=RaidPolicy.hit(raid,own.partyId(),now);}catch(IllegalStateException ignored){return;}
         if(next.hp()>0){
             raids.update(next);
-            attacker.sendSystemMessage(Component.literal("[TeamWars] Core hit! Remaining health: "+next.hp()+"/"+RaidPolicy.CORE_HP));
+            attacker.sendSystemMessage(Component.literal("[TeamWars] Core hit! Remaining health: "+next.hp()+" HP"));
             return;
         }
         if(!level.isLoaded(target) || !level.getBlockState(target).is(BaseCoreRegistries.CORE_BLOCK.get()))return;

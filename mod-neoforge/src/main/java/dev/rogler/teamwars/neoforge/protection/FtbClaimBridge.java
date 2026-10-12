@@ -46,8 +46,31 @@ public final class FtbClaimBridge {
      * Uses the exact FTB Teams/Chunks 2101.1.x TeamProperty API by reflection.
      * Never assume a server-side default changed existing party preferences.
      */
+    private static String globalAllyMode() throws ReflectiveOperationException {
+        Class<?> config=Class.forName("dev.ftb.mods.ftbchunks.FTBChunksWorldConfig");
+        Object setting=config.getField("ALLY_MODE").get(null);
+        Object mode=call(setting,"get");
+        return String.valueOf(mode);
+    }
+    /** OP-only visibility inspection. PRIVATE does not conceal coordinates from modified clients:
+     * FTB Chunks' hidden packet still contains an unclaimed chunk's x/z coordinates.
+     */
+    public static String audit(UUID team) {
+        try {
+            Api api=bind(team);
+            Object prop=Class.forName("dev.ftb.mods.ftbchunks.api.FTBChunksProperties")
+                .getField("CLAIM_VISIBILITY").get(null);
+            return "FTB visibility="+call(api.team(),"getProperty",prop)
+                +" | ally_mode="+globalAllyMode()
+                +" | map hiding is not secure against modified clients";
+        } catch(ReflectiveOperationException|RuntimeException ex) {
+            return "FTB PRIVACY AUDIT UNAVAILABLE: "+ex.getClass().getSimpleName()+": "+ex.getMessage();
+        }
+    }
     private static void requirePrivateClaimVisibility(Api api, CommandSourceStack src)
         throws ReflectiveOperationException {
+        if ("FORCED_ALL".equals(globalAllyMode()))
+            throw new IllegalStateException("FTB ally_mode=forced_all exposes private claims; set ally_mode=default/forced_none");
         Class<?> props=Class.forName("dev.ftb.mods.ftbchunks.api.FTBChunksProperties");
         Object property=props.getField("CLAIM_VISIBILITY").get(null);
         @SuppressWarnings({"unchecked", "rawtypes"})

@@ -14,6 +14,7 @@ public final class BaseProtectionSavedData extends SavedData {
     public static final class Record {
         public final UUID team;
         public long graceUntilMillis;
+        public int armorLevel;
         public final Set<Long> createdClaims = new HashSet<>();
         Record(UUID team, long graceUntilMillis) { this.team=team;this.graceUntilMillis=graceUntilMillis; }
     }
@@ -40,13 +41,23 @@ public final class BaseProtectionSavedData extends SavedData {
         long until = previous == null ? (next == null ? 0L : next.graceUntilMillis)
             : next == null ? previous.graceUntilMillis
             : Math.min(previous.graceUntilMillis, next.graceUntilMillis);
-        teams.put(to, new Record(to, until));
+        Record adopted = new Record(to, until);
+        // Paid core armor belongs to the persistent TeamWars identity. Do not lose
+        // upgrades when an administrator explicitly adopts a confirmed orphan.
+        adopted.armorLevel = Math.max(previous == null ? 0 : previous.armorLevel,
+            next == null ? 0 : next.armorLevel);
+        teams.put(to, adopted);
         teams.remove(from);
         setDirty();
     }
 
     public void setGrace(UUID id,long until) {
         Record r=ensure(id,0,0);r.graceUntilMillis=until;setDirty();
+    }
+    public boolean upgradeArmor(UUID team, int expectedOldLevel) {
+        Record r=teams.get(team);
+        if (r==null || r.armorLevel!=expectedOldLevel || expectedOldLevel<0 || expectedOldLevel>=2) return false;
+        r.armorLevel++; setDirty(); return true;
     }
     public void changed() { setDirty(); }
     public static long key(int chunkX,int chunkZ) {
@@ -63,6 +74,7 @@ public final class BaseProtectionSavedData extends SavedData {
         for(Tag rowTag:tag.getList("Teams",Tag.TAG_COMPOUND)) {
             CompoundTag row=(CompoundTag)rowTag;
             UUID id=row.getUUID("Id");Record r=new Record(id,row.getLong("GraceUntil"));
+            r.armorLevel=Math.max(0,Math.min(2,row.getInt("ArmorLevel")));
             for(long key:row.getLongArray("FTBClaims"))r.createdClaims.add(key);
             data.teams.put(id,r);
         }
@@ -72,7 +84,7 @@ public final class BaseProtectionSavedData extends SavedData {
         ListTag list=new ListTag();
         for(Record r:teams.values()) {
             CompoundTag e=new CompoundTag();e.putUUID("Id",r.team);
-            e.putLong("GraceUntil",r.graceUntilMillis);
+            e.putLong("GraceUntil",r.graceUntilMillis);e.putInt("ArmorLevel",r.armorLevel);
             e.putLongArray("FTBClaims",r.createdClaims.stream().mapToLong(Long::longValue).toArray());
             list.add(e);
         }

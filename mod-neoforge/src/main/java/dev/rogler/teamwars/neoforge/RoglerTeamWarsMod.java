@@ -39,7 +39,7 @@ import java.nio.file.Path;
 @Mod(RoglerTeamWarsMod.MOD_ID)
 public final class RoglerTeamWarsMod {
     public static final String MOD_ID = "roglerteamwars";
-    public static final String VERSION = "0.4.0";
+    public static final String VERSION = "0.5.0";
     private static RoglerTeamWarsMod INSTANCE;
     private BaseCoreConfig baseConfig = BaseCoreConfig.DEFAULT;
     private dev.rogler.teamwars.neoforge.protection.BaseProtectionConfig protectionConfig =
@@ -201,12 +201,47 @@ public final class RoglerTeamWarsMod {
                 .then(Commands.literal("status").executes(ctx -> BaseCoreService.ownStatus(ctx.getSource())))
                 .then(Commands.literal("distance").executes(ctx -> BaseCoreService.distance(ctx.getSource())))
                 .then(Commands.literal("pack").executes(ctx -> BaseCoreService.packCommand(ctx.getSource())))
+                .then(Commands.literal("upgrade")
+                    .then(Commands.literal("status").executes(ctx ->
+                        dev.rogler.teamwars.neoforge.base.CoreUpgradeService.status(ctx.getSource())))
+                    .then(Commands.literal("armor").executes(ctx ->
+                        dev.rogler.teamwars.neoforge.base.CoreUpgradeService.buyArmor(ctx.getSource()))))
                 .then(Commands.literal("protection").executes(ctx ->
                     dev.rogler.teamwars.neoforge.protection.BaseGuardService.ownStatus(ctx.getSource())))
                 .then(Commands.literal("recover").executes(ctx -> BaseCoreService.issue(
                     ctx.getSource(), ctx.getSource().getPlayerOrException(), true))))
             .then(Commands.literal("admin").requires(source -> source.hasPermission(2))
                 .then(Commands.literal("corelist").executes(ctx -> BaseCoreService.info(ctx.getSource())))
+                .then(Commands.literal("teams").executes(ctx ->
+                    dev.rogler.teamwars.neoforge.protection.BaseGuardService.teams(ctx.getSource())))
+                .then(Commands.literal("claimaudit")
+                    .then(Commands.argument("team", com.mojang.brigadier.arguments.StringArgumentType.word())
+                        .executes(ctx -> dev.rogler.teamwars.neoforge.protection.BaseGuardService.auditClaims(
+                            ctx.getSource(), parseTeamId(ctx.getSource(),
+                                com.mojang.brigadier.arguments.StringArgumentType.getString(ctx,"team"))))))
+                .then(Commands.literal("reclaimlostteam")
+                    .then(Commands.argument("team", com.mojang.brigadier.arguments.StringArgumentType.word())
+                        .executes(ctx -> BaseCoreService.reclaimLostTeam(ctx.getSource(),
+                            parseTeamId(ctx.getSource(),com.mojang.brigadier.arguments.StringArgumentType.getString(ctx,"team"))))))
+                .then(Commands.literal("graceteam")
+                    .then(Commands.argument("team", com.mojang.brigadier.arguments.StringArgumentType.word())
+                        .then(Commands.argument("minutes", com.mojang.brigadier.arguments.IntegerArgumentType.integer(0,10080))
+                            .executes(ctx -> dev.rogler.teamwars.neoforge.protection.BaseGuardService.setGraceTeam(
+                                ctx.getSource(),parseTeamId(ctx.getSource(),
+                                    com.mojang.brigadier.arguments.StringArgumentType.getString(ctx,"team")),
+                                com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx,"minutes"))))))
+                .then(Commands.literal("raidstartteam")
+                    .then(Commands.argument("team", com.mojang.brigadier.arguments.StringArgumentType.word())
+                        .then(Commands.argument("minutes", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1,30))
+                            .executes(ctx -> dev.rogler.teamwars.neoforge.raid.RaidService.openTeam(
+                                ctx.getSource(),parseTeamId(ctx.getSource(),
+                                    com.mojang.brigadier.arguments.StringArgumentType.getString(ctx,"team")),
+                                com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx,"minutes"))))))
+                .then(Commands.literal("raidstopteam")
+                    .then(Commands.argument("team", com.mojang.brigadier.arguments.StringArgumentType.word())
+                        .executes(ctx -> dev.rogler.teamwars.neoforge.raid.RaidService.stopTeam(
+                            ctx.getSource(),parseTeamId(ctx.getSource(),
+                                com.mojang.brigadier.arguments.StringArgumentType.getString(ctx,"team"))))))
                 .then(Commands.literal("raidstart")
                     .then(Commands.argument("player", EntityArgument.player())
                         .then(Commands.argument("minutes", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1,30))
@@ -281,6 +316,15 @@ public final class RoglerTeamWarsMod {
                 }))));
     }
 
+    private static java.util.UUID parseTeamId(net.minecraft.commands.CommandSourceStack src,String raw)
+        throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        try { return java.util.UUID.fromString(raw); }
+        catch(IllegalArgumentException invalid) {
+            throw new com.mojang.brigadier.exceptions.CommandSyntaxException(
+                new com.mojang.brigadier.exceptions.SimpleCommandExceptionType(Component.literal("Invalid FTB team UUID")),
+                Component.literal("Invalid team UUID: "+raw));
+        }
+    }
     private int status(net.minecraft.commands.CommandSourceStack source) {
         source.sendSuccess(() -> Component.literal("Rogler TeamWars v" + VERSION
             + " | FTB party projection: " + scoreboard.status()
@@ -288,7 +332,7 @@ public final class RoglerTeamWarsMod {
             + " | quarantined: " + scoreboard.quarantinedCount()
             + " | FTB API errors: " + scoreboard.apiFailures()), false);
         source.sendSuccess(() -> Component.literal("Features: FTB team sync, private nametags, /teamwars team; "
-            + "core guard, private automatic FTB claims; OP-controlled core-only raids (opt-in), scores; NO Xaero share yet."), false);
+            + "core guard, private auto FTB claims, team UUID admin tools, armor tiers; raids opt-in; NO Xaero share yet."), false);
         return Command.SINGLE_SUCCESS;
     }
 

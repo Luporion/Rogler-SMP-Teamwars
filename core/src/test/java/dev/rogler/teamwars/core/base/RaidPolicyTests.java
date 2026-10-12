@@ -28,6 +28,12 @@ public final class RaidPolicyTests {
         try {ledger.defeatPlaced(defender,token,loc);throw new AssertionError();}catch(IllegalStateException ok){n++;}
         UUID fresh=UUID.randomUUID();ledger.reissueFromEscrow(defender,fresh);
         yes(!ledger.canPlace(defender,token,loc));yes(ledger.canPlace(defender,fresh,loc));
-        System.out.println("v0.4.0 RaidPolicyTests: "+n+" checks OK");
+        var upgraded = new RaidPolicy.Window(defender, null, now + 60000L, 20, 0L);
+        yes(upgraded.hp()==20);
+        for (int i=0; i<20; i++) upgraded=RaidPolicy.hit(upgraded, attacker, now+i*800L);
+        yes(upgraded.hp()==0);
+        try { new RaidPolicy.Window(defender,null,now+60000L,21,0L); throw new AssertionError(); }
+        catch(IllegalArgumentException ok) { n++; }
+        System.out.println("v0.5.0 RaidPolicyTests: "+n+" checks OK");
     }
 }

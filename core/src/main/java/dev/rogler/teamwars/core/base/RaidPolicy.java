@@ -6,10 +6,11 @@ import java.util.UUID;
 public final class RaidPolicy {
     private RaidPolicy() {}
     public static final int CORE_HP=10;
+    public static final int MAX_CORE_HP=20;
     public static final long HIT_COOLDOWN_MILLIS=750L;
     public record Window(UUID defender, UUID attacker, long untilMillis, int hp, long lastHitMillis) {
         public Window {
-            if(defender==null || hp<0 || hp>CORE_HP)throw new IllegalArgumentException("Invalid raid state");
+            if(defender==null || hp<0 || hp>MAX_CORE_HP)throw new IllegalArgumentException("Invalid raid state");
         }
     }
     public static boolean eligible(Window raid, UUID defender, UUID attacker, long now,

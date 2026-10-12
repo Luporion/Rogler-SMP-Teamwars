@@ -114,6 +114,7 @@ public final class BaseGuardService {
         if(r!=null)FtbClaimBridge.release(level,team,r,opSource(level.getServer(),actor.blockPosition()),saved);
         RoglerTeamWarsLogger.info("CORE_PROTECTION_PACK team="+team+" FTB claims released (best effort)");
     }
+    private static final Set<UUID> warnedOrphans = new HashSet<>();
     /** Rebuild missing claim ownership for worlds created under older v0.2.x versions. */
     public static void reconcile(MinecraftServer server) {
         var cfg=RoglerTeamWarsMod.protectionConfig();
@@ -121,7 +122,11 @@ public final class BaseGuardService {
         for(var e:cores(server).ledger().all()) {
             if(e.mode()!=BaseCoreLedger.Mode.PLACED || e.location()==null)continue;
             var r=saved.ensure(e.teamId(),System.currentTimeMillis(),cfg.newTeamGraceHours());
-            if(cfg.autoFtbClaims() && FtbTeamLookup.state(e.teamId())==FtbTeamLookup.State.EXISTS) {
+            var state=FtbTeamLookup.state(e.teamId());
+            if(state==FtbTeamLookup.State.MISSING && warnedOrphans.add(e.teamId()))
+                RoglerTeamWarsLogger.warn("ORPHAN_TEAM: registered core exists but FTB party UUID disappeared "
+                    +e.teamId()+". Do not assume same-name party owns it. /teamwars admin orphanlist");
+            if(cfg.autoFtbClaims() && state==FtbTeamLookup.State.EXISTS) {
                 BlockPos at=new BlockPos(e.location().x(),e.location().y(),e.location().z());
                 FtbClaimBridge.claim(server.overworld(),e.teamId(),at.getX()>>4,at.getZ()>>4,
                     cfg.claimRadiusChunks(),r,opSource(server,at),saved);
@@ -141,9 +146,37 @@ public final class BaseGuardService {
     }
     public static int setGrace(CommandSourceStack src,ServerPlayer p,int minutes) {
         var a=RoglerTeamWarsMod.assignmentFor(p);if(!a.validParty())return 0;
+        return setGraceTeam(src,a.partyId(),minutes);
+    }
+    public static int setGraceTeam(CommandSourceStack src,UUID team,int minutes) {
+        if(cores(src.getServer()).ledger().get(team)==null) {
+            src.sendFailure(Component.literal("[TeamWars] No registered core for this team UUID."));return 0;
+        }
         long until=System.currentTimeMillis()+minutes*60000L;
-        BaseProtectionSavedData.get(src.getServer()).setGrace(a.partyId(),until);
-        src.sendSuccess(()->Component.literal("[TeamWars] Grace time set to "+minutes+"m for team "+a.partyId()),true);
+        BaseProtectionSavedData.get(src.getServer()).setGrace(team,until);
+        src.sendSuccess(()->Component.literal("[TeamWars] Grace time set to "+minutes+"m for team "+team),true);
+        return Command.SINGLE_SUCCESS;
+    }
+    /** Admin-only list of stable team IDs and their current FTB party state; no guesses from names. */
+    public static int teams(CommandSourceStack src) {
+        var all=cores(src.getServer()).ledger().all();
+        src.sendSuccess(()->Component.literal("[TeamWars] Registered team identities: "+all.size()),false);
+        for(var e:all) {
+            var state=FtbTeamLookup.state(e.teamId());
+            var record=BaseProtectionSavedData.get(src.getServer()).team(e.teamId());
+            int armor=record==null?0:record.armorLevel;
+            src.sendSuccess(()->Component.literal("[TeamWars] "+e.teamId()+" | FTB="+state
+                +" | core="+e.mode()+" | armor="+armor+" | auto-claims="+(record==null?0:record.createdClaims.size())),false);
+        }
+        return Command.SINGLE_SUCCESS;
+    }
+    /** Admin-only privacy state lookup; intentionally excludes base coordinates. */
+    public static int auditClaims(CommandSourceStack src,UUID team) {
+        if(FtbTeamLookup.state(team)!=FtbTeamLookup.State.EXISTS) {
+            src.sendFailure(Component.literal("[TeamWars] FTB party not found. No privacy claim audit."));return 0;
+        }
+        String result=FtbClaimBridge.audit(team);
+        src.sendSuccess(()->Component.literal("[TeamWars] "+team+": "+result),false);
         return Command.SINGLE_SUCCESS;
     }
     /** OP-only diagnostics: never disclose another team's base to ordinary players. */
