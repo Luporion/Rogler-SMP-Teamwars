@@ -5,6 +5,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.world.flag.FeatureFlags;
+import net.minecraft.world.inventory.MenuType;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import com.simibubi.create.api.stress.BlockStressValues;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -19,6 +21,11 @@ public final class BaseCoreRegistries {
 
     private static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES =
         DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE,RoglerTeamWarsMod.MOD_ID);
+
+    private static final DeferredRegister<MenuType<?>> MENUS =
+        DeferredRegister.create(Registries.MENU,RoglerTeamWarsMod.MOD_ID);
+    public static final DeferredHolder<MenuType<?>,MenuType<CoreDashboardMenu>> CORE_DASHBOARD =
+        MENUS.register("core_dashboard",()->new MenuType<>(CoreDashboardMenu::new,FeatureFlags.DEFAULT_FLAGS));
 
     public static final DeferredBlock<CoreKineticBlock> CORE_BLOCK = BLOCKS.registerBlock("base_core",
         p -> new CoreKineticBlock(p),
@@ -38,7 +45,7 @@ public final class BaseCoreRegistries {
         () -> new BaseCoreItem(CORE_BLOCK.get(), new Item.Properties().stacksTo(1).fireResistant()));
 
     public static void register(IEventBus bus) {
-        BLOCKS.register(bus); ITEMS.register(bus); BLOCK_ENTITIES.register(bus);
+        BLOCKS.register(bus); ITEMS.register(bus); BLOCK_ENTITIES.register(bus); MENUS.register(bus);
 
     }
     public static void registerCreateStress() {

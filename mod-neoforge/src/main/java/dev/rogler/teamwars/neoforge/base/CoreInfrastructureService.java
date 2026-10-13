@@ -13,8 +13,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.SimpleMenuProvider;
-import net.minecraft.world.inventory.ChestMenu;
-import net.minecraft.world.inventory.MenuType;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.energy.IEnergyStorage;
@@ -60,6 +58,23 @@ public final class CoreInfrastructureService {
         @Override public boolean canReceive() {return false;}
     }
     /** Only a confirmed online member of the owning FTB party can open this shared menu. */
+    /** Open the same secured dashboard from /teamwars base menu or /teamwars guide. */
+    public static boolean openOwn(ServerPlayer p) {
+        if(p.getServer()==null || p.level()!=p.getServer().overworld())return false;
+        var a=RoglerTeamWarsMod.assignmentFor(p);
+        if(!a.validParty())return false;
+        var cfg=RoglerTeamWarsMod.baseConfig();
+        var entry=BaseCoreSavedData.get(p.getServer(),cfg.zone(p.getServer()),cfg.carrySeconds()).ledger().get(a.partyId());
+        if(entry==null||entry.location()==null || !"minecraft:overworld".equals(entry.location().dimension()))return false;
+        return open(p,new BlockPos(entry.location().x(),entry.location().y(),entry.location().z()));
+    }
+    public static int openCommand(net.minecraft.commands.CommandSourceStack source)
+        throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer p=source.getPlayerOrException();
+        if(openOwn(p))return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+        p.displayClientMessage(Component.literal("[TeamWars] Gehe zu deinem platzierten Kern (8 Bloecke) und oeffne das Dashboard."),true);
+        return 0;
+    }
     public static boolean open(ServerPlayer p,BlockPos pos) {
         if(!(p.level() instanceof ServerLevel level) || p.isSpectator() || p.distanceToSqr(
             pos.getX()+0.5,pos.getY()+0.5,pos.getZ()+0.5)>64)return false;
@@ -67,8 +82,8 @@ public final class CoreInfrastructureService {
         var a=RoglerTeamWarsMod.assignmentFor(p);
         if(team==null || !a.validParty() || !team.equals(a.partyId())) return false;
         var inventory=CoreInfrastructureSavedData.get(p.getServer()).getOrCreate(team).inventory;
-        p.openMenu(new SimpleMenuProvider((id,inv,viewer)->new ChestMenu(MenuType.GENERIC_9x1,id,inv,inventory,1),
-            Component.literal("TeamWars Core – 9 slots")));
+        p.openMenu(new SimpleMenuProvider((id,inv,viewer)->new CoreDashboardMenu(id,inv,inventory,team),
+            Component.literal("TeamWars | Basis-Kern")));
         return true;
     }
     public static void tick(MinecraftServer server) {

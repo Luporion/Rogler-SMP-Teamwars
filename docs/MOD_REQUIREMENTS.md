@@ -47,3 +47,7 @@ No new runtime dependency relative to v0.3.0. FTB Teams 2101.1.11, FTB Library 2
 
 ## v0.4.0
 No new mods vs v0.3.1: NeoForge 21.1.249, Minecraft 1.21.1, FTB Teams 2101.1.11, FTB Library 2101.1.37, FTB Chunks 2101.1.22, Rogler TeamWars 0.4.0. Replace the previous TeamWars JAR; client and server must agree. Xaero, Tree Physics, Create, Sable and other mods are not required by the new code, but must be regression-tested when installed.
+
+## v0.5.3 additions
+
+**No new third-party mod dependency.** Minecraft 1.21.1 / NeoForge 21.1.249, Create 6.0.10, FTB Teams 2101.1.11, FTB Library 2101.1.37, FTB Chunks 2101.1.22 remain. AE2 and Crafts & Additions are optional integrations; AE2 requires external Energy Acceptor and cables. Native ME Drive is not shipped. Server and each joining client need same TeamWars 0.5.3 JAR.

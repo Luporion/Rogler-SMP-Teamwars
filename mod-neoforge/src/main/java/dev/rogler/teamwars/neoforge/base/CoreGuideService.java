@@ -53,24 +53,22 @@ public final class CoreGuideService {
         return p.level().hasChunkAt(pos)&&p.level().getBlockState(pos).is(BaseCoreRegistries.CORE_BLOCK.get())
             && p.distanceToSqr(pos.getX()+0.5,pos.getY()+0.5,pos.getZ()+0.5)<=64;
     }
+    public static java.util.List<java.util.Map.Entry<String,ResourceLocation>> manuals(){
+        return java.util.List.copyOf(discover().entrySet());
+    }
     public static int help(CommandSourceStack src) throws CommandSyntaxException {
         help(src.getPlayerOrException());
         return Command.SINGLE_SUCCESS;
     }
     public static void help(ServerPlayer p) {
-        say(p,"Willkommen im Technik-Hub! Rechtsklick = 9-Slot-Inventar; Buch in der Hand + Rechtsklick = Hilfe.");
-        say(p,"FE: Kabel/AE2 Energy Acceptor DIREKT neben Kern; 20/40/80 FE/t, max. 160 FE/t Output.");
-        say(p,"Create: 16 RPM / 256 SU nach /teamwars base upgrade create. Mit Welle an der Achsen-Seite verbinden.");
-        say(p,"Create-Lernen: Create-Item in JEI/EMI ansehen und W gedrueckt halten -> Ponder-Animation. Bald eigene Wasserraeder/Dampfmaschine bauen!");
-        say(p,"AE2-Lernen: W beim Ueberfahren passender AE2-Items; in vielen AE2-Menus ?-Hilfeschaltflaeche.");
-        say(p,"Buecher: /teamwars guide books; /teamwars guide give <modid> am eigenen Kern. Es werden NUR vorhandene echte Buecher angeboten.");
+        if(CoreInfrastructureService.openOwn(p))return;
+        p.displayClientMessage(Component.literal("[TeamWars] Technik-Guides im Kern-Dashboard: gehe zu deinem Kern (8 Bloecke) oder nutze /teamwars base menu."),true);
     }
     public static int books(CommandSourceStack src) throws CommandSyntaxException {
-        ServerPlayer p=src.getPlayerOrException();Map<String,ResourceLocation> books=discover();
-        if(books.isEmpty())say(p,"Keine bekannten Handbuch-Items gefunden. Nutze JEI/EMI, Ponder und AE2-Ingame-Guide.");
-        else for(var book:books.entrySet())say(p,book.getKey()+" -> "+book.getValue()+" (mit /teamwars guide give "+book.getKey()+")");
-        say(p,"Nicht jede Mod besitzt ein Buch. Automatische Erkennung ist erweiterbar und keine Garantie fuer ALLE Mods.");
-        return Command.SINGLE_SUCCESS;
+        ServerPlayer p=src.getPlayerOrException();
+        if(CoreInfrastructureService.openOwn(p))return Command.SINGLE_SUCCESS;
+        say(p,"Am eigenen Kern findest du alle erkannten Handbuecher in der GUIDE-Seite. Nutze /teamwars base menu.");
+        return 0;
     }
     public static int give(CommandSourceStack src,String modid) throws CommandSyntaxException {
         ServerPlayer p=src.getPlayerOrException();

@@ -25,6 +25,8 @@ if ($LASTEXITCODE -ne 0) { throw "core energy tests failed: $LASTEXITCODE" }
 
 & java -ea -cp build/classes dev.rogler.teamwars.core.base.CoreKineticPolicyTests
 if ($LASTEXITCODE -ne 0) { throw "Create kinetic policy tests failed: $LASTEXITCODE" }
+& java -ea -cp build/classes dev.rogler.teamwars.core.base.CoreDashboardPolicyTests
+if ($LASTEXITCODE -ne 0) { throw "dashboard policy tests failed: $LASTEXITCODE" }
 
 $settingsFiles = @(
     'mod-neoforge/src/main/java/dev/rogler/teamwars/neoforge/teams/TeamWarsSettings.java',

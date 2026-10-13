@@ -4,11 +4,11 @@ license="MIT"
 
 [[mods]]
 modId="roglerteamwars"
-version="0.5.2"
+version="0.5.3"
 displayName="Rogler TeamWars"
 authors="Rogler TeamWars contributors"
 description='''
-Rogler SMP TeamWars v0.5.2: industrial kinetic base core with Create starter shaft (16 RPM/256 SU), bounded FE, private inventory and first-steps guide.
+Rogler SMP TeamWars v0.5.3: industrial kinetic base core with Create starter shaft (16 RPM/256 SU), bounded FE, private inventory and first-steps guide.
 General destructive raids, separate chunk loader quotas, Xaero sync, and Sable integrations are not active.
 '''
 

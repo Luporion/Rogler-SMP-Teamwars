@@ -39,7 +39,7 @@ import java.nio.file.Path;
 @Mod(RoglerTeamWarsMod.MOD_ID)
 public final class RoglerTeamWarsMod {
     public static final String MOD_ID = "roglerteamwars";
-    public static final String VERSION = "0.5.2";
+    public static final String VERSION = "0.5.3";
     private static RoglerTeamWarsMod INSTANCE;
     private BaseCoreConfig baseConfig = BaseCoreConfig.DEFAULT;
     private dev.rogler.teamwars.neoforge.base.CorePowerConfig powerConfig = dev.rogler.teamwars.neoforge.base.CorePowerConfig.DEFAULT;
@@ -153,8 +153,6 @@ public final class RoglerTeamWarsMod {
             && !event.getEntity().getItemInHand(InteractionHand.MAIN_HAND).isEmpty()) return;
         if (event.getEntity() instanceof ServerPlayer player) {
             if (player.isShiftKeyDown()) BaseCoreService.pack(player, event.getPos());
-            else if (player.getItemInHand(InteractionHand.MAIN_HAND).is(net.minecraft.world.item.Items.BOOK))
-                dev.rogler.teamwars.neoforge.base.CoreGuideService.help(player);
             else dev.rogler.teamwars.neoforge.base.CoreInfrastructureService.open(player, event.getPos());
         }
         // Also consume client use action, preventing held items from interfering.
@@ -222,6 +220,8 @@ public final class RoglerTeamWarsMod {
                         .executes(ctx -> dev.rogler.teamwars.neoforge.base.CoreGuideService.give(ctx.getSource(),
                             com.mojang.brigadier.arguments.StringArgumentType.getString(ctx,"modid"))))))
             .then(Commands.literal("base")
+                .then(Commands.literal("menu").executes(ctx ->
+                    dev.rogler.teamwars.neoforge.base.CoreInfrastructureService.openCommand(ctx.getSource())))
                 .then(Commands.literal("status").executes(ctx -> BaseCoreService.ownStatus(ctx.getSource())))
                 .then(Commands.literal("distance").executes(ctx -> BaseCoreService.distance(ctx.getSource())))
                 .then(Commands.literal("pack").executes(ctx -> BaseCoreService.packCommand(ctx.getSource())))

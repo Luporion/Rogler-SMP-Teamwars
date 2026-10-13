@@ -1,3 +1,8 @@
+# LATEST v0.5.3 GUI handover
+
+**Before editing** read `docs/releases/v0.5.3.md`, `docs/PROJECT_STATE_v0.5.3.md`, `docs/CORE_DASHBOARD_ARCHITECTURE.md`, `docs/TEST_PLAN_v0.5.3.md` and `docs/LLM_HANDOVER_v0.5.3.md`. v0.5.3 replaces chat floods with an owner-only server-authoritative core dashboard. `CoreInfrastructureSavedData` schema, FTB claims, raid gates and team ownership are unchanged. Build target 1.21.1 NeoForge 21.1.249 Create 6.0.10; GUI compile is NOT proven by pure Java tests.
+---
+
 # Current v0.5.2 handover
 
 For new LLM sessions read `docs/releases/v0.5.2.md`, `docs/TEST_PLAN_v0.5.2.md`, and `docs/research/CORE_ONBOARDING.md` first. Current codebase uses Create 6.0.10 native kinetic generator API; Create is newly **required** in v0.5.2 (already present in the actual modpack). No Minecraft runtime claim before GitHub Actions and DEV-world test. Source ZIP does not mean compiled/verified JAR. Avoid name-based team ownership, blanket item capabilities, free infinite tech output, and irreversible world migrations.

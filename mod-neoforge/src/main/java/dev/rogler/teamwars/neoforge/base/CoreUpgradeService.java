@@ -23,7 +23,20 @@ import java.util.UUID;
 /** Server-only atomic material cost, per-team persistent armor 0/1/2. */
 public final class CoreUpgradeService {
     private CoreUpgradeService() {}
-    private static void say(ServerPlayer p,String s) {p.sendSystemMessage(Component.literal("[TeamWars] "+s));}
+    private static final ThreadLocal<Boolean> GUI_MODE = ThreadLocal.withInitial(() -> false);
+    private static void say(ServerPlayer p,String s) {if(!GUI_MODE.get())p.sendSystemMessage(Component.literal("[TeamWars] "+s));}
+    /** Dashboard purchases are identical to commands but report through synced menu data, not chat. */
+    public static int buyFromDashboard(CommandSourceStack source,int action) throws CommandSyntaxException {
+        GUI_MODE.set(true);
+        try {
+            return switch(action){
+                case CoreDashboardMenu.BUY_ARMOR -> buyArmor(source);
+                case CoreDashboardMenu.BUY_ENERGY -> buyEnergy(source);
+                case CoreDashboardMenu.BUY_CREATE -> buyCreate(source);
+                default -> 0;
+            };
+        } finally { GUI_MODE.remove(); }
+    }
     private static int count(ServerPlayer p,Item kind) {
         int n=0;
         for(int i=0;i<p.getInventory().getContainerSize();i++) {
