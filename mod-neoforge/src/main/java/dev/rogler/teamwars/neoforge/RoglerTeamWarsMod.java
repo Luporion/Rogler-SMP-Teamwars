@@ -39,7 +39,7 @@ import java.nio.file.Path;
 @Mod(RoglerTeamWarsMod.MOD_ID)
 public final class RoglerTeamWarsMod {
     public static final String MOD_ID = "roglerteamwars";
-    public static final String VERSION = "0.5.1";
+    public static final String VERSION = "0.5.2";
     private static RoglerTeamWarsMod INSTANCE;
     private BaseCoreConfig baseConfig = BaseCoreConfig.DEFAULT;
     private dev.rogler.teamwars.neoforge.base.CorePowerConfig powerConfig = dev.rogler.teamwars.neoforge.base.CorePowerConfig.DEFAULT;
@@ -64,6 +64,8 @@ public final class RoglerTeamWarsMod {
     public RoglerTeamWarsMod(IEventBus modBus) {
         INSTANCE = this;
         BaseCoreRegistries.register(modBus);
+        modBus.addListener((net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent e) ->
+            e.enqueueWork(BaseCoreRegistries::registerCreateStress));
         modBus.addListener(dev.rogler.teamwars.neoforge.base.CoreInfrastructureService::registerCapabilities);
         NeoForge.EVENT_BUS.register(this);
     }
@@ -145,8 +147,14 @@ public final class RoglerTeamWarsMod {
     public void onCorePickup(PlayerInteractEvent.RightClickBlock event) {
         if (event.getHand() != InteractionHand.MAIN_HAND
             || !event.getLevel().getBlockState(event.getPos()).is(BaseCoreRegistries.CORE_BLOCK.get())) return;
+        // Sneak + held item must reach normal item use, e.g. Crafts & Additions
+        // connectors, Create wrench/shaft and block placements on the core face.
+        if(event.getEntity().isShiftKeyDown()
+            && !event.getEntity().getItemInHand(InteractionHand.MAIN_HAND).isEmpty()) return;
         if (event.getEntity() instanceof ServerPlayer player) {
             if (player.isShiftKeyDown()) BaseCoreService.pack(player, event.getPos());
+            else if (player.getItemInHand(InteractionHand.MAIN_HAND).is(net.minecraft.world.item.Items.BOOK))
+                dev.rogler.teamwars.neoforge.base.CoreGuideService.help(player);
             else dev.rogler.teamwars.neoforge.base.CoreInfrastructureService.open(player, event.getPos());
         }
         // Also consume client use action, preventing held items from interfering.
@@ -205,6 +213,14 @@ public final class RoglerTeamWarsMod {
             .then(Commands.literal("war")
                 .then(Commands.literal("status").executes(ctx -> dev.rogler.teamwars.neoforge.raid.RaidService.status(ctx.getSource())))
                 .then(Commands.literal("scores").executes(ctx -> dev.rogler.teamwars.neoforge.raid.RaidService.scores(ctx.getSource()))))
+            .then(Commands.literal("guide")
+                .executes(ctx -> dev.rogler.teamwars.neoforge.base.CoreGuideService.help(ctx.getSource()))
+                .then(Commands.literal("books")
+                    .executes(ctx -> dev.rogler.teamwars.neoforge.base.CoreGuideService.books(ctx.getSource())))
+                .then(Commands.literal("give")
+                    .then(Commands.argument("modid", com.mojang.brigadier.arguments.StringArgumentType.word())
+                        .executes(ctx -> dev.rogler.teamwars.neoforge.base.CoreGuideService.give(ctx.getSource(),
+                            com.mojang.brigadier.arguments.StringArgumentType.getString(ctx,"modid"))))))
             .then(Commands.literal("base")
                 .then(Commands.literal("status").executes(ctx -> BaseCoreService.ownStatus(ctx.getSource())))
                 .then(Commands.literal("distance").executes(ctx -> BaseCoreService.distance(ctx.getSource())))
@@ -215,7 +231,9 @@ public final class RoglerTeamWarsMod {
                     .then(Commands.literal("armor").executes(ctx ->
                         dev.rogler.teamwars.neoforge.base.CoreUpgradeService.buyArmor(ctx.getSource())))
                     .then(Commands.literal("energy").executes(ctx ->
-                        dev.rogler.teamwars.neoforge.base.CoreUpgradeService.buyEnergy(ctx.getSource()))))
+                        dev.rogler.teamwars.neoforge.base.CoreUpgradeService.buyEnergy(ctx.getSource())))
+                    .then(Commands.literal("create").executes(ctx ->
+                        dev.rogler.teamwars.neoforge.base.CoreUpgradeService.buyCreate(ctx.getSource()))))
                 .then(Commands.literal("energy").executes(ctx ->
                     dev.rogler.teamwars.neoforge.base.CoreInfrastructureService.status(ctx.getSource())))
                 .then(Commands.literal("protection").executes(ctx ->

@@ -25,7 +25,7 @@ import java.util.UUID;
  */
 public final class CoreInfrastructureService {
     private CoreInfrastructureService() {}
-    private static UUID placedOwner(ServerLevel level,BlockPos pos) {
+    public static UUID owner(ServerLevel level,BlockPos pos) {
         if(level!=level.getServer().overworld() || !level.getBlockState(pos).is(BaseCoreRegistries.CORE_BLOCK.get())) return null;
         var cfg=RoglerTeamWarsMod.baseConfig();
         var cores=BaseCoreSavedData.get(level.getServer(),cfg.zone(level.getServer()),cfg.carrySeconds());
@@ -41,13 +41,13 @@ public final class CoreInfrastructureService {
         event.registerBlock(Capabilities.EnergyStorage.BLOCK,
             (level,pos,state,be,side) -> {
                 if(!(level instanceof ServerLevel serverLevel)) return null;
-                UUID team=placedOwner(serverLevel,pos);
+                UUID team=owner(serverLevel,pos);
                 return team==null ? null : new TeamEnergy(serverLevel,pos,team);
             }, BaseCoreRegistries.CORE_BLOCK.get());
     }
     private record TeamEnergy(ServerLevel level,BlockPos pos,UUID team) implements IEnergyStorage {
         private CoreInfrastructureSavedData.TeamRecord current() {
-            return team.equals(placedOwner(level,pos))
+            return team.equals(owner(level,pos))
                 ? CoreInfrastructureSavedData.get(level.getServer()).getOrCreate(team) : null;
         }
         @Override public int receiveEnergy(int maxReceive,boolean simulate) {return 0;}
@@ -63,7 +63,7 @@ public final class CoreInfrastructureService {
     public static boolean open(ServerPlayer p,BlockPos pos) {
         if(!(p.level() instanceof ServerLevel level) || p.isSpectator() || p.distanceToSqr(
             pos.getX()+0.5,pos.getY()+0.5,pos.getZ()+0.5)>64)return false;
-        UUID team=placedOwner(level,pos);
+        UUID team=owner(level,pos);
         var a=RoglerTeamWarsMod.assignmentFor(p);
         if(team==null || !a.validParty() || !team.equals(a.partyId())) return false;
         var inventory=CoreInfrastructureSavedData.get(p.getServer()).getOrCreate(team).inventory;

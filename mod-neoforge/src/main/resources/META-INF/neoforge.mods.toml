@@ -4,11 +4,11 @@ license="MIT"
 
 [[mods]]
 modId="roglerteamwars"
-version="0.5.1"
+version="0.5.2"
 displayName="Rogler TeamWars"
 authors="Rogler TeamWars contributors"
 description='''
-Rogler SMP TeamWars v0.5.1: team-owned nine-slot core inventory, bounded FE generation and upgrades, stable team controls, private FTB claims and core-only raiding.
+Rogler SMP TeamWars v0.5.2: industrial kinetic base core with Create starter shaft (16 RPM/256 SU), bounded FE, private inventory and first-steps guide.
 General destructive raids, separate chunk loader quotas, Xaero sync, and Sable integrations are not active.
 '''
 
@@ -38,4 +38,11 @@ modId="ftbchunks"
 type="required"
 versionRange="[2101.1.22,)"
 ordering="AFTER"
+side="BOTH"
+
+[[dependencies.roglerteamwars]]
+modId="create"
+type="required"
+versionRange="[6.0.10,6.1.0)"
+ordering="NONE"
 side="BOTH"

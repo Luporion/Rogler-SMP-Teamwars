@@ -5,6 +5,9 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dev.rogler.teamwars.core.base.BaseCoreLedger;
 import dev.rogler.teamwars.core.base.CoreUpgradePolicy;
 import dev.rogler.teamwars.core.base.CorePowerPolicy;
+import dev.rogler.teamwars.core.base.CoreKineticPolicy;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import dev.rogler.teamwars.neoforge.RoglerTeamWarsMod;
 import dev.rogler.teamwars.neoforge.protection.BaseProtectionSavedData;
 import dev.rogler.teamwars.neoforge.raid.RaidService;
@@ -56,9 +59,11 @@ public final class CoreUpgradeService {
         var rec=BaseProtectionSavedData.get(player.getServer()).team(a.partyId());
         int lvl=rec==null?0:rec.armorLevel;
         String next=lvl>=2?"MAX":CoreUpgradePolicy.diamondsForNext(lvl)+" diamonds + "+CoreUpgradePolicy.netheriteForNext(lvl)+" netherite ingots";
-        int energyLevel=CoreInfrastructureSavedData.get(player.getServer()).getOrCreate(a.partyId()).energyLevel;
+        var infra=CoreInfrastructureSavedData.get(player.getServer()).getOrCreate(a.partyId());
+        int energyLevel=infra.energyLevel;
         say(player,"Core armor tier "+lvl+"/2; raid HP "+CoreUpgradePolicy.maxHealth(lvl)+"; next armor cost: "+next
-            +" | energy tier "+energyLevel+"/2, "+RoglerTeamWarsMod.powerConfig().rate(energyLevel)+" FE/t.");
+            +" | energy tier "+energyLevel+"/2, "+RoglerTeamWarsMod.powerConfig().rate(energyLevel)+" FE/t"
+            +" | Create drive "+(infra.createLevel>0?"16 RPM / 256 SU":"not installed")+".");
         return Command.SINGLE_SUCCESS;
     }
     public static int buyArmor(CommandSourceStack source) throws CommandSyntaxException {
@@ -80,6 +85,30 @@ public final class CoreUpgradeService {
         return Command.SINGLE_SUCCESS;
     }
     /** One bounded utility upgrade at a time; no creative purchases or raid-time modifications. */
+    /** Buy one real Create kinetic generator: 16 rpm * 16 capacity = 256 SU. */
+    public static int buyCreate(CommandSourceStack source) throws CommandSyntaxException {
+        ServerPlayer p=source.getPlayerOrException();var core=ownPlaced(p);
+        if(core==null){say(p,"Your placed, loaded core must be within 8 blocks.");return 0;}
+        var record=CoreInfrastructureSavedData.get(p.getServer()).getOrCreate(core.teamId());
+        Item alloy=BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath("create","andesite_alloy"));
+        Item shaft=BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath("create","shaft"));
+        if(alloy==Items.AIR || shaft==Items.AIR){say(p,"Create material registry unavailable.");return 0;}
+        if(!CoreKineticPolicy.canUpgrade(record.createLevel,count(p,alloy),count(p,shaft),true,
+            RaidService.active(p.getServer(),core.teamId()),!p.isCreative()&&!p.isSpectator())){
+            say(p,"Create drive costs 16 Andesite Alloy + 8 Shafts; no upgrades during raids.");return 0;
+        }
+        consume(p,alloy,CoreKineticPolicy.ALLOY_COST);
+        consume(p,shaft,CoreKineticPolicy.SHAFT_COST);
+        record.createLevel=1;
+        // Existing TeamRecord marks SavedData dirty via inventory? Ensure persistence explicitly.
+        CoreInfrastructureSavedData.get(p.getServer()).setDirty();
+        var loc=core.location();
+        var be=p.getServer().overworld().getBlockEntity(new BlockPos(loc.x(),loc.y(),loc.z()));
+        if(be instanceof CoreKineticBlockEntity kinetic) kinetic.refreshEngine();
+        say(p,"Create starter drive activated: 16 RPM / 256 SU. Build additional generation soon!");
+        return Command.SINGLE_SUCCESS;
+    }
+
     public static int buyEnergy(CommandSourceStack source) throws CommandSyntaxException {
         ServerPlayer p=source.getPlayerOrException();var core=ownPlaced(p);
         if(core==null) {say(p,"Your placed, loaded core must be within 8 blocks.");return 0;}

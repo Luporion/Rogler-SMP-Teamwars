@@ -25,6 +25,7 @@ public final class CoreInfrastructureSavedData extends SavedData {
         public final UUID team;
         public final CoreInventory inventory;
         public int energyLevel;
+        public int createLevel;
         private int storedFE;
         TeamRecord(UUID id) { team = id; inventory = new CoreInventory(id); }
         public int energy() { return storedFE; }
@@ -85,7 +86,7 @@ public final class CoreInfrastructureSavedData extends SavedData {
         TeamRecord old=records.remove(from);
         records.remove(to);
         if(old!=null) {
-            TeamRecord neo=new TeamRecord(to);neo.energyLevel=old.energyLevel;neo.storedFE=old.storedFE;
+            TeamRecord neo=new TeamRecord(to);neo.energyLevel=old.energyLevel;neo.createLevel=old.createLevel;neo.storedFE=old.storedFE;
             for(int i=0;i<CorePowerPolicy.SLOTS;i++)neo.inventory.setItem(i,old.inventory.getItem(i).copy());
             records.put(to,neo);
         }
@@ -102,6 +103,7 @@ public final class CoreInfrastructureSavedData extends SavedData {
             if (!row.hasUUID("Id")) continue;
             UUID id=row.getUUID("Id");TeamRecord r=data.getOrCreate(id);
             r.energyLevel=Math.max(0,Math.min(CorePowerPolicy.MAX_LEVEL,row.getInt("EnergyLevel")));
+            r.createLevel=Math.max(0,Math.min(1,row.getInt("CreateLevel")));
             r.storedFE=CorePowerPolicy.clampEnergy(row.getInt("StoredFE"));
             for(Tag item:row.getList("Items",Tag.TAG_COMPOUND)) {
                 CompoundTag entry=(CompoundTag)item;
@@ -116,7 +118,7 @@ public final class CoreInfrastructureSavedData extends SavedData {
         ListTag teams=new ListTag();
         for(var r:records.values()) {
             CompoundTag row=new CompoundTag();row.putUUID("Id",r.team);
-            row.putInt("EnergyLevel",r.energyLevel);row.putInt("StoredFE",r.storedFE);
+            row.putInt("EnergyLevel",r.energyLevel);row.putInt("CreateLevel",r.createLevel);row.putInt("StoredFE",r.storedFE);
             ListTag items=new ListTag();
             for(int i=0;i<CorePowerPolicy.SLOTS;i++) {
                 ItemStack stack=r.inventory.getItem(i);

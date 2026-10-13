@@ -1,3 +1,9 @@
+# v0.5.2 source candidate (2026-10-13)
+
+Implemented industrial Base Core assets and real Create 6.0.10 kinetic generator (16 RPM / 256 SU, purchased), plus in-core tutorial and conservative book discovery. Changed sneak interaction so held connector items no longer pack core. Requires Create on both sides; Java policy tests pass, NeoForge CI and real in-game testing still pending. See `docs/releases/v0.5.2.md`, `docs/TEST_PLAN_v0.5.2.md`, and `docs/research/CORE_ONBOARDING.md`. AE2 ME-node/Drive and Sophisticated upgrade handlers remain deferred.
+
+---
+
 # Update 2026-10-12: v0.3.0 source candidate
 
 **Implemented in source, NOT yet tested in Minecraft:** FTB opt-in auto-claims 3×3 (privacy default OFF), native CoreGuard, persistent 24h first-base Grace, Creative unique Core item fix, recovery without resetting transport hour. Still pending CI compile and two-client PvP/explosion/FTB acceptance. Do not enable raids.

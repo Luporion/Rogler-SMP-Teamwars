@@ -1,3 +1,9 @@
+# Current v0.5.2 handover
+
+For new LLM sessions read `docs/releases/v0.5.2.md`, `docs/TEST_PLAN_v0.5.2.md`, and `docs/research/CORE_ONBOARDING.md` first. Current codebase uses Create 6.0.10 native kinetic generator API; Create is newly **required** in v0.5.2 (already present in the actual modpack). No Minecraft runtime claim before GitHub Actions and DEV-world test. Source ZIP does not mean compiled/verified JAR. Avoid name-based team ownership, blanket item capabilities, free infinite tech output, and irreversible world migrations.
+
+---
+
 # AGENTS.md — Binding collaboration rules for GPT-6, Codex and human contributors
 
 ## Mission and deadline

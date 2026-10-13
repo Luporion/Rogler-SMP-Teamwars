@@ -1,1 +1,14 @@
-{"variants":{"":{"model":"roglerteamwars:block/base_core"}}}
+{
+  "variants": {
+    "axis=x": {
+      "model": "roglerteamwars:block/base_core"
+    },
+    "axis=z": {
+      "model": "roglerteamwars:block/base_core",
+      "y": 90
+    },
+    "axis=y": {
+      "model": "roglerteamwars:block/base_core_y"
+    }
+  }
+}

@@ -1,0 +1,45 @@
+package dev.rogler.teamwars.neoforge.base;
+
+import com.simibubi.create.content.kinetics.base.GeneratingKineticBlockEntity;
+import dev.rogler.teamwars.core.base.CoreKineticPolicy;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.server.level.ServerLevel;
+import java.util.List;
+import java.util.UUID;
+
+/** Create 6.0.10 physical kinetic source; no misleading fake SU status.
+ *  Default unupgraded core produces 0 RPM, purchased starter drive 16 RPM/256 SU.
+ */
+public class CoreKineticBlockEntity extends GeneratingKineticBlockEntity {
+    public CoreKineticBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) { super(type,pos,state); }
+    private boolean enabled() {
+        if(!(level instanceof ServerLevel l))return false;
+        UUID team=CoreInfrastructureService.owner(l,worldPosition);
+        var data=team==null?null:CoreInfrastructureSavedData.get(l.getServer()).find(team);
+        return data!=null && data.createLevel>=1;
+    }
+    @Override public float getGeneratedSpeed() {return enabled()?CoreKineticPolicy.RPM:0;}
+    @Override public void initialize() {
+        super.initialize();
+        if(!hasSource() || getGeneratedSpeed()>getTheoreticalSpeed())updateGeneratedRotation();
+    }
+    public void refreshEngine() {
+        if(level!=null && !level.isClientSide) {
+            updateGeneratedRotation();
+            notifyStressCapacityChange(CoreKineticPolicy.CAPACITY_PER_RPM);
+            setChanged();
+        }
+    }
+    @Override public boolean addToGoggleTooltip(List<Component> tooltip,boolean sneaking) {
+        super.addToGoggleTooltip(tooltip,sneaking);
+        tooltip.add(Component.literal(enabled()
+            ? "TeamWars Startantrieb: 16 RPM / 256 SU – bald weitere Stromerzeugung bauen!"
+            : "TeamWars: Create-Startantrieb noch nicht gekauft (/teamwars base upgrade create)")
+            .withStyle(enabled()?ChatFormatting.AQUA:ChatFormatting.GRAY));
+        return true;
+    }
+}
