@@ -24,8 +24,16 @@ public final class BaseCoreRegistries {
         p -> new CoreKineticBlock(p),
         BlockBehaviour.Properties.of().strength(-1.0f, 3600000.0f).lightLevel(state -> 8).noOcclusion());
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CoreKineticBlockEntity>> CORE_BE =
-        BLOCK_ENTITIES.register("base_core",()->BlockEntityType.Builder.of(
-            (pos,state)->new CoreKineticBlockEntity(CORE_BE.get(),pos,state),CORE_BLOCK.get()).build(null));
+        BLOCK_ENTITIES.register("base_core", () -> BlockEntityType.Builder.of(
+            BaseCoreRegistries::createCoreEntity, CORE_BLOCK.get()).build(null));
+    // DeferredRegister constructs CORE_BE before the registered BlockEntityType exists.
+    // Look up its holder only when Minecraft actually creates the BlockEntity,
+    // never inside CORE_BE's own field initializer (illegal Java self-reference).
+    private static CoreKineticBlockEntity createCoreEntity(net.minecraft.core.BlockPos pos,
+                                                            net.minecraft.world.level.block.state.BlockState state) {
+        return new CoreKineticBlockEntity(CORE_BE.get(), pos, state);
+    }
+
     public static final DeferredItem<BaseCoreItem> CORE_ITEM = ITEMS.register("base_core",
         () -> new BaseCoreItem(CORE_BLOCK.get(), new Item.Properties().stacksTo(1).fireResistant()));
 
