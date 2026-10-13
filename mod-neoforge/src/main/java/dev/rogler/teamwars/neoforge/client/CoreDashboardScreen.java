@@ -10,7 +10,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
 /** Compact industrial hub. Drawn with vanilla GuiGraphics, no external UI library.
- * The real 9+36 inventory slots are always visible; pages replace chat walls.
+ * The real 27+36 inventory slots are always visible; pages replace chat walls.
  * All state-changing actions go through server-validated menu buttons.
  */
 public final class CoreDashboardScreen extends AbstractContainerScreen<CoreDashboardMenu> {
@@ -24,8 +24,8 @@ public final class CoreDashboardScreen extends AbstractContainerScreen<CoreDashb
     public CoreDashboardScreen(CoreDashboardMenu menu,Inventory inventory,Component title){
         super(menu,inventory,title);
         imageWidth=270;
-        imageHeight=268;
-        inventoryLabelY=174;
+        imageHeight=304;
+        inventoryLabelY=210;
     }
     @Override protected void init(){
         super.init();
@@ -59,7 +59,7 @@ public final class CoreDashboardScreen extends AbstractContainerScreen<CoreDashb
                 if(!books.isEmpty()){
                     bookIndex=Math.floorMod(bookIndex,books.size());
                     button("<",12,122,23,19,()->{bookIndex=Math.floorMod(bookIndex-1,books.size());selectTab(3);});
-                    button("Handbuch erhalten",40,122,183,19,()->action(CoreDashboardMenu.MANUAL_BASE+bookIndex));
+                    button("Buch tauschen (1 Buch)",40,122,183,19,()->action(CoreDashboardMenu.MANUAL_BASE+bookIndex));
                     button(">",228,122,29,19,()->{bookIndex=(bookIndex+1)%books.size();selectTab(3);});
                 }
             }
@@ -126,6 +126,7 @@ public final class CoreDashboardScreen extends AbstractContainerScreen<CoreDashb
                 else {
                     text(g,"Handbuch "+(bookIndex+1)+"/"+manuals.size()+": "+manuals.get(Math.floorMod(bookIndex,manuals.size())).getKey(),13,99,COPPER);
                     text(g,manuals.get(Math.floorMod(bookIndex,manuals.size())).getValue().toString(),13,110,MUTED);
+                    // Payment requirement is also stated on the button.
                 }
             }
             case 4 -> {
@@ -160,12 +161,12 @@ public final class CoreDashboardScreen extends AbstractContainerScreen<CoreDashb
         g.fill(leftPos+7,topPos+6,leftPos+263,topPos+21,0xFF253946);
         text(g,"ROGLER  //  BASIS-KERN",13,10,COPPER);
         drawPanel(g);
-        text(g,"TEAM-INVENTAR (9)",51,144,CYAN);
-        text(g,"SPIELERINVENTAR",51,174,MUTED);
-        for(int i=0;i<9;i++)slotBg(g,51+i*18,153);
-        for(int row=0;row<3;row++)for(int col=0;col<9;col++)slotBg(g,51+col*18,185+row*18);
-        for(int col=0;col<9;col++)slotBg(g,51+col*18,243);
-        text(g,"v0.5.3",213,264,MUTED);
+        text(g,"TEAM-INVENTAR (27)",51,144,CYAN);
+        text(g,"SPIELERINVENTAR",51,210,MUTED);
+        for(int row=0;row<3;row++)for(int col=0;col<9;col++)slotBg(g,51+col*18,153+row*18);
+        for(int row=0;row<3;row++)for(int col=0;col<9;col++)slotBg(g,51+col*18,221+row*18);
+        for(int col=0;col<9;col++)slotBg(g,51+col*18,279);
+        text(g,"v0.5.4",213,300,MUTED);
     }
     private void slotBg(GuiGraphics g,int x,int y){
         g.fill(leftPos+x-1,topPos+y-1,leftPos+x+17,topPos+y+17,0xFF485967);

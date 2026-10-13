@@ -18,7 +18,7 @@ import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 import java.util.UUID;
 
-/** Vanilla 9-slot owner-only GUI + read/extract-only NeoForge FE capability.
+/** Vanilla 27-slot owner-only GUI + read/extract-only NeoForge FE capability.
  * No unrestricted item capability: AE2/Create automation must not siphon enemy bases.
  */
 public final class CoreInfrastructureService {

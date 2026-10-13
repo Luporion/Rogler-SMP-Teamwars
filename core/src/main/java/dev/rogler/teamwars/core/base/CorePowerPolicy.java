@@ -4,7 +4,7 @@ package dev.rogler.teamwars.core.base;
 public final class CorePowerPolicy {
     private CorePowerPolicy() {}
     public static final int MAX_LEVEL = 2;
-    public static final int SLOTS = 9;
+    public static final int SLOTS = 27;
     public static final int MAX_FE = 20_000;
     public static final int MAX_EXTRACT_PER_CALL = 160;
 

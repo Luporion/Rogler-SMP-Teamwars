@@ -6,7 +6,7 @@ public final class CorePowerPolicyTests {
     private static void yes(boolean actual) { assert actual; checks++; }
     private static void no(boolean actual) { assert !actual; checks++; }
     public static void main(String[] args) {
-        eq(9,CorePowerPolicy.SLOTS);
+        eq(27,CorePowerPolicy.SLOTS);
         eq(20,CorePowerPolicy.generationPerTick(0));
         eq(40,CorePowerPolicy.generationPerTick(1));
         eq(80,CorePowerPolicy.generationPerTick(2));

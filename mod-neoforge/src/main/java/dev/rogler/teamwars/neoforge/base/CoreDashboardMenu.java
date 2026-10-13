@@ -35,7 +35,7 @@ public final class CoreDashboardMenu extends AbstractContainerMenu {
 
     /** Client factory: no server-only team identity or SavedData crosses the network. */
     public CoreDashboardMenu(int id, Inventory playerInventory) {
-        this(id, playerInventory, new SimpleContainer(9), new SimpleContainerData(DATA_COUNT), false);
+        this(id, playerInventory, new SimpleContainer(dev.rogler.teamwars.core.base.CorePowerPolicy.SLOTS), new SimpleContainerData(DATA_COUNT), false);
     }
     public CoreDashboardMenu(int id, Inventory playerInventory, Container core, UUID team) {
         this(id, playerInventory, core, new LiveData((ServerPlayer)playerInventory.player,team), true);
@@ -43,15 +43,16 @@ public final class CoreDashboardMenu extends AbstractContainerMenu {
     private CoreDashboardMenu(int id, Inventory playerInventory, Container core,
                               ContainerData data, boolean serverMenu) {
         super(BaseCoreRegistries.CORE_DASHBOARD.get(),id);
-        checkContainerSize(core,9);
+        checkContainerSize(core,dev.rogler.teamwars.core.base.CorePowerPolicy.SLOTS);
         this.core=core;
         this.data=data;
         this.serverMenu=serverMenu;
         // Shared core storage + normal player inventory are always displayed at the bottom.
-        for(int i=0;i<9;i++)addSlot(new Slot(core,i,51+i*18,153));
         for(int y=0;y<3;y++)for(int x=0;x<9;x++)
-            addSlot(new Slot(playerInventory,x+y*9+9,51+x*18,185+y*18));
-        for(int x=0;x<9;x++)addSlot(new Slot(playerInventory,x,51+x*18,243));
+            addSlot(new Slot(core,x+y*9,51+x*18,153+y*18));
+        for(int y=0;y<3;y++)for(int x=0;x<9;x++)
+            addSlot(new Slot(playerInventory,x+y*9+9,51+x*18,221+y*18));
+        for(int x=0;x<9;x++)addSlot(new Slot(playerInventory,x,51+x*18,279));
         addDataSlots(data);
     }
     public int value(int index){return data.get(index);}
@@ -62,8 +63,9 @@ public final class CoreDashboardMenu extends AbstractContainerMenu {
         Slot slot=slots.get(index);
         if(!slot.hasItem())return result;
         ItemStack stack=slot.getItem();result=stack.copy();
-        if(index<9){if(!moveItemStackTo(stack,9,45,true))return ItemStack.EMPTY;}
-        else if(!moveItemStackTo(stack,0,9,false))return ItemStack.EMPTY;
+        if(index<dev.rogler.teamwars.core.base.CorePowerPolicy.SLOTS){
+            if(!moveItemStackTo(stack,dev.rogler.teamwars.core.base.CorePowerPolicy.SLOTS,slots.size(),true))return ItemStack.EMPTY;}
+        else if(!moveItemStackTo(stack,0,dev.rogler.teamwars.core.base.CorePowerPolicy.SLOTS,false))return ItemStack.EMPTY;
         if(stack.isEmpty())slot.setByPlayer(ItemStack.EMPTY);else slot.setChanged();
         return result;
     }

@@ -17,7 +17,7 @@ public final class CoreIntegrationPolicy {
         };
     }
     /** Capability providers cannot identify a requesting team: never expose private
-     * 9-slot storage to a global item capability until caller security is solved. */
+     * 27-slot storage to a global item capability until caller security is solved. */
     public static boolean itemAutomationAllowed(boolean callerIdentityVerified) {
         return callerIdentityVerified;
     }

@@ -16,7 +16,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.saveddata.SavedData;
 import java.util.*;
 
-/** Persistent TEAM-owned 9-slot inventory and FE buffer. No block-entity duplication
+/** Persistent TEAM-owned 27-slot inventory and FE buffer. No block-entity duplication
  * during core pack, ESCROW, relocation or raid defeat. Server-thread access only.
  */
 public final class CoreInfrastructureSavedData extends SavedData {

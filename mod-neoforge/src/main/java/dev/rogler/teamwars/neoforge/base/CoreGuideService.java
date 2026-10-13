@@ -80,10 +80,29 @@ public final class CoreGuideService {
         // Avoid giving unbounded duplicates when the same book is already carried.
         for(int i=0;i<p.getInventory().getContainerSize();i++)
             if(p.getInventory().getItem(i).is(item)) {say(p,"Du traegst dieses Handbuch bereits.");return 0;}
-        ItemStack stack=new ItemStack(item);
-        if(!p.getInventory().add(stack)) {say(p,"Inventar voll. Bitte erst einen Slot freimachen.");return 0;}
+        // Exchange one ordinary Minecraft BOOK for one installed mod manual. The
+        // server checks both payment and output space before mutating inventory.
+        int bookSlot=-1;
+        for(int i=0;i<p.getInventory().getContainerSize();i++) {
+            if(p.getInventory().getItem(i).is(Items.BOOK)) { bookSlot=i; break; }
+        }
+        if(bookSlot<0){say(p,"Du brauchst 1 normales Minecraft-Buch pro Handbuch.");return 0;}
+        // One input book disappears, leaving at least one slot available unless
+        // the paid stack has count > 1. Non-stackable output requires free space.
+        boolean room=p.getInventory().getFreeSlot()>=0 || p.getInventory().getItem(bookSlot).getCount()==1;
+        if(!dev.rogler.teamwars.core.base.CoreManualTradePolicy.mayTrade(true,false,1,room)) {
+            say(p,"Inventar voll. Bitte einen freien Platz schaffen.");return 0;
+        }
+        ItemStack payment=p.getInventory().getItem(bookSlot);
+        payment.shrink(1);
+        ItemStack manual=new ItemStack(item);
+        if(!p.getInventory().add(manual)) {
+            // No item is granted; refund the book on any insertion failure.
+            p.getInventory().add(new ItemStack(Items.BOOK));
+            say(p,"Handbuch konnte nicht eingelegt werden; Buch erstattet.");return 0;
+        }
         p.getInventory().setChanged();p.containerMenu.broadcastChanges();
-        say(p,"Erhalten: "+id);
+        say(p,"1 Buch eingetauscht gegen "+id);
         return Command.SINGLE_SUCCESS;
     }
 }
