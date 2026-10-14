@@ -15,6 +15,8 @@ public final class BaseProtectionSavedData extends SavedData {
         public final UUID team;
         public long graceUntilMillis;
         public int armorLevel;
+        /** Actual placed core axis for renderer/kinetics after safe repair; defaults to X on old worlds. */
+        public String coreAxis="x";
         public final Set<Long> createdClaims = new HashSet<>();
         Record(UUID team, long graceUntilMillis) { this.team=team;this.graceUntilMillis=graceUntilMillis; }
     }
@@ -44,6 +46,7 @@ public final class BaseProtectionSavedData extends SavedData {
         Record adopted = new Record(to, until);
         // Paid core armor belongs to the persistent TeamWars identity. Do not lose
         // upgrades when an administrator explicitly adopts a confirmed orphan.
+        adopted.coreAxis = previous == null ? (next == null ? "x" : next.coreAxis) : previous.coreAxis;
         adopted.armorLevel = Math.max(previous == null ? 0 : previous.armorLevel,
             next == null ? 0 : next.armorLevel);
         teams.put(to, adopted);
@@ -51,6 +54,12 @@ public final class BaseProtectionSavedData extends SavedData {
         setDirty();
     }
 
+    public void setCoreAxis(UUID id,String axis) {
+        if(!axis.equals("x") && !axis.equals("y") && !axis.equals("z"))
+            throw new IllegalArgumentException("Invalid axis");
+        Record r=ensure(id,0,0);
+        if(!r.coreAxis.equals(axis)){r.coreAxis=axis;setDirty();}
+    }
     public void setGrace(UUID id,long until) {
         Record r=ensure(id,0,0);r.graceUntilMillis=until;setDirty();
     }
@@ -75,6 +84,8 @@ public final class BaseProtectionSavedData extends SavedData {
             CompoundTag row=(CompoundTag)rowTag;
             UUID id=row.getUUID("Id");Record r=new Record(id,row.getLong("GraceUntil"));
             r.armorLevel=Math.max(0,Math.min(2,row.getInt("ArmorLevel")));
+            String axis=row.getString("CoreAxis");
+            r.coreAxis=(axis.equals("x")||axis.equals("y")||axis.equals("z"))?axis:"x";
             for(long key:row.getLongArray("FTBClaims"))r.createdClaims.add(key);
             data.teams.put(id,r);
         }
@@ -84,7 +95,7 @@ public final class BaseProtectionSavedData extends SavedData {
         ListTag list=new ListTag();
         for(Record r:teams.values()) {
             CompoundTag e=new CompoundTag();e.putUUID("Id",r.team);
-            e.putLong("GraceUntil",r.graceUntilMillis);e.putInt("ArmorLevel",r.armorLevel);
+            e.putLong("GraceUntil",r.graceUntilMillis);e.putInt("ArmorLevel",r.armorLevel);e.putString("CoreAxis",r.coreAxis);
             e.putLongArray("FTBClaims",r.createdClaims.stream().mapToLong(Long::longValue).toArray());
             list.add(e);
         }

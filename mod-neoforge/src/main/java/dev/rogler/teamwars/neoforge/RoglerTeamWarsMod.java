@@ -39,7 +39,7 @@ import java.nio.file.Path;
 @Mod(RoglerTeamWarsMod.MOD_ID)
 public final class RoglerTeamWarsMod {
     public static final String MOD_ID = "roglerteamwars";
-    public static final String VERSION = "0.5.3";
+    public static final String VERSION = "0.6.0";
     private static RoglerTeamWarsMod INSTANCE;
     private BaseCoreConfig baseConfig = BaseCoreConfig.DEFAULT;
     private dev.rogler.teamwars.neoforge.base.CorePowerConfig powerConfig = dev.rogler.teamwars.neoforge.base.CorePowerConfig.DEFAULT;
@@ -86,6 +86,7 @@ public final class RoglerTeamWarsMod {
         catch(IOException e) {powerConfig=dev.rogler.teamwars.neoforge.base.CorePowerConfig.DEFAULT;
             RoglerTeamWarsLogger.warn("Invalid FE configuration; safe defaults: "+e.getMessage());}
         scoreboard.refresh(activeServer, settings);
+        dev.rogler.teamwars.neoforge.protection.BaseGuardService.verifyPhysicalCores(activeServer);
         dev.rogler.teamwars.neoforge.protection.BaseGuardService.reconcile(activeServer);
         RoglerTeamWarsLogger.info("v" + VERSION + " loaded. FTB Teams is authoritative. "
             + "Team name tags: " + (settings.nametagsForTeammatesOnly() ? "teammates only" : "vanilla")
@@ -116,6 +117,10 @@ public final class RoglerTeamWarsMod {
             BaseCoreService.cleanupCreativeGhosts(activeServer);
             dev.rogler.teamwars.neoforge.raid.RaidService.tick(activeServer);
         }
+        // Recovery is tick-budget bounded: 2-4 registered teams, every 20 ticks,
+        // no force-loading and no cross-team block edits.
+        if (activeServer.getTickCount() % 20 == 0)
+            dev.rogler.teamwars.neoforge.protection.BaseGuardService.verifyPhysicalCores(activeServer);
         if (activeServer.getTickCount() % 1200 == 0)
             dev.rogler.teamwars.neoforge.protection.BaseGuardService.reconcile(activeServer);
     }
@@ -282,6 +287,8 @@ public final class RoglerTeamWarsMod {
                     .then(Commands.argument("player", EntityArgument.player())
                         .executes(ctx -> dev.rogler.teamwars.neoforge.raid.RaidService.stop(ctx.getSource(),
                             EntityArgument.getPlayer(ctx,"player")))))
+                .then(Commands.literal("coreaudit").executes(ctx ->
+                    dev.rogler.teamwars.neoforge.protection.BaseGuardService.integrityAudit(ctx.getSource())))
                 .then(Commands.literal("orphanlist").executes(ctx ->
                     dev.rogler.teamwars.neoforge.protection.BaseGuardService.orphanList(ctx.getSource())))
                 .then(Commands.literal("adoptcore")
@@ -332,6 +339,7 @@ public final class RoglerTeamWarsMod {
                     try { powerConfig=dev.rogler.teamwars.neoforge.base.CorePowerConfig.load(server); }
                     catch(IOException e) { RoglerTeamWarsLogger.warn("FE reload refused: "+e.getMessage()); }
                     scoreboard.refresh(server, settings);
+                    dev.rogler.teamwars.neoforge.protection.BaseGuardService.verifyPhysicalCores(server);
                     dev.rogler.teamwars.neoforge.protection.BaseGuardService.reconcile(server);
                     ctx.getSource().sendSuccess(() -> Component.literal("TeamWars config: " + configResult), false);
                     return Command.SINGLE_SUCCESS;

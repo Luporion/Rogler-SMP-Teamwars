@@ -120,6 +120,8 @@ public final class BaseCoreItem extends BlockItem {
                 player.containerMenu.broadcastChanges();
             }
             dev.rogler.teamwars.neoforge.protection.BaseGuardService.placed(level, player, team, target);
+            dev.rogler.teamwars.neoforge.protection.BaseProtectionSavedData.get(level.getServer())
+                .setCoreAxis(team,level.getBlockState(target).getValue(CoreKineticBlock.AXIS).getName());
         }
         if (!result.consumesAction()) {
             player.displayClientMessage(Component.literal("[TeamWars] Placement blocked: check surface, protected claim or world border."), true);

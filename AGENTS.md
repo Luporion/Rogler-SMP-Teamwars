@@ -1,3 +1,9 @@
+# v0.6.0 critical handover
+
+**Must read:** `docs/releases/v0.6.0.md`, `docs/TEST_PLAN_v0.6.0.md`, `docs/LLM_HANDOVER_v0.6.0.md`. v0.6.0 implements a nuclear-bypass core integrity watchdog and a visible Create shaft aperture. No generic third-party nuclear immunity, map sync, voice chat or guaranteed production-readiness. Read CI and two-client tests before accepting.
+
+---
+
 # LATEST v0.5.3 GUI handover
 
 **Before editing** read `docs/releases/v0.5.3.md`, `docs/PROJECT_STATE_v0.5.3.md`, `docs/CORE_DASHBOARD_ARCHITECTURE.md`, `docs/TEST_PLAN_v0.5.3.md` and `docs/LLM_HANDOVER_v0.5.3.md`. v0.5.3 replaces chat floods with an owner-only server-authoritative core dashboard. `CoreInfrastructureSavedData` schema, FTB claims, raid gates and team ownership are unchanged. Build target 1.21.1 NeoForge 21.1.249 Create 6.0.10; GUI compile is NOT proven by pure Java tests.

@@ -8,6 +8,8 @@ import dev.rogler.teamwars.neoforge.teams.RoglerTeamWarsLogger;
 import dev.rogler.teamwars.neoforge.teams.FtbTeamLookup;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import dev.rogler.teamwars.core.base.CoreIntegrityPolicy;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -114,6 +116,101 @@ public final class BaseGuardService {
         if(r!=null)FtbClaimBridge.release(level,team,r,opSource(level.getServer(),actor.blockPosition()),saved);
         RoglerTeamWarsLogger.info("CORE_PROTECTION_PACK team="+team+" FTB claims released (best effort)");
     }
+    /**
+     * Compensating transaction for direct third-party world mutations (e.g. some modded
+     * nuclear weapons bypass ExplosionEvent and regular BreakEvent). Server tick ONLY;
+     * checks loaded chunks without force-loading and never overwrites a non-air block.
+     * If reconstruction is not possible, quarantine the bearer in ESCROW and release
+     * only our recorded FTB claims (with best-effort retries). No victory/score is awarded.
+     */
+    public static void verifyPhysicalCores(MinecraftServer server) {
+        BaseCoreSavedData db=cores(server);
+        BaseProtectionSavedData protections=BaseProtectionSavedData.get(server);
+        ServerLevel level=server.overworld();
+        for(var entry:java.util.List.copyOf(db.ledger().all())) {
+            UUID team=entry.teamId();
+            var rec=protections.team(team);
+            boolean placed=entry.mode()==BaseCoreLedger.Mode.PLACED && entry.location()!=null;
+            BlockPos pos=placed?new BlockPos(entry.location().x(),entry.location().y(),entry.location().z()):null;
+            boolean loaded=pos!=null && level.hasChunkAt(pos);
+            boolean physical=loaded && level.getBlockState(pos).is(BaseCoreRegistries.CORE_BLOCK.get());
+            boolean air=loaded && level.getBlockState(pos).isAir();
+            var action=CoreIntegrityPolicy.decide(placed,loaded,physical,air,
+                rec!=null && !rec.createdClaims.isEmpty());
+            if(action==CoreIntegrityPolicy.Action.HEALTHY && placed && physical && rec!=null) {
+                // Backfill orientation on v0.5.4 saves without optional CoreAxis.
+                protections.setCoreAxis(team,level.getBlockState(pos).getValue(CoreKineticBlock.AXIS).getName());
+            }
+            if(action==CoreIntegrityPolicy.Action.RESTORE_AIR){
+                try {
+                    Direction.Axis axis=Direction.Axis.X;
+                    if(rec!=null) axis=switch(rec.coreAxis){
+                        case "y" -> Direction.Axis.Y;case "z" -> Direction.Axis.Z;default -> Direction.Axis.X;
+                    };
+                    var state=BaseCoreRegistries.CORE_BLOCK.get().defaultBlockState()
+                        .setValue(CoreKineticBlock.AXIS,axis);
+                    if(level.getBlockState(pos).isAir() && level.setBlock(pos,state,3)
+                        && level.getBlockState(pos).is(BaseCoreRegistries.CORE_BLOCK.get())) {
+                        level.invalidateCapabilities(pos);
+                        if(level.getBlockEntity(pos) instanceof CoreKineticBlockEntity kinetic)
+                            kinetic.refreshEngine();
+                        RoglerTeamWarsLogger.warn("CORE_RESTORED_AFTER_EXTERNAL_REMOVAL team="+team
+                            +" pos="+pos+"; third-party mod bypassed normal protection hooks");
+                        notifyOwner(server,team,"Der Basis-Kern wurde nach einer externen Blockzerstoerung wiederhergestellt."
+                            +" Die Umgebung ist moeglicherweise beschaedigt; pruefe deine Basis.");
+                        continue;
+                    }
+                } catch(RuntimeException ex) {
+                    RoglerTeamWarsLogger.warn("CORE_RESTORE_FAILED team="+team+" "+ex.getMessage());
+                }
+                action=CoreIntegrityPolicy.Action.ESCROW_RELEASE;
+            }
+            if(action==CoreIntegrityPolicy.Action.ESCROW_RELEASE){
+                // Do not mutate the world/block or issue a replacement item. This is a
+                // persisted, explicit recovery state with a revoked placed location.
+                try {
+                    db.ledger().rescueMissingPlaced(team,entry.token(),entry.location());
+                    db.changed();
+                    RoglerTeamWarsLogger.warn("CORE_QUARANTINED_MISSING_BLOCK team="+team
+                        +" at="+pos+"; team may recover via /teamwars base recover");
+                    notifyOwner(server,team,"Dein Basis-Kern fehlt nach einer externen Weltenaenderung."
+                        +" Er liegt sicher im Recovery-Status. /teamwars base recover");
+                } catch(IllegalStateException ex){
+                    RoglerTeamWarsLogger.warn("CORE_QUARANTINE_FAILED team="+team+" "+ex.getMessage());
+                }
+                if(rec!=null) FtbClaimBridge.release(level,team,rec,opSource(server,pos),protections);
+            } else if(action==CoreIntegrityPolicy.Action.RELEASE_STALE_CLAIMS) {
+                // Repeated retries if FTB is temporarily unavailable. Never unclaim a
+                // manually placed chunk or a chunk now owned by a different team.
+                FtbClaimBridge.release(level,team,rec,opSource(server,BlockPos.ZERO),protections);
+            }
+        }
+    }
+    private static void notifyOwner(MinecraftServer server,UUID team,String message) {
+        for(ServerPlayer p:server.getPlayerList().getPlayers()) {
+            var a=RoglerTeamWarsMod.assignmentFor(p);
+            if(a.validParty() && team.equals(a.partyId()))
+                p.sendSystemMessage(Component.literal("[TeamWars] "+message));
+        }
+    }
+    /** OP check with count only; detailed positions are deliberately not sent to normal players. */
+    public static int integrityAudit(CommandSourceStack src) {
+        verifyPhysicalCores(src.getServer());
+        int live=0,escrow=0,pending=0;
+        var protections=BaseProtectionSavedData.get(src.getServer());
+        for(var e:cores(src.getServer()).ledger().all()) {
+            if(e.mode()==BaseCoreLedger.Mode.PLACED)live++;
+            if(e.mode()==BaseCoreLedger.Mode.ESCROW)escrow++;
+            if(e.mode()!=BaseCoreLedger.Mode.PLACED) {
+                var rec=protections.team(e.teamId());
+                if(rec!=null)pending+=rec.createdClaims.size();
+            }
+        }
+        final int a=live,b=escrow,c=pending;
+        src.sendSuccess(()->Component.literal("[TeamWars] Core integrity: placed="+a
+            +" escrow="+b+" stale auto-claim records awaiting FTB cleanup="+c),false);
+        return Command.SINGLE_SUCCESS;
+    }
     private static final Set<UUID> warnedOrphans = new HashSet<>();
     /** Rebuild missing claim ownership for worlds created under older v0.2.x versions. */
     public static void reconcile(MinecraftServer server) {
@@ -128,6 +225,8 @@ public final class BaseGuardService {
                     +e.teamId()+". Do not assume same-name party owns it. /teamwars admin orphanlist");
             if(cfg.autoFtbClaims() && state==FtbTeamLookup.State.EXISTS) {
                 BlockPos at=new BlockPos(e.location().x(),e.location().y(),e.location().z());
+                if(server.overworld().hasChunkAt(at) && !server.overworld().getBlockState(at)
+                    .is(BaseCoreRegistries.CORE_BLOCK.get())) continue; // watchdog first; no ghost reclaims
                 FtbClaimBridge.claim(server.overworld(),e.teamId(),at.getX()>>4,at.getZ()>>4,
                     cfg.claimRadiusChunks(),r,opSource(server,at),saved);
             }

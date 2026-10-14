@@ -166,7 +166,7 @@ public final class CoreDashboardScreen extends AbstractContainerScreen<CoreDashb
         for(int row=0;row<3;row++)for(int col=0;col<9;col++)slotBg(g,51+col*18,153+row*18);
         for(int row=0;row<3;row++)for(int col=0;col<9;col++)slotBg(g,51+col*18,221+row*18);
         for(int col=0;col<9;col++)slotBg(g,51+col*18,279);
-        text(g,"v0.5.4",213,300,MUTED);
+        text(g,"v"+dev.rogler.teamwars.neoforge.RoglerTeamWarsMod.VERSION,213,300,MUTED);
     }
     private void slotBg(GuiGraphics g,int x,int y){
         g.fill(leftPos+x-1,topPos+y-1,leftPos+x+17,topPos+y+17,0xFF485967);
