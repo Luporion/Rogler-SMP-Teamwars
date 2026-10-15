@@ -1,6 +1,7 @@
 package dev.rogler.teamwars.neoforge.protection;
 
 import dev.rogler.teamwars.neoforge.teams.RoglerTeamWarsLogger;
+import dev.rogler.teamwars.core.base.CoreClaimCleanupPolicy;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -14,6 +15,8 @@ import java.util.*;
 public final class FtbClaimBridge {
     private FtbClaimBridge() {}
     private static final Set<String> loggedFailures=new HashSet<>();
+    /** Avoid one error stack/log per server second while FTB is unavailable. */
+    private static final Map<UUID,String> loggedReleaseFailures=new HashMap<>();
     public record Result(int created,int existing,int failed,String detail) {}
     private record Api(Object manager,Object teamData,Object team,Class<?> chunkDimPos,Method getChunk,Method claim,Method unclaim) {}
     private static Object call(Object obj,String name,Object... args) throws ReflectiveOperationException {
@@ -139,14 +142,24 @@ public final class FtbClaimBridge {
             for(long k:new HashSet<>(record.createdClaims)) {
                 Object cdp=pos(api,level,BaseProtectionSavedData.x(k),BaseProtectionSavedData.z(k));
                 Object existing=api.getChunk().invoke(api.manager(),cdp);
-                if(existing==null) {record.createdClaims.remove(k);saved.changed();continue;}
-                if(!owner(existing).equals(team))continue; // NEVER unclaim enemy ownership
+                // Obsolete receipt from a previously removed/foreign-controlled
+                // claim must not remain as a permanent ghost. Never unclaim foreign teams.
+                boolean exists = existing != null;
+                boolean stillOwned = exists && team.equals(owner(existing));
+                if (CoreClaimCleanupPolicy.decide(exists, stillOwned)
+                    == CoreClaimCleanupPolicy.Action.FORGET_OBSOLETE_RECEIPT) {
+                    record.createdClaims.remove(k); saved.changed(); continue;
+                }
                 if(success(api.unclaim().invoke(api.teamData(),src,cdp,false,false))) {
                     record.createdClaims.remove(k);saved.changed();
                 }
             }
+            loggedReleaseFailures.remove(team);
         } catch(ReflectiveOperationException | RuntimeException e) {
-            RoglerTeamWarsLogger.warn("FTB claim release incomplete for team "+team+": "+e.getMessage());
+            String message=e.getClass().getSimpleName()+": "+e.getMessage();
+            if(!message.equals(loggedReleaseFailures.put(team,message)))
+                RoglerTeamWarsLogger.warn("FTB claim release incomplete for team "+team+": "+message
+                    +"; pending receipts are preserved for a later retry");
         }
     }
 }

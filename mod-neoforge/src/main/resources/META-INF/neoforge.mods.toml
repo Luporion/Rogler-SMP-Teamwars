@@ -4,11 +4,11 @@ license="MIT"
 
 [[mods]]
 modId="roglerteamwars"
-version="0.6.1"
+version="0.6.2"
 displayName="Rogler Core"
 authors="Rogler Core contributors"
 description='''
-Rogler Core v0.6.1: backwards-compatible industrial base core, FTB Teams and Chunks, Create shaft/FE, protected raids and optional Warium FusionBlast startup recovery.
+Rogler Core v0.6.2: event-local explosion protection index, bounded core recovery, safe FTB claim cleanup, diagnostics, industrial Create/FE base and optional Warium FusionBlast startup recovery.
 The Warium quarantine is OFF by default; it does not rewrite entity regions or guarantee repair of malformed .mca files.
 '''
 

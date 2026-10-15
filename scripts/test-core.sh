@@ -22,3 +22,7 @@ javac --release 21 -encoding UTF-8 -cp build/classes -d build/classes \
   mod-neoforge/src/main/java/dev/rogler/teamwars/neoforge/teams/TeamWarsSettings.java \
   mod-neoforge/src/test/java/dev/rogler/teamwars/neoforge/teams/TeamWarsSettingsTests.java
 java -ea -cp build/classes dev.rogler.teamwars.neoforge.teams.TeamWarsSettingsTests
+
+java -ea -cp build/classes dev.rogler.teamwars.core.base.CoreExplosionIndexTests
+java -ea -cp build/classes dev.rogler.teamwars.core.base.CoreRecoveryPolicyTests
+java -ea -cp build/classes dev.rogler.teamwars.core.base.CoreClaimCleanupPolicyTests

@@ -44,3 +44,10 @@ $settingsFiles = @(
 if ($LASTEXITCODE -ne 0) { throw "settings javac failed: $LASTEXITCODE" }
 & java -ea -cp build/classes dev.rogler.teamwars.neoforge.teams.TeamWarsSettingsTests
 if ($LASTEXITCODE -ne 0) { throw "settings tests failed: $LASTEXITCODE" }
+
+& java -ea -cp build/classes dev.rogler.teamwars.core.base.CoreExplosionIndexTests
+if ($LASTEXITCODE -ne 0) { throw "explosion index tests failed: $LASTEXITCODE" }
+& java -ea -cp build/classes dev.rogler.teamwars.core.base.CoreRecoveryPolicyTests
+if ($LASTEXITCODE -ne 0) { throw "recovery policy tests failed: $LASTEXITCODE" }
+& java -ea -cp build/classes dev.rogler.teamwars.core.base.CoreClaimCleanupPolicyTests
+if ($LASTEXITCODE -ne 0) { throw "claim receipt tests failed: $LASTEXITCODE" }

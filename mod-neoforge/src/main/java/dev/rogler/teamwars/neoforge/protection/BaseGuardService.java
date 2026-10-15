@@ -10,6 +10,8 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import dev.rogler.teamwars.core.base.CoreIntegrityPolicy;
+import dev.rogler.teamwars.core.base.CoreExplosionIndex;
+import dev.rogler.teamwars.core.base.CoreRecoveryPolicy;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -26,6 +28,22 @@ import java.util.*;
  * a full FTB permission audit; Sable/contraptions and other mod block edits need separate tests. */
 public final class BaseGuardService {
     private BaseGuardService() {}
+    // Same logical server thread as normal Minecraft world updates. Never cache a
+    // protection index across explosions: placement/relocation must take effect immediately.
+    private static CoreRecoveryPolicy recoveryPolicy = new CoreRecoveryPolicy();
+    private static long measuredExplosions, measuredPositions, preventedBlocks;
+    private static long totalHandlerNanos, maxHandlerNanos, slowHandlers, lastSlowLogTick = Long.MIN_VALUE;
+    private static final long SLOW_HANDLER_NS = 25_000_000L;
+    private static final long LOG_INTERVAL_TICKS = 1200L;
+
+    /** Discard volatile observations when an integrated/dedicated server is switched. */
+    public static void resetRuntimeState() {
+        recoveryPolicy = new CoreRecoveryPolicy();
+        measuredExplosions = measuredPositions = preventedBlocks = 0L;
+        totalHandlerNanos = maxHandlerNanos = slowHandlers = 0L;
+        lastSlowLogTick = Long.MIN_VALUE;
+        warnedOrphans.clear();
+    }
     private static BaseCoreSavedData cores(MinecraftServer s) {
         BaseCoreConfig cfg=RoglerTeamWarsMod.baseConfig();
         return BaseCoreSavedData.get(s,cfg.zone(s),cfg.carrySeconds());
@@ -80,9 +98,53 @@ public final class BaseGuardService {
         }
     }
     public static void onExplosion(ExplosionEvent.Detonate ev) {
-        if(!(ev.getLevel() instanceof ServerLevel level))return;
-        // v0.4.0 raid only allows direct valid core hits: never let TNT destroy claimed base blocks.
-        ev.getAffectedBlocks().removeIf(p->owner(level.getServer(),level,p)!=null);
+        if (!(ev.getLevel() instanceof ServerLevel level) || level != level.getServer().overworld()
+            || !RoglerTeamWarsMod.protectionConfig().baseGuard()) return;
+        var affected = ev.getAffectedBlocks();
+        if (affected.isEmpty()) return;
+        long began = System.nanoTime();
+        // Build the exact 3x3/7x7 chunk projection ONCE for this event. No world or
+        // FTB query inside the affected-block loop, no forced chunk loads, no stale cache.
+        int radius = RoglerTeamWarsMod.protectionConfig().claimRadiusChunks();
+        List<CoreExplosionIndex.Center> centers = new ArrayList<>();
+        for (var entry : cores(level.getServer()).ledger().all()) {
+            if (entry.mode() != BaseCoreLedger.Mode.PLACED || entry.location() == null) continue;
+            var at = entry.location();
+            if (!"minecraft:overworld".equals(at.dimension())) continue;
+            centers.add(new CoreExplosionIndex.Center(entry.teamId(), at.x(), at.z()));
+        }
+        CoreExplosionIndex index = CoreExplosionIndex.build(centers, radius);
+        int before = affected.size();
+        if (index.coveredChunks() != 0)
+            affected.removeIf(p -> index.protectsBlock(p.getX(), p.getZ()));
+        long elapsed = System.nanoTime() - began;
+        measuredExplosions++;
+        measuredPositions += before;
+        preventedBlocks += before - affected.size();
+        totalHandlerNanos += elapsed;
+        maxHandlerNanos = Math.max(maxHandlerNanos, elapsed);
+        if (elapsed >= SLOW_HANDLER_NS) {
+            slowHandlers++;
+            long tick = level.getServer().getTickCount();
+            if (lastSlowLogTick == Long.MIN_VALUE || tick - lastSlowLogTick >= LOG_INTERVAL_TICKS) {
+                lastSlowLogTick = tick;
+                RoglerTeamWarsLogger.warn("EXPLOSION_GUARD_SLOW handler_ms=" + (elapsed / 1_000_000L)
+                    + " affected=" + before + " protected=" + (before - affected.size())
+                    + " active_cores=" + centers.size() + " protected_chunks=" + index.coveredChunks()
+                    + " (excludes Level.explode and third-party callback time)");
+            }
+        }
+    }
+    /** Read-only, bounded counters; timings cover ONLY this handler, not the entire explosion. */
+    public static int explosionStats(CommandSourceStack src) {
+        long n=measuredExplosions, pos=measuredPositions, avoided=preventedBlocks;
+        long averageMicros=n==0?0:(totalHandlerNanos/n)/1000L;
+        long worstMicros=maxHandlerNanos/1000L;
+        src.sendSuccess(()->Component.literal("[Rogler Core] Explosion guard: events="+n
+            +" affected_positions="+pos+" protected_positions="+avoided
+            +" avg_handler_us="+averageMicros+" max_handler_us="+worstMicros
+            +" over_25ms="+slowHandlers+" | excludes Warium explosion / loot / chunk generation"),false);
+        return Command.SINGLE_SUCCESS;
     }
     public static void onDamage(LivingIncomingDamageEvent ev) {
         if(!(ev.getEntity() instanceof ServerPlayer victim))return;
@@ -137,6 +199,18 @@ public final class BaseGuardService {
             boolean air=loaded && level.getBlockState(pos).isAir();
             var action=CoreIntegrityPolicy.decide(placed,loaded,physical,air,
                 rec!=null && !rec.createdClaims.isEmpty());
+            if (!placed) recoveryPolicy.resolved(team);
+            else if (!loaded) recoveryPolicy.unloaded(team);
+            else if (physical) recoveryPolicy.healthy(team, System.currentTimeMillis());
+            if (action == CoreIntegrityPolicy.Action.RESTORE_AIR) {
+                CoreRecoveryPolicy.Decision decision = recoveryPolicy.missingAir(team, System.currentTimeMillis());
+                if (decision == CoreRecoveryPolicy.Decision.WAIT) continue;
+                if (decision == CoreRecoveryPolicy.Decision.QUARANTINE) {
+                    RoglerTeamWarsLogger.warn("CORE_REPEATED_EXTERNAL_DESTRUCTION team="+team
+                        +"; bounded retries exhausted, quarantine instead of infinite rebuilding");
+                    action=CoreIntegrityPolicy.Action.ESCROW_RELEASE;
+                }
+            }
             if(action==CoreIntegrityPolicy.Action.HEALTHY && placed && physical && rec!=null) {
                 // Backfill orientation on v0.5.4 saves without optional CoreAxis.
                 protections.setCoreAxis(team,level.getBlockState(pos).getValue(CoreKineticBlock.AXIS).getName());
@@ -178,6 +252,7 @@ public final class BaseGuardService {
                 } catch(IllegalStateException ex){
                     RoglerTeamWarsLogger.warn("CORE_QUARANTINE_FAILED team="+team+" "+ex.getMessage());
                 }
+                recoveryPolicy.resolved(team);
                 if(rec!=null) FtbClaimBridge.release(level,team,rec,opSource(server,pos),protections);
             } else if(action==CoreIntegrityPolicy.Action.RELEASE_STALE_CLAIMS) {
                 // Repeated retries if FTB is temporarily unavailable. Never unclaim a
@@ -195,20 +270,36 @@ public final class BaseGuardService {
     }
     /** OP check with count only; detailed positions are deliberately not sent to normal players. */
     public static int integrityAudit(CommandSourceStack src) {
-        verifyPhysicalCores(src.getServer());
-        int live=0,escrow=0,pending=0;
+        // Status-only by design: never changes physical blocks or FTB claims.
+        int live=0,escrow=0,pending=0,missingLoaded=0,unloaded=0;
         var protections=BaseProtectionSavedData.get(src.getServer());
         for(var e:cores(src.getServer()).ledger().all()) {
-            if(e.mode()==BaseCoreLedger.Mode.PLACED)live++;
+            if(e.mode()==BaseCoreLedger.Mode.PLACED) {
+                live++;
+                if (e.location()!=null) {
+                    var at=e.location();
+                    BlockPos p=new BlockPos(at.x(),at.y(),at.z());
+                    if (!src.getServer().overworld().hasChunkAt(p)) unloaded++;
+                    else if(!src.getServer().overworld().getBlockState(p).is(BaseCoreRegistries.CORE_BLOCK.get())) missingLoaded++;
+                }
+            }
             if(e.mode()==BaseCoreLedger.Mode.ESCROW)escrow++;
             if(e.mode()!=BaseCoreLedger.Mode.PLACED) {
                 var rec=protections.team(e.teamId());
                 if(rec!=null)pending+=rec.createdClaims.size();
             }
         }
-        final int a=live,b=escrow,c=pending;
-        src.sendSuccess(()->Component.literal("[TeamWars] Core integrity: placed="+a
-            +" escrow="+b+" stale auto-claim records awaiting FTB cleanup="+c),false);
+        final int a=live,b=escrow,c=pending,m=missingLoaded,u=unloaded;
+        src.sendSuccess(()->Component.literal("[Rogler Core] READ-ONLY core audit: placed="+a
+            +" escrow="+b+" loaded_missing="+m+" unloaded_unchecked="+u
+            +" stale_auto_claim_receipts="+c
+            +" (use /rogler admin corerepair apply to run a reconciliation pass)"),false);
+        return Command.SINGLE_SUCCESS;
+    }
+    public static int integrityRepair(CommandSourceStack src) {
+        verifyPhysicalCores(src.getServer());
+        src.sendSuccess(()->Component.literal("[Rogler Core] Recovery pass executed for loaded core chunks;"
+            +" restoration may be deferred by the five-second stability window. Review /rogler admin coreaudit."),false);
         return Command.SINGLE_SUCCESS;
     }
     private static final Set<UUID> warnedOrphans = new HashSet<>();

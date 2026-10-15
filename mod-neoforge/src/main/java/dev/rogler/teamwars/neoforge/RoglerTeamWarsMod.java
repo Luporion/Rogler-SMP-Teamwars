@@ -41,7 +41,7 @@ import java.nio.file.Path;
 @Mod(RoglerTeamWarsMod.MOD_ID)
 public final class RoglerTeamWarsMod {
     public static final String MOD_ID = "roglerteamwars";
-    public static final String VERSION = "0.6.1";
+    public static final String VERSION = "0.6.2";
     private static RoglerTeamWarsMod INSTANCE;
     private BaseCoreConfig baseConfig = BaseCoreConfig.DEFAULT;
     private dev.rogler.teamwars.neoforge.base.CorePowerConfig powerConfig = dev.rogler.teamwars.neoforge.base.CorePowerConfig.DEFAULT;
@@ -87,6 +87,7 @@ public final class RoglerTeamWarsMod {
     @SubscribeEvent
     public void started(ServerStartedEvent event) {
         activeServer = event.getServer();
+        dev.rogler.teamwars.neoforge.protection.BaseGuardService.resetRuntimeState();
         reloadSettings(activeServer);
         try { baseConfig = BaseCoreConfig.load(activeServer); }
         catch (IOException e) {
@@ -109,6 +110,7 @@ public final class RoglerTeamWarsMod {
 
     @SubscribeEvent
     public void stopping(ServerStoppingEvent event) {
+        dev.rogler.teamwars.neoforge.protection.BaseGuardService.resetRuntimeState();
         dev.rogler.teamwars.neoforge.compat.WariumRecoveryGuard.shutdown();
         activeServer = null;
     }
@@ -322,6 +324,12 @@ public final class RoglerTeamWarsMod {
                             EntityArgument.getPlayer(ctx,"player")))))
                 .then(Commands.literal("coreaudit").executes(ctx ->
                     dev.rogler.teamwars.neoforge.protection.BaseGuardService.integrityAudit(ctx.getSource())))
+                .then(Commands.literal("corerepair").requires(src -> src.hasPermission(4))
+                    .then(Commands.literal("apply").executes(ctx ->
+                        dev.rogler.teamwars.neoforge.protection.BaseGuardService.integrityRepair(ctx.getSource()))))
+                .then(Commands.literal("explosionstats").requires(src -> src.hasPermission(4))
+                    .executes(ctx ->
+                        dev.rogler.teamwars.neoforge.protection.BaseGuardService.explosionStats(ctx.getSource())))
                 .then(Commands.literal("orphanlist").executes(ctx ->
                     dev.rogler.teamwars.neoforge.protection.BaseGuardService.orphanList(ctx.getSource())))
                 .then(Commands.literal("adoptcore")

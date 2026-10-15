@@ -1,3 +1,9 @@
+# Rogler Core v0.6.2 — latest source handover
+
+Read `docs/releases/v0.6.2.md`, `docs/LLM_HANDOVER_v0.6.2.md`, `docs/TEST_PLAN_v0.6.2.md`, and `docs/PROJECT_STATE_v0.6.2.md`. This source candidate optimizes per-event explosion protection, bounded core recovery and stale FTB receipt cleanup, with handler-only measurements. **Do not claim Warium watchdog elimination or real performance gains without a dedicated-server A/B test.** Base SHA `48433f4`. No new mods or data schema. Keep original GitHub/LLM files in the exact post-patch Git archive.
+
+---
+
 # Rogler Core v0.6.1 — newest project handover
 
 **START HERE:** `docs/releases/v0.6.1.md`, `docs/LLM_HANDOVER_v0.6.1.md`, `docs/TEST_PLAN_v0.6.1.md`, `docs/PROJECT_STATE_v0.6.1.md`. The user-facing project was renamed Rogler Core without touching registry IDs or SavedData. Warium recovery is strictly opt-in and unverified against real Warium crash-loop saves. No generic nuke fix is claimed. Preserve original workflows, compiled mod requirements, world/FTB backups and Git history.
