@@ -247,7 +247,7 @@ function Get-Artifact {
         )
         $foundArtifacts = @($response.artifacts | Where-Object {
             $_.expired -eq $false -and
-            $_.name -match '^roglerteamwars-[A-Za-z0-9_.+\-]+-unverified-runtime$'
+            $_.name -match '^rogler(?:teamwars|core)-[A-Za-z0-9_.+\-]+-unverified-runtime$'
         })
         if ($foundArtifacts.Count -gt 1) {
             throw 'Mehrere passende Rogler-Artefakte vorhanden. Kein automatischer Download.'
