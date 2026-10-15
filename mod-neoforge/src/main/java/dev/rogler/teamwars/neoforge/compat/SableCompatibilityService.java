@@ -87,8 +87,8 @@ public final class SableCompatibilityService {
         activeServer=server;
         reload(server);
         var finding=SableCompatibilityPolicy.assess(loaded(),splitting().state());
-        String line="SABLE_COMPAT_063 status="+finding.status()+" detail="+finding.detail()
-            +" | no injected Sable mixin; splitting not changed; "+configStatus;
+        String line="SABLE_COMPAT_064 status="+finding.status()+" detail="+finding.detail()
+            +" | splitting not changed; v0.6.4 lifecycle guard reported separately; "+configStatus;
         if(finding.warning())RoglerTeamWarsLogger.warn(line);
         else RoglerTeamWarsLogger.info(line);
     }
@@ -113,8 +113,9 @@ public final class SableCompatibilityService {
         reply(src,"Sable status="+finding.status()+": "+finding.detail());
         reply(src,"Sable common TOML: splitting="+split.state()+", heatmap_steps="+split.heatmapSteps()
             +" (read-only, relative to server config directory)");
-        reply(src,"Sable: Destructive guards/queue owned by addon; no Core duplicate mixins, no direct API bridge yet.");
+        reply(src,"Sable: Destructive optional: when present it owns its split guards; Rogler lifecycle guard auto-disables. No Destructive API/ME bridge.");
         reply(src,"Config: "+configStatus+". /rogler admin compat explosions for event counts.");
+        dev.rogler.teamwars.neoforge.compat.sable.SableRemovedSublevelGuard.report(src);
         return 1;
     }
     public static int mods(CommandSourceStack src) {
@@ -144,8 +145,10 @@ public final class SableCompatibilityService {
     }
     public static int reloadCommand(CommandSourceStack src) {
         boolean result=reload(src.getServer());
-        reply(src,result?"Sable diagnostic config reloaded (no Sable settings modified).":
-            "Invalid Sable diagnostic config; safe metrics OFF.");
-        return result?1:0;
+        boolean lifecycle=dev.rogler.teamwars.neoforge.compat.sable.SableRemovedSublevelGuard.reload(src.getServer());
+        reply(src,"Sable diagnostic config="+(result?"OK":"INVALID/OFF")+
+            ", lifecycle config="+(lifecycle?"OK":"INVALID/OFF")+
+            "; Sable common settings were not modified.");
+        return result&&lifecycle?1:0;
     }
 }

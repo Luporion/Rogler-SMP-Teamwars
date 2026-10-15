@@ -60,3 +60,6 @@ if ($LASTEXITCODE -ne 0) { throw "SableSplitConfigAuditTests failed: $LASTEXITCO
 
 & java -ea -cp build/classes dev.rogler.teamwars.core.compat.ExplosionObservationCounterTests
 if ($LASTEXITCODE -ne 0) { throw "ExplosionObservationCounterTests failed: $LASTEXITCODE" }
+
+& java -ea -cp build/classes dev.rogler.teamwars.core.compat.SableLifecyclePolicyTests
+if ($LASTEXITCODE -ne 0) { throw "SableLifecyclePolicyTests failed: $LASTEXITCODE" }

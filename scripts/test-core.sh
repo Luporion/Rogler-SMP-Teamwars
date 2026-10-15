@@ -32,3 +32,5 @@ java -ea -cp build/classes dev.rogler.teamwars.core.compat.SableCompatibilityPol
 java -ea -cp build/classes dev.rogler.teamwars.core.compat.SableSplitConfigAuditTests
 
 java -ea -cp build/classes dev.rogler.teamwars.core.compat.ExplosionObservationCounterTests
+
+java -ea -cp build/classes dev.rogler.teamwars.core.compat.SableLifecyclePolicyTests

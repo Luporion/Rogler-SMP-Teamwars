@@ -131,3 +131,9 @@ Create a playable team-based NeoForge 1.21.1 Minecraft server for 8–12 players
 - Native FE output 20/40/80 FE/t with world config, 20k buffer and 160/t max push; do not claim actual AE2 ME-grid terminal or Create rotational API integration.
 - Build remains UNVERIFIED until CI green, and runtime remains UNVERIFIED until user tests. No silent new dependencies or unsanctioned server world modifications.
 - Every release: downloadable full-source ZIP incl. AGENTS and all LLM/docs/scripts; Git patch; installation/verification instructions; list partial/unimplemented integrations honestly.
+
+## v0.6.4 Sable-lifecycle guard (2026-10-15)
+- Primary pack WITHOUT Sable: Destructive; keep Sable `sub_level_splitting=true`.
+- Narrow preflight only against exactly Sable 2.0.6, no post-mutation `assembleBlocks` cancellation, no raw MCA rewriting and no forced chunk load. Unknown versions and Destructive installed => guard inactive.
+- Read `docs/LLM_HANDOVER_v0.6.4.md`, `docs/releases/v0.6.4.md`, `docs/TEST_PLAN_v0.6.4.md`; v0.6.4 policy tests alone do not verify Mixin application or world stability.
+- Always return format patch AND full source ZIP with all repository docs and LLM handovers; exact source after patch via user's git archive, not condensed offline snapshot.
