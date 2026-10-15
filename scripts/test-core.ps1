@@ -1,5 +1,28 @@
 $ErrorActionPreference = 'Stop'
 Set-Location (Join-Path $PSScriptRoot '..')
+# Structural startup regression: the registered Mixin package must contain
+# mixin classes only. Loading an ordinary service from there causes
+# Mixin IllegalClassLoadError on NeoForge at server startup.
+$mixin = Get-Content 'mod-neoforge/src/main/resources/roglercore-sable-lifecycle.mixins.json' -Raw | ConvertFrom-Json
+$mixinDir = Join-Path 'mod-neoforge/src/main/java' ($mixin.package -replace '\.', '/')
+$allowedMixinNames = @($mixin.mixins | ForEach-Object { ($_ -split '\.')[-1] })
+foreach ($classFile in @(Get-ChildItem -LiteralPath $mixinDir -Filter '*.java' -Recurse)) {
+    if ($classFile.BaseName -notin $allowedMixinNames) {
+        throw "Non-Mixin service in reserved package: $($classFile.FullName)"
+    }
+    if (-not (Select-String -LiteralPath $classFile.FullName -Pattern '^@Mixin\s*\(')) {
+        throw "Missing @Mixin annotation in $($classFile.FullName)"
+    }
+}
+if (-not (Test-Path 'mod-neoforge/src/main/java/dev/rogler/teamwars/neoforge/compat/SableRemovedSublevelGuard.java')) {
+    throw 'SableRemovedSublevelGuard must be outside the reserved mixin package'
+}
+$oldFqn = "$($mixin.package).SableRemovedSublevelGuard"
+$badRefs = @(Get-ChildItem 'mod-neoforge/src/main/java' -Filter '*.java' -Recurse |
+    Select-String -SimpleMatch $oldFqn)
+if ($badRefs.Count -gt 0) { throw "Stale reserved-package reference to $oldFqn" }
+Write-Host 'Mixin package boundary check: OK'
+
 New-Item -ItemType Directory -Force build/classes | Out-Null
 $files = @(Get-ChildItem -Recurse core/src -Filter '*.java' | ForEach-Object { $_.FullName })
 & javac --release 21 -encoding UTF-8 -d build/classes $files

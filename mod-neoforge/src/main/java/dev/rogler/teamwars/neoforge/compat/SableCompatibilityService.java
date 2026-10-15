@@ -115,7 +115,7 @@ public final class SableCompatibilityService {
             +" (read-only, relative to server config directory)");
         reply(src,"Sable: Destructive optional: when present it owns its split guards; Rogler lifecycle guard auto-disables. No Destructive API/ME bridge.");
         reply(src,"Config: "+configStatus+". /rogler admin compat explosions for event counts.");
-        dev.rogler.teamwars.neoforge.compat.sable.SableRemovedSublevelGuard.report(src);
+        dev.rogler.teamwars.neoforge.compat.SableRemovedSublevelGuard.report(src);
         return 1;
     }
     public static int mods(CommandSourceStack src) {
@@ -145,7 +145,7 @@ public final class SableCompatibilityService {
     }
     public static int reloadCommand(CommandSourceStack src) {
         boolean result=reload(src.getServer());
-        boolean lifecycle=dev.rogler.teamwars.neoforge.compat.sable.SableRemovedSublevelGuard.reload(src.getServer());
+        boolean lifecycle=dev.rogler.teamwars.neoforge.compat.SableRemovedSublevelGuard.reload(src.getServer());
         reply(src,"Sable diagnostic config="+(result?"OK":"INVALID/OFF")+
             ", lifecycle config="+(lifecycle?"OK":"INVALID/OFF")+
             "; Sable common settings were not modified.");

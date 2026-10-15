@@ -41,7 +41,7 @@ import java.nio.file.Path;
 @Mod(RoglerTeamWarsMod.MOD_ID)
 public final class RoglerTeamWarsMod {
     public static final String MOD_ID = "roglerteamwars";
-    public static final String VERSION = "0.6.4";
+    public static final String VERSION = "0.6.5";
     private static RoglerTeamWarsMod INSTANCE;
     private BaseCoreConfig baseConfig = BaseCoreConfig.DEFAULT;
     private dev.rogler.teamwars.neoforge.base.CorePowerConfig powerConfig = dev.rogler.teamwars.neoforge.base.CorePowerConfig.DEFAULT;
@@ -89,7 +89,7 @@ public final class RoglerTeamWarsMod {
         activeServer = event.getServer();
         dev.rogler.teamwars.neoforge.protection.BaseGuardService.resetRuntimeState();
         dev.rogler.teamwars.neoforge.compat.SableCompatibilityService.initialize(activeServer);
-        dev.rogler.teamwars.neoforge.compat.sable.SableRemovedSublevelGuard.initialize(activeServer);
+        dev.rogler.teamwars.neoforge.compat.SableRemovedSublevelGuard.initialize(activeServer);
         reloadSettings(activeServer);
         try { baseConfig = BaseCoreConfig.load(activeServer); }
         catch (IOException e) {
@@ -115,7 +115,7 @@ public final class RoglerTeamWarsMod {
         dev.rogler.teamwars.neoforge.protection.BaseGuardService.resetRuntimeState();
         dev.rogler.teamwars.neoforge.compat.WariumRecoveryGuard.shutdown();
         dev.rogler.teamwars.neoforge.compat.SableCompatibilityService.shutdown();
-        dev.rogler.teamwars.neoforge.compat.sable.SableRemovedSublevelGuard.shutdown();
+        dev.rogler.teamwars.neoforge.compat.SableRemovedSublevelGuard.shutdown();
         activeServer = null;
     }
 
@@ -280,7 +280,7 @@ public final class RoglerTeamWarsMod {
                     .then(Commands.literal("explosions").executes(ctx ->
                         dev.rogler.teamwars.neoforge.compat.SableCompatibilityService.explosions(ctx.getSource())))
                     .then(Commands.literal("lifecycle").executes(ctx ->
-                        dev.rogler.teamwars.neoforge.compat.sable.SableRemovedSublevelGuard.report(ctx.getSource())))
+                        dev.rogler.teamwars.neoforge.compat.SableRemovedSublevelGuard.report(ctx.getSource())))
                     .then(Commands.literal("reload").executes(ctx ->
                         dev.rogler.teamwars.neoforge.compat.SableCompatibilityService.reloadCommand(ctx.getSource()))))
                 .then(Commands.literal("warium").requires(src -> src.hasPermission(4))

@@ -1,4 +1,4 @@
-package dev.rogler.teamwars.neoforge.compat.sable;
+package dev.rogler.teamwars.neoforge.compat;
 
 import dev.rogler.teamwars.core.compat.SableLifecyclePolicy;
 import dev.rogler.teamwars.neoforge.teams.RoglerTeamWarsLogger;

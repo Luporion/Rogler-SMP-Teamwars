@@ -1,5 +1,6 @@
 package dev.rogler.teamwars.neoforge.compat.sable;
 
+import dev.rogler.teamwars.neoforge.compat.SableRemovedSublevelGuard;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
