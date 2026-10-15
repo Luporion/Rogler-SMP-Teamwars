@@ -26,3 +26,9 @@ java -ea -cp build/classes dev.rogler.teamwars.neoforge.teams.TeamWarsSettingsTe
 java -ea -cp build/classes dev.rogler.teamwars.core.base.CoreExplosionIndexTests
 java -ea -cp build/classes dev.rogler.teamwars.core.base.CoreRecoveryPolicyTests
 java -ea -cp build/classes dev.rogler.teamwars.core.base.CoreClaimCleanupPolicyTests
+
+java -ea -cp build/classes dev.rogler.teamwars.core.compat.SableCompatibilityPolicyTests
+
+java -ea -cp build/classes dev.rogler.teamwars.core.compat.SableSplitConfigAuditTests
+
+java -ea -cp build/classes dev.rogler.teamwars.core.compat.ExplosionObservationCounterTests

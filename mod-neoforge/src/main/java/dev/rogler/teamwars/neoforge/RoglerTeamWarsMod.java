@@ -41,7 +41,7 @@ import java.nio.file.Path;
 @Mod(RoglerTeamWarsMod.MOD_ID)
 public final class RoglerTeamWarsMod {
     public static final String MOD_ID = "roglerteamwars";
-    public static final String VERSION = "0.6.2";
+    public static final String VERSION = "0.6.3";
     private static RoglerTeamWarsMod INSTANCE;
     private BaseCoreConfig baseConfig = BaseCoreConfig.DEFAULT;
     private dev.rogler.teamwars.neoforge.base.CorePowerConfig powerConfig = dev.rogler.teamwars.neoforge.base.CorePowerConfig.DEFAULT;
@@ -88,6 +88,7 @@ public final class RoglerTeamWarsMod {
     public void started(ServerStartedEvent event) {
         activeServer = event.getServer();
         dev.rogler.teamwars.neoforge.protection.BaseGuardService.resetRuntimeState();
+        dev.rogler.teamwars.neoforge.compat.SableCompatibilityService.initialize(activeServer);
         reloadSettings(activeServer);
         try { baseConfig = BaseCoreConfig.load(activeServer); }
         catch (IOException e) {
@@ -112,6 +113,7 @@ public final class RoglerTeamWarsMod {
     public void stopping(ServerStoppingEvent event) {
         dev.rogler.teamwars.neoforge.protection.BaseGuardService.resetRuntimeState();
         dev.rogler.teamwars.neoforge.compat.WariumRecoveryGuard.shutdown();
+        dev.rogler.teamwars.neoforge.compat.SableCompatibilityService.shutdown();
         activeServer = null;
     }
 
@@ -213,6 +215,7 @@ public final class RoglerTeamWarsMod {
 
     @SubscribeEvent
     public void onProtectedExplosion(net.neoforged.neoforge.event.level.ExplosionEvent.Detonate event) {
+        dev.rogler.teamwars.neoforge.compat.SableCompatibilityService.onExplosion(event);
         dev.rogler.teamwars.neoforge.protection.BaseGuardService.onExplosion(event);
     }
 
@@ -264,8 +267,18 @@ public final class RoglerTeamWarsMod {
                     ctx.getSource(), ctx.getSource().getPlayerOrException(), true))))
             .then(Commands.literal("admin").requires(source -> source.hasPermission(2))
                 .then(Commands.literal("compat").requires(src -> src.hasPermission(4))
-                    .then(Commands.literal("report").executes(ctx ->
-                        dev.rogler.teamwars.neoforge.compat.WariumRecoveryGuard.report(ctx.getSource()))))
+                    .then(Commands.literal("report").executes(ctx -> {
+                        dev.rogler.teamwars.neoforge.compat.WariumRecoveryGuard.report(ctx.getSource());
+                        return dev.rogler.teamwars.neoforge.compat.SableCompatibilityService.report(ctx.getSource());
+                    }))
+                    .then(Commands.literal("sable").executes(ctx ->
+                        dev.rogler.teamwars.neoforge.compat.SableCompatibilityService.report(ctx.getSource())))
+                    .then(Commands.literal("mods").executes(ctx ->
+                        dev.rogler.teamwars.neoforge.compat.SableCompatibilityService.mods(ctx.getSource())))
+                    .then(Commands.literal("explosions").executes(ctx ->
+                        dev.rogler.teamwars.neoforge.compat.SableCompatibilityService.explosions(ctx.getSource())))
+                    .then(Commands.literal("reload").executes(ctx ->
+                        dev.rogler.teamwars.neoforge.compat.SableCompatibilityService.reloadCommand(ctx.getSource()))))
                 .then(Commands.literal("warium").requires(src -> src.hasPermission(4))
                     .then(Commands.literal("status").executes(ctx ->
                         dev.rogler.teamwars.neoforge.compat.WariumRecoveryGuard.status(ctx.getSource())))

@@ -4,11 +4,11 @@ license="MIT"
 
 [[mods]]
 modId="roglerteamwars"
-version="0.6.2"
+version="0.6.3"
 displayName="Rogler Core"
 authors="Rogler Core contributors"
 description='''
-Rogler Core v0.6.2: event-local explosion protection index, bounded core recovery, safe FTB claim cleanup, diagnostics, industrial Create/FE base and optional Warium FusionBlast startup recovery.
+Rogler Core v0.6.3: read-only Sable/Sable Destructive compatibility report, opt-in bounded explosion event metrics, existing safe core/claim recovery and optional Warium startup quarantine.
 The Warium quarantine is OFF by default; it does not rewrite entity regions or guarantee repair of malformed .mca files.
 '''
 

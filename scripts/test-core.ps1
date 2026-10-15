@@ -51,3 +51,12 @@ if ($LASTEXITCODE -ne 0) { throw "explosion index tests failed: $LASTEXITCODE" }
 if ($LASTEXITCODE -ne 0) { throw "recovery policy tests failed: $LASTEXITCODE" }
 & java -ea -cp build/classes dev.rogler.teamwars.core.base.CoreClaimCleanupPolicyTests
 if ($LASTEXITCODE -ne 0) { throw "claim receipt tests failed: $LASTEXITCODE" }
+
+& java -ea -cp build/classes dev.rogler.teamwars.core.compat.SableCompatibilityPolicyTests
+if ($LASTEXITCODE -ne 0) { throw "SableCompatibilityPolicyTests failed: $LASTEXITCODE" }
+
+& java -ea -cp build/classes dev.rogler.teamwars.core.compat.SableSplitConfigAuditTests
+if ($LASTEXITCODE -ne 0) { throw "SableSplitConfigAuditTests failed: $LASTEXITCODE" }
+
+& java -ea -cp build/classes dev.rogler.teamwars.core.compat.ExplosionObservationCounterTests
+if ($LASTEXITCODE -ne 0) { throw "ExplosionObservationCounterTests failed: $LASTEXITCODE" }
