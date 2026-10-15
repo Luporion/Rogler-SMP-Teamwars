@@ -26,6 +26,8 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
+import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
@@ -39,7 +41,7 @@ import java.nio.file.Path;
 @Mod(RoglerTeamWarsMod.MOD_ID)
 public final class RoglerTeamWarsMod {
     public static final String MOD_ID = "roglerteamwars";
-    public static final String VERSION = "0.6.0";
+    public static final String VERSION = "0.6.1";
     private static RoglerTeamWarsMod INSTANCE;
     private BaseCoreConfig baseConfig = BaseCoreConfig.DEFAULT;
     private dev.rogler.teamwars.neoforge.base.CorePowerConfig powerConfig = dev.rogler.teamwars.neoforge.base.CorePowerConfig.DEFAULT;
@@ -70,6 +72,18 @@ public final class RoglerTeamWarsMod {
         NeoForge.EVENT_BUS.register(this);
     }
 
+    /** Load recovery policy before entity regions may be deserialized. */
+    @SubscribeEvent
+    public void beforeStart(ServerAboutToStartEvent event) {
+        dev.rogler.teamwars.neoforge.compat.WariumRecoveryGuard.initialize(event.getServer());
+    }
+
+    /** Never touches the world or loads a chunk while entities are joining. */
+    @SubscribeEvent(priority = net.neoforged.bus.api.EventPriority.HIGHEST)
+    public void onEntityJoin(EntityJoinLevelEvent event) {
+        dev.rogler.teamwars.neoforge.compat.WariumRecoveryGuard.onJoin(event);
+    }
+
     @SubscribeEvent
     public void started(ServerStartedEvent event) {
         activeServer = event.getServer();
@@ -95,6 +109,7 @@ public final class RoglerTeamWarsMod {
 
     @SubscribeEvent
     public void stopping(ServerStoppingEvent event) {
+        dev.rogler.teamwars.neoforge.compat.WariumRecoveryGuard.shutdown();
         activeServer = null;
     }
 
@@ -206,7 +221,7 @@ public final class RoglerTeamWarsMod {
 
     @SubscribeEvent
     public void registerCommands(RegisterCommandsEvent event) {
-        event.getDispatcher().register(Commands.literal("teamwars")
+        var legacyNode = event.getDispatcher().register(Commands.literal("teamwars")
             .executes(ctx -> status(ctx.getSource()))
             .then(Commands.literal("status").executes(ctx -> status(ctx.getSource())))
             .then(Commands.literal("team")
@@ -246,6 +261,24 @@ public final class RoglerTeamWarsMod {
                 .then(Commands.literal("recover").executes(ctx -> BaseCoreService.issue(
                     ctx.getSource(), ctx.getSource().getPlayerOrException(), true))))
             .then(Commands.literal("admin").requires(source -> source.hasPermission(2))
+                .then(Commands.literal("compat").requires(src -> src.hasPermission(4))
+                    .then(Commands.literal("report").executes(ctx ->
+                        dev.rogler.teamwars.neoforge.compat.WariumRecoveryGuard.report(ctx.getSource()))))
+                .then(Commands.literal("warium").requires(src -> src.hasPermission(4))
+                    .then(Commands.literal("status").executes(ctx ->
+                        dev.rogler.teamwars.neoforge.compat.WariumRecoveryGuard.status(ctx.getSource())))
+                    .then(Commands.literal("list").executes(ctx ->
+                        dev.rogler.teamwars.neoforge.compat.WariumRecoveryGuard.list(ctx.getSource())))
+                    .then(Commands.literal("candidates").executes(ctx ->
+                        dev.rogler.teamwars.neoforge.compat.WariumRecoveryGuard.candidates(ctx.getSource())))
+                    .then(Commands.literal("reload").executes(ctx -> {
+                        if (dev.rogler.teamwars.neoforge.compat.WariumRecoveryGuard.reload(ctx.getSource().getServer())) {
+                            ctx.getSource().sendSuccess(() -> Component.literal("[Rogler Core] Recovery config reloaded. Already loaded entities are not re-evaluated."), false);
+                            return 1;
+                        }
+                        ctx.getSource().sendFailure(Component.literal("[Rogler Core] Invalid recovery configuration: mode forced OFF."));
+                        return 0;
+                    })))
                 .then(Commands.literal("corelist").executes(ctx -> BaseCoreService.info(ctx.getSource())))
                 .then(Commands.literal("teams").executes(ctx ->
                     dev.rogler.teamwars.neoforge.protection.BaseGuardService.teams(ctx.getSource())))
@@ -341,7 +374,7 @@ public final class RoglerTeamWarsMod {
                     scoreboard.refresh(server, settings);
                     dev.rogler.teamwars.neoforge.protection.BaseGuardService.verifyPhysicalCores(server);
                     dev.rogler.teamwars.neoforge.protection.BaseGuardService.reconcile(server);
-                    ctx.getSource().sendSuccess(() -> Component.literal("TeamWars config: " + configResult), false);
+                    ctx.getSource().sendSuccess(() -> Component.literal("Rogler Core config: " + configResult), false);
                     return Command.SINGLE_SUCCESS;
                 }))
                 .then(Commands.literal("resync").executes(ctx -> {
@@ -354,6 +387,8 @@ public final class RoglerTeamWarsMod {
                         + " | Config: " + configResult + " | Online party count: " + scoreboard.partyCount()), false);
                     return Command.SINGLE_SUCCESS;
                 }))));
+        // New player-facing name; legacy full command tree remains operational.
+        event.getDispatcher().register(Commands.literal("rogler").redirect(legacyNode));
     }
 
     private static java.util.UUID parseTeamId(net.minecraft.commands.CommandSourceStack src,String raw)
@@ -366,12 +401,12 @@ public final class RoglerTeamWarsMod {
         }
     }
     private int status(net.minecraft.commands.CommandSourceStack source) {
-        source.sendSuccess(() -> Component.literal("Rogler TeamWars v" + VERSION
+        source.sendSuccess(() -> Component.literal("Rogler Core v" + VERSION
             + " | FTB party projection: " + scoreboard.status()
             + " | online parties: " + scoreboard.partyCount()
             + " | quarantined: " + scoreboard.quarantinedCount()
             + " | FTB API errors: " + scoreboard.apiFailures()), false);
-        source.sendSuccess(() -> Component.literal("Features: FTB team sync, private nametags, /teamwars team; "
+        source.sendSuccess(() -> Component.literal("Features: FTB team sync, private nametags, /rogler team; "
             + "core guard, private auto FTB claims, team UUID admin tools, armor tiers; raids opt-in; NO Xaero share yet."), false);
         return Command.SINGLE_SUCCESS;
     }
@@ -392,7 +427,7 @@ public final class RoglerTeamWarsMod {
 
     private int teamHelp(net.minecraft.commands.CommandSourceStack source) {
         source.sendSuccess(() -> Component.literal("Manage memberships/invites using FTB Teams GUI or /ftbteams party. "
-            + "TeamWars v0.1 only mirrors FTB and applies nametag rules."), false);
+            + "Rogler Core mirrors FTB and applies nametag rules."), false);
         return Command.SINGLE_SUCCESS;
     }
 }

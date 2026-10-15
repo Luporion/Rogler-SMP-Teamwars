@@ -1,3 +1,9 @@
+# Rogler Core v0.6.1 — newest project handover
+
+**START HERE:** `docs/releases/v0.6.1.md`, `docs/LLM_HANDOVER_v0.6.1.md`, `docs/TEST_PLAN_v0.6.1.md`, `docs/PROJECT_STATE_v0.6.1.md`. The user-facing project was renamed Rogler Core without touching registry IDs or SavedData. Warium recovery is strictly opt-in and unverified against real Warium crash-loop saves. No generic nuke fix is claimed. Preserve original workflows, compiled mod requirements, world/FTB backups and Git history.
+
+---
+
 # v0.6.0 critical handover
 
 **Must read:** `docs/releases/v0.6.0.md`, `docs/TEST_PLAN_v0.6.0.md`, `docs/LLM_HANDOVER_v0.6.0.md`. v0.6.0 implements a nuclear-bypass core integrity watchdog and a visible Create shaft aperture. No generic third-party nuclear immunity, map sync, voice chat or guaranteed production-readiness. Read CI and two-client tests before accepting.

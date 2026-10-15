@@ -159,7 +159,7 @@ public final class CoreDashboardScreen extends AbstractContainerScreen<CoreDashb
         g.fill(leftPos,topPos,leftPos+imageWidth,topPos+imageHeight,EDGE);
         g.fill(leftPos+2,topPos+2,leftPos+imageWidth-2,topPos+imageHeight-2,BACK);
         g.fill(leftPos+7,topPos+6,leftPos+263,topPos+21,0xFF253946);
-        text(g,"ROGLER  //  BASIS-KERN",13,10,COPPER);
+        text(g,"ROGLER  //  CORE",13,10,COPPER);
         drawPanel(g);
         text(g,"TEAM-INVENTAR (27)",51,144,CYAN);
         text(g,"SPIELERINVENTAR",51,210,MUTED);

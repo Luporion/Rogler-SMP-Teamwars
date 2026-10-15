@@ -33,6 +33,9 @@ if ($LASTEXITCODE -ne 0) { throw "manual book trade tests failed: $LASTEXITCODE"
 & java -ea -cp build/classes dev.rogler.teamwars.core.base.CoreIntegrityPolicyTests
 if ($LASTEXITCODE -ne 0) { throw "integrity policy tests failed: $LASTEXITCODE" }
 
+& java -ea -cp build/classes dev.rogler.teamwars.core.compat.WariumRecoveryPolicyTests
+if ($LASTEXITCODE -ne 0) { throw "Warium recovery policy tests failed: $LASTEXITCODE" }
+
 $settingsFiles = @(
     'mod-neoforge/src/main/java/dev/rogler/teamwars/neoforge/teams/TeamWarsSettings.java',
     'mod-neoforge/src/test/java/dev/rogler/teamwars/neoforge/teams/TeamWarsSettingsTests.java'

@@ -4,12 +4,12 @@ license="MIT"
 
 [[mods]]
 modId="roglerteamwars"
-version="0.6.0"
-displayName="Rogler TeamWars"
-authors="Rogler TeamWars contributors"
+version="0.6.1"
+displayName="Rogler Core"
+authors="Rogler Core contributors"
 description='''
-Rogler SMP TeamWars v0.6.0: industrial kinetic base core with visible through-shaft, nuclear bypass recovery and FTB ghost claim cleanup (16 RPM/256 SU), bounded FE, private inventory and first-steps guide.
-General destructive raids, separate chunk loader quotas, Xaero sync, and Sable integrations are not active.
+Rogler Core v0.6.1: backwards-compatible industrial base core, FTB Teams and Chunks, Create shaft/FE, protected raids and optional Warium FusionBlast startup recovery.
+The Warium quarantine is OFF by default; it does not rewrite entity regions or guarantee repair of malformed .mca files.
 '''
 
 [[dependencies.roglerteamwars]]

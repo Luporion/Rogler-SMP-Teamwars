@@ -16,7 +16,7 @@ if(-not $PatchPath) {
   try { $downloads=(New-Object -ComObject Shell.Application).NameSpace('shell:Downloads').Self.Path }
   catch { $downloads=Join-Path $env:USERPROFILE 'Downloads' }
   if(-not (Test-Path -LiteralPath $downloads)) { throw "Downloads missing: $downloads" }
-  $matches=@(Get-ChildItem -LiteralPath $downloads -File -Filter 'Rogler-TeamWars-v*.patch' |
+  $matches=@(Get-ChildItem -LiteralPath $downloads -File -Filter 'Rogler-*-v*.patch' |
     Sort-Object LastWriteTime -Descending)
   if($matches.Count -eq 0) { throw "No TeamWars patch found in $downloads" }
   $PatchPath=$matches[0].FullName
@@ -32,7 +32,7 @@ if($subject) {
   if($history -contains $name) { throw "Patch already committed: $name" }
 }
 # Each downloaded release starts on its own branch; never silently mix versions.
-if ([IO.Path]::GetFileName($PatchPath) -match 'Rogler-TeamWars-(v[0-9]+\.[0-9]+\.[0-9]+)-update\.patch') {
+if ([IO.Path]::GetFileName($PatchPath) -match 'Rogler-(?:TeamWars|Core)-(v[0-9]+\.[0-9]+\.[0-9]+)-update\.patch') {
   $version = $Matches[1]
   if ($branch -notlike "*$version*") {
     $nextBranch = "feat/$version-update"
@@ -50,7 +50,7 @@ if($LASTEXITCODE -ne 0) { throw 'Patch is incompatible with this repository; NOT
 & git -c gc.auto=0 am --no-3way -- $PatchPath
 if($LASTEXITCODE -ne 0) { throw 'git am failed. DO NOT push or retry; inspect git status. The patch was preserved in Downloads.' }
 # The patch commit must actually carry the expected Gradle/mod version.
-if ([IO.Path]::GetFileName($PatchPath) -match 'Rogler-TeamWars-(v[0-9]+\.[0-9]+\.[0-9]+)-update\.patch') {
+if ([IO.Path]::GetFileName($PatchPath) -match 'Rogler-(?:TeamWars|Core)-(v[0-9]+\.[0-9]+\.[0-9]+)-update\.patch') {
   $expected = $Matches[1].Substring(1)
   $actual = (Get-Content (Join-Path $repo 'mod-neoforge/gradle.properties') | Where-Object { $_ -match '^mod_version=' } | Select-Object -First 1)
   if ($actual -ne "mod_version=$expected") { throw "Patch committed but mod_version is $actual, expected $expected. Do NOT push!" }
@@ -65,7 +65,7 @@ $versionLine=(Get-Content (Join-Path $repo 'mod-neoforge/gradle.properties') |
 if(-not $versionLine) { throw 'Missing mod_version in gradle.properties.' }
 $releaseVersion=($versionLine -split '=',2)[1].Trim()
 $releasePath=(Resolve-Path -LiteralPath $PatchPath).Path
-$sourceZip=Join-Path (Split-Path -Parent $releasePath) "Rogler-TeamWars-v$releaseVersion-full-source-exact.zip"
+$sourceZip=Join-Path (Split-Path -Parent $releasePath) "Rogler-Core-v$releaseVersion-full-source-exact.zip"
 if(Test-Path -LiteralPath $sourceZip) { throw "Refusing to overwrite existing source snapshot: $sourceZip" }
 & git archive --format=zip "--output=$sourceZip" HEAD
 if ($LASTEXITCODE -ne 0) { throw 'Exact full-source ZIP generation failed; not pushing.' }
