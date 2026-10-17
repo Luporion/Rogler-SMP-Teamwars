@@ -19,6 +19,7 @@ public final class TeamScoreboardSync {
     private final FtbPartyReader ftb = new FtbPartyReader();
     private int partyCount;
     private int quarantinedCount;
+    private int oversizeCount;
     private int apiFailures;
     private String lastStatus = "Not synchronized";
 
@@ -28,6 +29,7 @@ public final class TeamScoreboardSync {
         Map<String, java.util.UUID> keyIdentity = new HashMap<>();
         Set<java.util.UUID> actualParties = new HashSet<>();
         quarantinedCount = 0;
+        oversizeCount = 0;
         apiFailures = 0;
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             var party = ftb.partyFor(player.getUUID());
@@ -42,6 +44,7 @@ public final class TeamScoreboardSync {
                 }
             }
             if (!assignment.validParty() && party != null) quarantinedCount++;
+            if (assignment.validParty() && !assignment.warning().isBlank()) oversizeCount++;
             String key = assignment.scoreboardKey();
             PlayerTeam team = scoreboard.getPlayerTeam(key);
             if (team == null) team = scoreboard.addPlayerTeam(key);
@@ -71,6 +74,8 @@ public final class TeamScoreboardSync {
         partyCount = actualParties.size();
         lastStatus = apiFailures > 0 ? "FTB ADAPTER ERROR: " + apiFailures + " reader failure(s)"
             : (quarantinedCount > 0 ? "QUARANTINED " + quarantinedCount + " player(s)" : "OK");
+        if (oversizeCount > 0)
+            lastStatus += " | WARNING: " + oversizeCount + " player(s) in oversized FTB parties (ownership remains valid)";
         if (actualParties.size() > settings.maxParties())
             lastStatus += " | WARNING: " + actualParties.size() + " online parties, max " + settings.maxParties();
     }
@@ -89,6 +94,7 @@ public final class TeamScoreboardSync {
     public int partyCount() { return partyCount; }
     public int quarantinedCount() { return quarantinedCount; }
     public int apiFailures() { return apiFailures; }
+    public int oversizeCount() { return oversizeCount; }
     public String status() { return lastStatus; }
     public String ftbStatus() { return ftb.lastError(); }
     public TeamAssignmentPolicy.Assignment forPlayer(ServerPlayer player, TeamWarsSettings settings) {

@@ -4,11 +4,11 @@ license="MIT"
 
 [[mods]]
 modId="roglerteamwars"
-version="0.6.5"
+version="0.7.0"
 displayName="Rogler Core"
 authors="Rogler Core contributors"
 description='''
-Rogler Core v0.6.5: optional Sable 2.0.6 removed-owner/anchor split preflight without Sable Destructive, bounded diagnostics, existing base/claim recovery and optional Warium startup quarantine.
+Rogler Core v0.7.0: enemy radar privacy and player exploration provenance; optional Sable 2.0.6 removed-owner/anchor split preflight without Sable Destructive, bounded diagnostics, existing base/claim recovery and optional Warium startup quarantine.
 The Warium quarantine is OFF by default; it does not rewrite entity regions or guarantee repair of malformed .mca files.
 '''
 

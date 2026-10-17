@@ -35,6 +35,9 @@ public final class BaseGuardService {
     private static long totalHandlerNanos, maxHandlerNanos, slowHandlers, lastSlowLogTick = Long.MIN_VALUE;
     private static final long SLOW_HANDLER_NS = 25_000_000L;
     private static final long LOG_INTERVAL_TICKS = 1200L;
+    // Denial diagnostics are bounded and never expose protected coordinates in chat.
+    private static final Map<UUID, Long> lastDeniedLogMillis = new HashMap<>();
+    private static final long DENIED_LOG_INTERVAL_MS = 60_000L;
 
     /** Discard volatile observations when an integrated/dedicated server is switched. */
     public static void resetRuntimeState() {
@@ -43,6 +46,7 @@ public final class BaseGuardService {
         totalHandlerNanos = maxHandlerNanos = slowHandlers = 0L;
         lastSlowLogTick = Long.MIN_VALUE;
         warnedOrphans.clear();
+        lastDeniedLogMillis.clear();
     }
     private static BaseCoreSavedData cores(MinecraftServer s) {
         BaseCoreConfig cfg=RoglerTeamWarsMod.baseConfig();
@@ -62,7 +66,18 @@ public final class BaseGuardService {
     private static boolean enemy(ServerPlayer player,UUID owner) {
         if(owner==null)return false;
         var a=RoglerTeamWarsMod.assignmentFor(player);
-        return !a.validParty() || !owner.equals(a.partyId());
+        boolean denied = !a.validParty() || !owner.equals(a.partyId());
+        if (denied) {
+            long now = System.currentTimeMillis();
+            Long previous = lastDeniedLogMillis.get(player.getUUID());
+            if (previous == null || now - previous >= DENIED_LOG_INTERVAL_MS || now < previous) {
+                lastDeniedLogMillis.put(player.getUUID(), now);
+                RoglerTeamWarsLogger.warn("CORE_GUARD_DENY actor=" + player.getUUID()
+                    + " protectedTeam=" + owner + " ftbParty=" + a.partyId()
+                    + " membershipValid=" + a.validParty() + " reason=" + a.warning());
+            }
+        }
+        return denied;
     }
     /** Early cancellation stops most physics mods before the normal break event. */
     public static void onLeftClick(PlayerInteractEvent.LeftClickBlock ev) {

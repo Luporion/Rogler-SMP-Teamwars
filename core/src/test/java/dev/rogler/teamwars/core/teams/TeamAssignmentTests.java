@@ -23,7 +23,17 @@ public final class TeamAssignmentTests {
         check(a.displayName().equals("Alpha"),"visible name");
         check(!TeamAssignmentPolicy.assign(alice,null,4).validParty(),"no FTB party solo");
         check(!TeamAssignmentPolicy.assign(UUID.randomUUID(),party,4).validParty(),"member mismatch fail closed");
-        check(!TeamAssignmentPolicy.assign(alice, new TeamAssignmentPolicy.Party(team,"Huge",Set.of(alice,bob,UUID.randomUUID())),2).validParty(),"oversize fail closed");
+        var oversizeParty = new TeamAssignmentPolicy.Party(team,"Huge",Set.of(alice,bob,UUID.randomUUID()));
+        var oversizedAlice = TeamAssignmentPolicy.assign(alice, oversizeParty, 2);
+        var oversizedBob = TeamAssignmentPolicy.assign(bob, oversizeParty, 2);
+        check(oversizedAlice.validParty(),"existing FTB member retains base rights when team is oversized");
+        check(oversizedAlice.partyId().equals(team),"oversize retains original UUID/Core ownership");
+        check(oversizedAlice.scoreboardKey().equals(oversizedBob.scoreboardKey()),"oversize teammates remain grouped");
+        check(!oversizedAlice.warning().isBlank(),"oversize exposes policy warning");
+        check(!TeamAssignmentPolicy.assign(UUID.randomUUID(),oversizeParty,2).validParty(),
+            "oversized FTB party still rejects non-members");
+        check(TeamAssignmentPolicy.assign(alice,oversizeParty,2).scoreboardKey().equals(a.scoreboardKey()),
+            "oversize does not change persistent scoreboard identity");
         check(TeamAssignmentPolicy.assign(alice,party,4).scoreboardKey().equals(a.scoreboardKey()),"stable across restart");
         check(!TeamAssignmentPolicy.solo(alice,"none").scoreboardKey().equals(TeamAssignmentPolicy.solo(bob,"none").scoreboardKey()),"solo players isolated");
         check(!TeamAssignmentPolicy.solo(alice,"none").scoreboardKey().equals(a.scoreboardKey()),"solo separate namespace");

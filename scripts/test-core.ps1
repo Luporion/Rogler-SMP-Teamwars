@@ -86,3 +86,6 @@ if ($LASTEXITCODE -ne 0) { throw "ExplosionObservationCounterTests failed: $LAST
 
 & java -ea -cp build/classes dev.rogler.teamwars.core.compat.SableLifecyclePolicyTests
 if ($LASTEXITCODE -ne 0) { throw "SableLifecyclePolicyTests failed: $LASTEXITCODE" }
+
+& java -ea -cp build/classes dev.rogler.teamwars.core.TeamMapPrivacyTests
+if ($LASTEXITCODE -ne 0) { throw "Map privacy/provenance tests failed: $LASTEXITCODE" }

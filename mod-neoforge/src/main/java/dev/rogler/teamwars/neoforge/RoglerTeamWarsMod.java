@@ -41,7 +41,7 @@ import java.nio.file.Path;
 @Mod(RoglerTeamWarsMod.MOD_ID)
 public final class RoglerTeamWarsMod {
     public static final String MOD_ID = "roglerteamwars";
-    public static final String VERSION = "0.6.5";
+    public static final String VERSION = "0.7.0";
     private static RoglerTeamWarsMod INSTANCE;
     private BaseCoreConfig baseConfig = BaseCoreConfig.DEFAULT;
     private dev.rogler.teamwars.neoforge.base.CorePowerConfig powerConfig = dev.rogler.teamwars.neoforge.base.CorePowerConfig.DEFAULT;
@@ -88,6 +88,7 @@ public final class RoglerTeamWarsMod {
     public void started(ServerStartedEvent event) {
         activeServer = event.getServer();
         dev.rogler.teamwars.neoforge.protection.BaseGuardService.resetRuntimeState();
+        dev.rogler.teamwars.neoforge.map.ExplorationService.start(activeServer);
         dev.rogler.teamwars.neoforge.compat.SableCompatibilityService.initialize(activeServer);
         dev.rogler.teamwars.neoforge.compat.SableRemovedSublevelGuard.initialize(activeServer);
         reloadSettings(activeServer);
@@ -112,6 +113,7 @@ public final class RoglerTeamWarsMod {
 
     @SubscribeEvent
     public void stopping(ServerStoppingEvent event) {
+        dev.rogler.teamwars.neoforge.map.ExplorationService.stop();
         dev.rogler.teamwars.neoforge.protection.BaseGuardService.resetRuntimeState();
         dev.rogler.teamwars.neoforge.compat.WariumRecoveryGuard.shutdown();
         dev.rogler.teamwars.neoforge.compat.SableCompatibilityService.shutdown();
@@ -123,12 +125,20 @@ public final class RoglerTeamWarsMod {
     public void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (activeServer != null && event.getEntity() instanceof ServerPlayer player) {
             scoreboard.refresh(player.getServer(), settings);
+            dev.rogler.teamwars.neoforge.map.XaeroPrivacyService.apply(player);
         }
+    }
+
+    @SubscribeEvent
+    public void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player)
+            dev.rogler.teamwars.neoforge.map.ExplorationService.logout(player.getUUID());
     }
 
     @SubscribeEvent
     public void tick(ServerTickEvent.Post event) {
         if (activeServer == null) return;
+        dev.rogler.teamwars.neoforge.map.ExplorationService.tick(activeServer);
         dev.rogler.teamwars.neoforge.base.CoreInfrastructureService.tick(activeServer);
         if (activeServer.getTickCount() % settings.refreshIntervalTicks() == 0)
             scoreboard.refresh(activeServer, settings);
@@ -231,6 +241,10 @@ public final class RoglerTeamWarsMod {
         var legacyNode = event.getDispatcher().register(Commands.literal("teamwars")
             .executes(ctx -> status(ctx.getSource()))
             .then(Commands.literal("status").executes(ctx -> status(ctx.getSource())))
+            .then(Commands.literal("map")
+                .then(Commands.literal("status").executes(ctx -> dev.rogler.teamwars.neoforge.map.ExplorationService.status(ctx.getSource())))
+                .then(Commands.literal("zone").executes(ctx -> dev.rogler.teamwars.neoforge.map.ExplorationService.zone(ctx.getSource())))
+                .executes(ctx -> dev.rogler.teamwars.neoforge.map.ExplorationService.status(ctx.getSource())))
             .then(Commands.literal("team")
                 .executes(ctx -> ownTeam(ctx.getSource()))
                 .then(Commands.literal("info").executes(ctx -> ownTeam(ctx.getSource())))
@@ -430,9 +444,10 @@ public final class RoglerTeamWarsMod {
             + " | FTB party projection: " + scoreboard.status()
             + " | online parties: " + scoreboard.partyCount()
             + " | quarantined: " + scoreboard.quarantinedCount()
+            + " | oversized FTB players (still authorized): " + scoreboard.oversizeCount()
             + " | FTB API errors: " + scoreboard.apiFailures()), false);
         source.sendSuccess(() -> Component.literal("Features: FTB team sync, private nametags, /rogler team; "
-            + "core guard, private auto FTB claims, team UUID admin tools, armor tiers; raids opt-in; NO Xaero share yet."), false);
+            + "core guard, private auto FTB claims, team UUID admin tools, armor tiers; raids opt-in; Xaero radar privacy enforced; exploration provenance (no Xaero rendering yet)."), false);
         return Command.SINGLE_SUCCESS;
     }
 
@@ -446,6 +461,8 @@ public final class RoglerTeamWarsMod {
         } else {
             source.sendSuccess(() -> Component.literal("FTB Team: " + group.displayName()
                 + " (" + group.partyId() + ")"), false);
+            if (!group.warning().isBlank())
+                source.sendSuccess(() -> Component.literal("[TeamWars] Warning: " + group.warning()), false);
         }
         return Command.SINGLE_SUCCESS;
     }

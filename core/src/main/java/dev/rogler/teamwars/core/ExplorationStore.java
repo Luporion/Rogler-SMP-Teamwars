@@ -32,6 +32,29 @@ public final class ExplorationStore {
         CRC32 crc = new CRC32(); crc.update(payload);
         Path temp = Files.createTempFile(absolute.getParent(), "teamwars-exp-", ".tmp");
         try {
+            // A replacement must not accidentally change ownership/mode of Crafty world files.
+            // On non-POSIX platforms the existing filesystem semantics remain in charge.
+            if (Files.exists(absolute)) {
+                var oldView = Files.getFileAttributeView(absolute,
+                    java.nio.file.attribute.PosixFileAttributeView.class, LinkOption.NOFOLLOW_LINKS);
+                var newView = Files.getFileAttributeView(temp,
+                    java.nio.file.attribute.PosixFileAttributeView.class);
+                if (oldView != null && newView != null) {
+                    var attrs = oldView.readAttributes();
+                    newView.setPermissions(attrs.permissions());
+                    newView.setGroup(attrs.group());
+                    newView.setOwner(attrs.owner());
+                } else {
+                    var oldAcl = Files.getFileAttributeView(absolute,
+                        java.nio.file.attribute.AclFileAttributeView.class, LinkOption.NOFOLLOW_LINKS);
+                    var newAcl = Files.getFileAttributeView(temp,
+                        java.nio.file.attribute.AclFileAttributeView.class);
+                    if (oldAcl != null && newAcl != null) {
+                        newAcl.setAcl(oldAcl.getAcl());
+                        newAcl.setOwner(oldAcl.getOwner());
+                    }
+                }
+            }
             try (DataOutputStream out = new DataOutputStream(Files.newOutputStream(temp))) {
                 out.writeInt(payload.length); out.write(payload); out.writeLong(crc.getValue());
             }

@@ -41,10 +41,16 @@ public final class TeamAssignmentPolicy {
         if (party == null) return solo(player, "FTB personal team or party unavailable");
         if (party.members().isEmpty() || !party.members().contains(player))
             return solo(player, "FTB returned a party without this member");
-        if (party.members().size() > maximumMembers)
-            return solo(player, "FTB party exceeds the configured member limit");
+        // FTB Teams is authoritative for membership. The TeamWars size setting is
+        // a policy warning, NOT permission to evict an existing real FTB party
+        // member from their own Core, claims, storage or scoreboard group.
+        // FTB's separate max_party_size setting must enforce join limits.
+        String warning = party.members().size() > maximumMembers
+            ? "FTB party has " + party.members().size() + " members; TeamWars configured limit is "
+                + maximumMembers + ". Adjust FTB max_party_size if needed."
+            : "";
         return new Assignment(player, party.id(), key("rt", party.id()),
-            party.displayName().isBlank() ? "Team" : party.displayName(), true, "");
+            party.displayName().isBlank() ? "Team" : party.displayName(), true, warning);
     }
 
     public static Assignment solo(UUID player, String explanation) {
