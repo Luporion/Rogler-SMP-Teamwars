@@ -92,3 +92,6 @@ if ($LASTEXITCODE -ne 0) { throw "Map privacy/provenance tests failed: $LASTEXIT
 
 & java -ea -cp build/classes dev.rogler.teamwars.core.TeamMapSessionTests
 if ($LASTEXITCODE -ne 0) { throw "TeamMapSessionTests failed: $LASTEXITCODE" }
+
+& java -ea -cp build/classes dev.rogler.teamwars.core.TeamIntelPolicyTests
+if ($LASTEXITCODE -ne 0) { throw "TeamIntelPolicyTests failed: $LASTEXITCODE" }

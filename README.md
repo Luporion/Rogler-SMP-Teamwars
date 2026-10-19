@@ -1,3 +1,7 @@
+# Current milestone: Rogler Core v0.7.2 SOURCE CANDIDATE
+
+Adds per-viewer FTB-filtered teammate coordinates, a lightweight companion HUD, volatile client session revocation and 20 new Java policy checks. **Native Xaero terrain/waypoint sync is NOT included.** See [v0.7.2 release](docs/releases/v0.7.2.md), [acceptance](docs/TEST_PLAN_v0.7.2.md) and [handover](docs/LLM_HANDOVER_v0.7.2.md). NeoForge CI/runtime verification pending.
+
 > **Current milestone v0.2.0 SOURCE CANDIDATE:** first authoritative physical Base Core with issued team UUID token, overworld 300–2000 radius, 1-hour online carrier timer, safe vanilla placement attempt, fallback operator escrow, per-world SavedData, and player-only team diagnostics. NOT raid-ready (FTB claims/Grace/chunkload absent); real NeoForge v0.2 runtime is not yet tested. Dependencies: NeoForge 21.1.249, FTB Teams 2101.1.11 and FTB Library 2101.1.35; **no new third-party mods**. See [requirements](docs/MOD_REQUIREMENTS.md) and [test plan](docs/plans/2026-10-10-v0.2.0-base-core.md).
 
 # Rogler SMP — TeamWars v0.1.0 (source candidate)

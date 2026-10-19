@@ -1,3 +1,7 @@
+# v0.7.2 update — 2026-10-19
+
+Implemented in source: secure teammate-only network presence snapshots and client HUD, preserving 0.7.1 server map sessions. Next: (1) NeoForge CI + two-team privacy tests; (2) native Xaero Minimap/World Map render adapters version-pinned to modpack trio; (3) revocable, nonpersistent team-only terrain tiles in both Xaero maps; (4) team-only waypoints via tested TeamPins or separate integration. This revision is NOT completion of the Xaero terrain/map sync milestone.
+
 # v0.5.3 UI architecture milestone
 
 Native owner-only 5-tab Core dashboard implemented in source. Keeps FE generator, 16 RPM / 256 SU Create starter shaft, 9 team slots. 3 purchase actions via menu. Tech guide uses registered manuals plus Create Ponder / AE2 built-in Guide hints. Side FE/AE2 diagnostics added; an AE2 ME-network node/terminal/Drive is **NOT** implemented. Future pages reserve sophisticated upgrade sockets, map, voice, radar, plant and chunkloading features. CI/runtime acceptance still required. See CORE_DASHBOARD_ARCHITECTURE.md.

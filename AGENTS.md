@@ -1,3 +1,7 @@
+# LATEST v0.7.2 SOURCE CANDIDATE
+
+Read `docs/releases/v0.7.2.md` and `docs/LLM_HANDOVER_v0.7.2.md`. The new client team intel HUD is **not a native Xaero map layer or terrain import**. FTB team membership is checked for both sender and each teammate; no enemy coordinates are emitted. Java-only tests do not establish NeoForge compilation or in-game privacy. Full-source ZIP + Git-format PATCH.cmd patch are required.
+
 # Rogler Core v0.6.2 — latest source handover
 
 Read `docs/releases/v0.6.2.md`, `docs/LLM_HANDOVER_v0.6.2.md`, `docs/TEST_PLAN_v0.6.2.md`, and `docs/PROJECT_STATE_v0.6.2.md`. This source candidate optimizes per-event explosion protection, bounded core recovery and stale FTB receipt cleanup, with handler-only measurements. **Do not claim Warium watchdog elimination or real performance gains without a dedicated-server A/B test.** Base SHA `48433f4`. No new mods or data schema. Keep original GitHub/LLM files in the exact post-patch Git archive.

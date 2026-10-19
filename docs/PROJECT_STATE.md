@@ -1,3 +1,7 @@
+# Current milestone: v0.7.2 — Team Intel HUD SOURCE CANDIDATE (2026-10-19)
+
+New server-authoritative teammate-only presence packets and volatile client HUD. Pure Java tests added. Previous v0.7.1 CI success: commit `e2fddd57`; no 0.7.2 CI/runtime evidence yet. Xaero terrain import/revocation, native minimap icons and FTB<->Xaero waypoints still NOT implemented. See `docs/releases/v0.7.2.md`. No SavedData schema migration.
+
 # LATEST — v0.3.0 SOURCE CANDIDATE (2026-10-12)
 
 Branch base: `feat/v0.2.2-core-relocation`, commit `545eca8` upstream. Do NOT assume runtime is verified. See `docs/releases/v0.3.0.md`.

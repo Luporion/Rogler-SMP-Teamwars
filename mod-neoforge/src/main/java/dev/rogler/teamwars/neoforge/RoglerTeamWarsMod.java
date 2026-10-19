@@ -41,7 +41,7 @@ import java.nio.file.Path;
 @Mod(RoglerTeamWarsMod.MOD_ID)
 public final class RoglerTeamWarsMod {
     public static final String MOD_ID = "roglerteamwars";
-    public static final String VERSION = "0.7.1";
+    public static final String VERSION = "0.7.2";
     private static RoglerTeamWarsMod INSTANCE;
     private BaseCoreConfig baseConfig = BaseCoreConfig.DEFAULT;
     private dev.rogler.teamwars.neoforge.base.CorePowerConfig powerConfig = dev.rogler.teamwars.neoforge.base.CorePowerConfig.DEFAULT;
@@ -66,6 +66,7 @@ public final class RoglerTeamWarsMod {
     public RoglerTeamWarsMod(IEventBus modBus) {
         INSTANCE = this;
         BaseCoreRegistries.register(modBus);
+        modBus.addListener(dev.rogler.teamwars.neoforge.map.TeamIntelNetwork::register);
         modBus.addListener((net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent e) ->
             e.enqueueWork(BaseCoreRegistries::registerCreateStress));
         modBus.addListener(dev.rogler.teamwars.neoforge.base.CoreInfrastructureService::registerCapabilities);
@@ -89,6 +90,7 @@ public final class RoglerTeamWarsMod {
         activeServer = event.getServer();
         dev.rogler.teamwars.neoforge.protection.BaseGuardService.resetRuntimeState();
         dev.rogler.teamwars.neoforge.map.ExplorationService.start(activeServer);
+        dev.rogler.teamwars.neoforge.map.TeamIntelService.reset();
         dev.rogler.teamwars.neoforge.compat.SableCompatibilityService.initialize(activeServer);
         dev.rogler.teamwars.neoforge.compat.SableRemovedSublevelGuard.initialize(activeServer);
         reloadSettings(activeServer);
@@ -114,6 +116,7 @@ public final class RoglerTeamWarsMod {
     @SubscribeEvent
     public void stopping(ServerStoppingEvent event) {
         dev.rogler.teamwars.neoforge.map.ExplorationService.stop();
+        dev.rogler.teamwars.neoforge.map.TeamIntelService.reset();
         dev.rogler.teamwars.neoforge.protection.BaseGuardService.resetRuntimeState();
         dev.rogler.teamwars.neoforge.compat.WariumRecoveryGuard.shutdown();
         dev.rogler.teamwars.neoforge.compat.SableCompatibilityService.shutdown();
@@ -131,14 +134,17 @@ public final class RoglerTeamWarsMod {
 
     @SubscribeEvent
     public void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player)
+        if (event.getEntity() instanceof ServerPlayer player) {
             dev.rogler.teamwars.neoforge.map.ExplorationService.logout(player.getUUID());
+            dev.rogler.teamwars.neoforge.map.TeamIntelService.logout(player.getUUID());
+        }
     }
 
     @SubscribeEvent
     public void tick(ServerTickEvent.Post event) {
         if (activeServer == null) return;
         dev.rogler.teamwars.neoforge.map.ExplorationService.tick(activeServer);
+        dev.rogler.teamwars.neoforge.map.TeamIntelService.tick(activeServer);
         dev.rogler.teamwars.neoforge.base.CoreInfrastructureService.tick(activeServer);
         if (activeServer.getTickCount() % settings.refreshIntervalTicks() == 0)
             scoreboard.refresh(activeServer, settings);
