@@ -5,12 +5,18 @@ import java.util.*;
 /** Server-authoritative per-player exploration provenance. Never mark chunk explored from Chunky/pregen. */
 public final class ExplorationIndex {
     private final Map<UUID, Set<ChunkKey>> personal = new HashMap<>();
+    private long revision;
+
+    /** Monotonic in this session: advances only for newly *personally visited* chunks. */
+    public long revision() { return revision; }
 
     /** True only if this player did not previously own this exploration sample. */
     public boolean discover(UUID player, ChunkKey chunk) {
         Objects.requireNonNull(player);
         Objects.requireNonNull(chunk);
-        return personal.computeIfAbsent(player, ignored -> new HashSet<>()).add(chunk);
+        boolean discovered = personal.computeIfAbsent(player, ignored -> new HashSet<>()).add(chunk);
+        if (discovered) revision++;
+        return discovered;
     }
     public Set<ChunkKey> personal(UUID player) {
         return Set.copyOf(personal.getOrDefault(player, Set.of()));

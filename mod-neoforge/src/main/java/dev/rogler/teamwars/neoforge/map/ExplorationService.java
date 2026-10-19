@@ -4,6 +4,7 @@ import dev.rogler.teamwars.core.ChunkKey;
 import dev.rogler.teamwars.core.ExplorationIndex;
 import dev.rogler.teamwars.core.ExplorationStore;
 import dev.rogler.teamwars.core.ExplorationTrail;
+import dev.rogler.teamwars.core.TeamMapSession;
 import dev.rogler.teamwars.neoforge.teams.FtbPartyReader;
 import dev.rogler.teamwars.neoforge.teams.RoglerTeamWarsLogger;
 import net.minecraft.commands.CommandSourceStack;
@@ -15,6 +16,8 @@ import net.minecraft.world.level.storage.LevelResource;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -29,6 +32,8 @@ import java.util.concurrent.Future;
 public final class ExplorationService {
     private static final String FILE = "roglerteamwars_exploration.rtwe";
     private static ExplorationIndex index;
+    private static final Map<UUID, TeamMapSession> sessions = new HashMap<>();
+    private static final FtbPartyReader ftb = new FtbPartyReader();
     private static ExplorationTrail trail;
     private static Path path;
     private static boolean enabled;
@@ -41,6 +46,7 @@ public final class ExplorationService {
         path = server.getWorldPath(LevelResource.ROOT).resolve("data").resolve(FILE);
         enabled = false;
         try {
+            sessions.clear();
             index = Files.exists(path) ? ExplorationStore.read(path) : new ExplorationIndex();
             trail = new ExplorationTrail(index, 8);
             pending = 0;
@@ -64,8 +70,23 @@ public final class ExplorationService {
             ChunkKey position = ChunkKey.fromBlock(player.level().dimension().location().toString(), player.blockPosition().getX(), player.blockPosition().getZ());
             pending += trail.sample(player.getUUID(),position);
         }
+        // Re-evaluate only on personal discovery changes or FTB membership changes.
+        // This holds authorization state server-side but does NOT send Xaero textures.
+        if (server.getTickCount() % 40 == 0) reconcileSessions(server);
         // Save at most once every 10 minutes, avoid writing every player movement.
         if (pending > 0 && server.getTickCount() % 12000 == 0) checkpoint();
+    }
+
+    private static void reconcileSessions(MinecraftServer server) {
+        Set<UUID> online = new HashSet<>();
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            UUID id = player.getUUID();
+            online.add(id);
+            var currentParty = ftb.partyFor(id);
+            // A missing or stale FTB roster never grants another player's map.
+            sessions.computeIfAbsent(id, TeamMapSession::new).reconcile(currentParty, index);
+        }
+        sessions.keySet().removeIf(id -> !online.contains(id));
     }
 
     private static int total() {
@@ -99,6 +120,7 @@ public final class ExplorationService {
 
     public static void logout(UUID player) {
         if (enabled) trail.logout(player);
+        sessions.remove(player);
     }
 
     public static void stop() {
@@ -113,6 +135,7 @@ public final class ExplorationService {
             }
         }
         if (writer != null) writer.shutdown();
+        sessions.clear();
         enabled = false; index = null; trail = null; path = null;
         writer = null; runningWrite = null; pending = 0;
     }
@@ -132,6 +155,22 @@ public final class ExplorationService {
         source.sendSuccess(() -> Component.literal(String.format(java.util.Locale.ROOT,
             "Spawn distance: %.0f blocks; allowed base radius %d..%d; currently %s",
             distance, config.innerRadius(), config.outerRadius(), inside ? "INSIDE" : "OUTSIDE")), false);
+        return 1;
+    }
+
+    /** Private per-viewer authorization snapshot; never broadcasts map lists or enemy locations. */
+    public static int sessionStatus(CommandSourceStack source) {
+        if (!enabled) {source.sendFailure(Component.literal("Exploration tracker unavailable"));return 0;}
+        ServerPlayer player;
+        try {player=source.getPlayerOrException();} catch (Exception e) {source.sendFailure(Component.literal("Player required"));return 0;}
+        var session = sessions.computeIfAbsent(player.getUUID(), TeamMapSession::new);
+        var change = session.reconcile(ftb.partyFor(player.getUUID()), index);
+        source.sendSuccess(()->Component.literal("Private map authorization: " + session.visibleCount() + " chunks, "
+            + session.members() + " current FTB members, generation " + session.generation() + "."),false);
+        source.sendSuccess(()->Component.literal("Last calculated delta: +" + change.revealed().size()
+            + " / -" + change.revoked().size() + "; roster changed: " + change.membershipChanged()),false);
+        source.sendSuccess(()->Component.literal("Xaero terrain rendering and cache revocation are NOT implemented. "
+            + "Never install global shared-map mods on a secret-team server."),false);
         return 1;
     }
 

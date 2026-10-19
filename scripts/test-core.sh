@@ -37,3 +37,5 @@ java -ea -cp build/classes dev.rogler.teamwars.core.compat.ExplosionObservationC
 java -ea -cp build/classes dev.rogler.teamwars.core.compat.SableLifecyclePolicyTests
 
 java -ea -cp build/classes dev.rogler.teamwars.core.TeamMapPrivacyTests
+
+java -ea -cp build/classes dev.rogler.teamwars.core.TeamMapSessionTests

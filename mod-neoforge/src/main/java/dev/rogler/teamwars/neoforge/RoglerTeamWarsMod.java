@@ -41,7 +41,7 @@ import java.nio.file.Path;
 @Mod(RoglerTeamWarsMod.MOD_ID)
 public final class RoglerTeamWarsMod {
     public static final String MOD_ID = "roglerteamwars";
-    public static final String VERSION = "0.7.0";
+    public static final String VERSION = "0.7.1";
     private static RoglerTeamWarsMod INSTANCE;
     private BaseCoreConfig baseConfig = BaseCoreConfig.DEFAULT;
     private dev.rogler.teamwars.neoforge.base.CorePowerConfig powerConfig = dev.rogler.teamwars.neoforge.base.CorePowerConfig.DEFAULT;
@@ -244,6 +244,7 @@ public final class RoglerTeamWarsMod {
             .then(Commands.literal("map")
                 .then(Commands.literal("status").executes(ctx -> dev.rogler.teamwars.neoforge.map.ExplorationService.status(ctx.getSource())))
                 .then(Commands.literal("zone").executes(ctx -> dev.rogler.teamwars.neoforge.map.ExplorationService.zone(ctx.getSource())))
+                .then(Commands.literal("session").executes(ctx -> dev.rogler.teamwars.neoforge.map.ExplorationService.sessionStatus(ctx.getSource())))
                 .executes(ctx -> dev.rogler.teamwars.neoforge.map.ExplorationService.status(ctx.getSource())))
             .then(Commands.literal("team")
                 .executes(ctx -> ownTeam(ctx.getSource()))
@@ -447,7 +448,7 @@ public final class RoglerTeamWarsMod {
             + " | oversized FTB players (still authorized): " + scoreboard.oversizeCount()
             + " | FTB API errors: " + scoreboard.apiFailures()), false);
         source.sendSuccess(() -> Component.literal("Features: FTB team sync, private nametags, /rogler team; "
-            + "core guard, private auto FTB claims, team UUID admin tools, armor tiers; raids opt-in; Xaero radar privacy enforced; exploration provenance (no Xaero rendering yet)."), false);
+            + "core guard, private auto FTB claims, team UUID admin tools, armor tiers; raids opt-in; Xaero radar privacy enforced; exploration provenance + private team visibility deltas (Xaero terrain rendering pending)."), false);
         return Command.SINGLE_SUCCESS;
     }
 
