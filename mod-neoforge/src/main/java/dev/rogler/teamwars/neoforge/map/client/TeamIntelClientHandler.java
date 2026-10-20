@@ -22,5 +22,14 @@ public final class TeamIntelClientHandler {
         return snapshot != null && snapshot.dimension().equals(mc.level.dimension().location().toString())
             ? snapshot : null;
     }
+    /** Deny by default until the first current-session team-intel packet arrives. */
+    public static boolean mayDisplay(java.util.UUID playerId) {
+        Minecraft mc=Minecraft.getInstance();
+        if(mc.player == null || mc.level == null || playerId == null) return false;
+        if(playerId.equals(mc.player.getUUID())) return true;
+        var snapshot=active();
+        return snapshot!=null && snapshot.teammates().stream()
+            .anyMatch(t -> t.playerId().equals(playerId));
+    }
     public static void clear(){STATE.reset();}
 }

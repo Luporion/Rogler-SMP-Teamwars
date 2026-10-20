@@ -10,6 +10,6 @@ import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 @EventBusSubscriber(modid=RoglerTeamWarsMod.MOD_ID,value=Dist.CLIENT)
 public final class TeamIntelConnectionEvents {
     private TeamIntelConnectionEvents() {}
-    @SubscribeEvent public static void onLogin(ClientPlayerNetworkEvent.LoggingIn event) { TeamIntelClientHandler.clear(); }
-    @SubscribeEvent public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) { TeamIntelClientHandler.clear(); }
+    @SubscribeEvent public static void onLogin(ClientPlayerNetworkEvent.LoggingIn event) { TeamIntelClientHandler.clear(); FtbXaeroWaypointMirror.clear(); }
+    @SubscribeEvent public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) { TeamIntelClientHandler.clear(); FtbXaeroWaypointMirror.clear(); }
 }

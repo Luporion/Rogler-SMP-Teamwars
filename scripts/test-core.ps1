@@ -95,3 +95,6 @@ if ($LASTEXITCODE -ne 0) { throw "TeamMapSessionTests failed: $LASTEXITCODE" }
 
 & java -ea -cp build/classes dev.rogler.teamwars.core.TeamIntelPolicyTests
 if ($LASTEXITCODE -ne 0) { throw "TeamIntelPolicyTests failed: $LASTEXITCODE" }
+
+& java -ea -cp build/classes dev.rogler.teamwars.core.FtbMapVisibilityPolicyTests
+if ($LASTEXITCODE -ne 0) { throw "FTB Chunks enemy visibility policy tests failed: $LASTEXITCODE" }

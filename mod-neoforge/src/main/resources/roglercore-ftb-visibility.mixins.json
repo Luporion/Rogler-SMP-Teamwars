@@ -1,0 +1,9 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "compatibilityLevel": "JAVA_21",
+  "package": "dev.rogler.teamwars.neoforge.compat.ftbvisibility",
+  "mixins": ["FtbVisibilityPacketMixin"],
+  "client": ["FtbVisibleClientPlayersMixin"],
+  "injectors": {"defaultRequire": 1}
+}

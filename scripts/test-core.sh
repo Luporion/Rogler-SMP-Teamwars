@@ -40,3 +40,5 @@ java -ea -cp build/classes dev.rogler.teamwars.core.TeamMapPrivacyTests
 
 java -ea -cp build/classes dev.rogler.teamwars.core.TeamMapSessionTests
 java -ea -cp build/classes dev.rogler.teamwars.core.TeamIntelPolicyTests
+
+java -ea -cp build/classes dev.rogler.teamwars.core.FtbMapVisibilityPolicyTests

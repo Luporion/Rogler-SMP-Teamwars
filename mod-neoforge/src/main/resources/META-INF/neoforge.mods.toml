@@ -4,16 +4,19 @@ license="MIT"
 
 [[mods]]
 modId="roglerteamwars"
-version="0.7.2"
+version="0.7.3"
 displayName="Rogler Core"
 authors="Rogler Core contributors"
 description='''
-Rogler Core v0.7.2: server-filtered teammate coordinate packets, volatile session state and an optional companion HUD; enemy radar privacy, personal exploration provenance and membership-aware visibility snapshots; optional Sable 2.0.6 removed-owner/anchor split preflight without Sable Destructive, bounded diagnostics, existing base/claim recovery and optional Warium startup quarantine.
+Rogler Core v0.7.3: FTB teammate-only player visibility, Xaero cave-mode preservation and experimental FTB-to-Xaero local waypoint mirror; server-filtered teammate coordinate packets, volatile session state and an optional companion HUD; enemy radar privacy, personal exploration provenance and membership-aware visibility snapshots; optional Sable 2.0.6 removed-owner/anchor split preflight without Sable Destructive, bounded diagnostics, existing base/claim recovery and optional Warium startup quarantine.
 The Warium quarantine is OFF by default; it does not rewrite entity regions or guarantee repair of malformed .mca files.
 '''
 
 [[mixins]]
 config="roglercore-sable-lifecycle.mixins.json"
+
+[[mixins]]
+config="roglercore-ftb-visibility.mixins.json"
 
 [[dependencies.roglerteamwars]]
 modId="neoforge"

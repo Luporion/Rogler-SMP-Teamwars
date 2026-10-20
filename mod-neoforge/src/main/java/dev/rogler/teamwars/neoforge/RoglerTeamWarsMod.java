@@ -41,7 +41,7 @@ import java.nio.file.Path;
 @Mod(RoglerTeamWarsMod.MOD_ID)
 public final class RoglerTeamWarsMod {
     public static final String MOD_ID = "roglerteamwars";
-    public static final String VERSION = "0.7.2";
+    public static final String VERSION = "0.7.3";
     private static RoglerTeamWarsMod INSTANCE;
     private BaseCoreConfig baseConfig = BaseCoreConfig.DEFAULT;
     private dev.rogler.teamwars.neoforge.base.CorePowerConfig powerConfig = dev.rogler.teamwars.neoforge.base.CorePowerConfig.DEFAULT;
@@ -128,7 +128,8 @@ public final class RoglerTeamWarsMod {
     public void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (activeServer != null && event.getEntity() instanceof ServerPlayer player) {
             scoreboard.refresh(player.getServer(), settings);
-            dev.rogler.teamwars.neoforge.map.XaeroPrivacyService.apply(player);
+            // v0.7.3: do not send Xaero fair-play marker: it disables Cave Mode.
+            // Enforce radar OFF with both Xaero server_profiles instead.
         }
     }
 
