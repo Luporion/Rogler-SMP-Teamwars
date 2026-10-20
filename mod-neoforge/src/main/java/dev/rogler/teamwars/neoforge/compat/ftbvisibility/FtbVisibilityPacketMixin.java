@@ -5,7 +5,6 @@ import dev.rogler.teamwars.core.teams.TeamAssignmentPolicy;
 import dev.rogler.teamwars.neoforge.teams.FtbPartyReader;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
@@ -14,6 +13,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,6 +25,8 @@ import java.util.UUID;
  * FTB's original routine allows OPs to see everyone and honors publicly visible
  * team positions. Rogler SMP does not. Cancellation FIRST means a reflection or
  * FTB failure never falls through to the privacy-leaking original routine.
+ * The modified packet MUST be sent via Architectury NetworkManager, as in FTB
+ * Chunks itself; direct NeoForge PacketDistributor will break encoding.
  * Target must match installed FTB Chunks; fail loudly on missing hook.
  */
 @Pseudo
@@ -47,10 +49,19 @@ public abstract class FtbVisibilityPacketMixin {
             for(ServerPlayer p:players){ids.add(p.getUUID());parties.put(p.getUUID(),ROGLER_FTB.partyFor(p.getUUID()));}
             Class<?> packet=Class.forName("dev.ftb.mods.ftbchunks.net.PlayerVisibilityPacket");
             Constructor<?> constructor=packet.getConstructor(List.class);
+            // FTB Chunks 2101.1.22 registers this payload through Architectury,
+            // NOT NeoForge's native payload registry. The original FTB code
+            // dispatches via NetworkManager.sendToPlayer, which wraps it in
+            // Architectury's BufCustomPacketPayload before Netty encodes it.
+            // PacketDistributor.sendToPlayer skips that wrapper and throws:
+            // ClassCastException PlayerVisibilityPacket -> BufCustomPacketPayload.
+            // Resolve the EXACT same public API as the installed FTB bytecode.
+            Method send = Class.forName("dev.architectury.networking.NetworkManager")
+                    .getMethod("sendToPlayer", ServerPlayer.class, CustomPacketPayload.class);
             for(ServerPlayer recipient:players){
                 List<UUID> visible=FtbMapVisibilityPolicy.visible(recipient.getUUID(),ids,parties);
                 var outgoing=(CustomPacketPayload)constructor.newInstance(visible);
-                PacketDistributor.sendToPlayer(recipient,outgoing);
+                send.invoke(null, recipient, outgoing);
             }
         } catch (ReflectiveOperationException | RuntimeException ex) {
             // Never invoke FTB's original method after a failure: it can leak all OP coordinates.

@@ -11,7 +11,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,8 +28,8 @@ import java.util.Optional;
 @EventBusSubscriber(modid=RoglerTeamWarsMod.MOD_ID,value=Dist.CLIENT)
 public final class FtbXaeroWaypointMirror {
     private static final String NAMESPACE = "roglercore_ftb_mirror";
-    private static final List<Object> inserted = new ArrayList<>();
-    private static Collection<Object> xaeroCollection;
+    private static final Map<Integer, Object> inserted = new HashMap<>();
+    private static Map<Integer, Object> xaeroCollection;
     private static String lastDimension="";
     private static long ticks;
     private static boolean warned;
@@ -40,18 +39,21 @@ public final class FtbXaeroWaypointMirror {
     public static void tick(ClientTickEvent.Post event) {
         Minecraft mc=Minecraft.getInstance();
         if(mc.level==null || mc.player==null){ clear();return; }
-        if(++ticks%60!=0) return;
         String dim=mc.level.dimension().location().toString();
+        // A dimension change must not render previous-dimension waypoints.
+        if(!lastDimension.isEmpty() && !lastDimension.equals(dim)) clear();
+        if(++ticks%60!=0) return;
         try {
-            // The documented Xaero API gives each mod its own custom-waypoint table.
-            // Treat unexpected collection shapes as unsupported; never modify a foreign table.
+            // In the exact installed Xaero Minimap 26.4.2 JAR this API returns
+            // Hashtable<Integer, Waypoint>, NOT Collection<Waypoint>.
+            // Preserve the namespaced table's integer keys and never touch other mods.
             Class<?> xaeroManager=Class.forName("xaero.common.minimap.waypoints.WaypointsManager");
             Object table=xaeroManager.getMethod("getCustomWaypoints",String.class).invoke(null,NAMESPACE);
-            if(!(table instanceof Collection<?> collection)) {
-                reportOnce("Xaero custom-waypoint table is not a Collection; integration disabled");
+            if(!(table instanceof Map<?, ?> map)) {
+                reportOnce("Xaero custom-waypoint table is not a Map; integration disabled");
                 clear();return;
             }
-            @SuppressWarnings("unchecked") Collection<Object> own=(Collection<Object>)collection;
+            @SuppressWarnings("unchecked") Map<Integer,Object> own=(Map<Integer,Object>)map;
             // Avoid accidental stale entries on a new world/realm connection.
             if(xaeroCollection!=own) {clear();xaeroCollection=own;}
             List<SourceWaypoint> waypoints=readFtb();
@@ -66,9 +68,13 @@ public final class FtbXaeroWaypointMirror {
                 if(unique.putIfAbsent(key,true)!=null)continue;
                 replacement.add(ctor.newInstance(p.x,p.y,p.z,p.name,"F",7));
             }
-            for(Object old:inserted)own.remove(old);
-            inserted.clear();
-            for(Object obj:replacement){own.add(obj);inserted.add(obj);}
+            clearInserted(own);
+            int index=1;
+            for(Object obj:replacement){
+                own.put(index,obj);
+                inserted.put(index,obj);
+                index++;
+            }
             lastDimension=dim;warned=false;
         } catch(ReflectiveOperationException | RuntimeException ex) {
             reportOnce("FTB -> Xaero waypoint reflection unavailable: " + ex.getClass().getSimpleName());
@@ -106,8 +112,16 @@ public final class FtbXaeroWaypointMirror {
     private static void reportOnce(String message){
         if(!warned){warned=true;System.err.println("[Rogler Core] WAYPOINT_BRIDGE: "+message);}
     }
+    /** Remove only entries still holding objects placed by this adapter. */
+    private static void clearInserted(Map<Integer,Object> table){
+        for(var e: inserted.entrySet()){
+            if(table.get(e.getKey())==e.getValue()) table.remove(e.getKey());
+        }
+        inserted.clear();
+    }
     public static void clear(){
-        if(xaeroCollection!=null) for(Object old:inserted) xaeroCollection.remove(old);
-        inserted.clear();xaeroCollection=null;lastDimension="";ticks=0;
+        if(xaeroCollection!=null) clearInserted(xaeroCollection);
+        else inserted.clear();
+        xaeroCollection=null;lastDimension="";ticks=0;
     }
 }
