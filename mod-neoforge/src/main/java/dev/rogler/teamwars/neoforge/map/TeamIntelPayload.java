@@ -37,7 +37,7 @@ public record TeamIntelPayload(long sequence, String dimension, int spawnX, int 
             buf.writeUUID(p.playerId());
             buf.writeUtf(p.name(),32);
             buf.writeUtf(p.dimension(),128);
-            buf.writeInt(p.x()); buf.writeInt(p.z());
+            buf.writeInt(p.x()); buf.writeInt(p.y()); buf.writeInt(p.z());
         }
     }
 
@@ -53,8 +53,8 @@ public record TeamIntelPayload(long sequence, String dimension, int spawnX, int 
         for (int i=0;i<size;i++){
             UUID id=buf.readUUID();
             String name=buf.readUtf(32), dim=buf.readUtf(128);
-            int x=buf.readInt(),z=buf.readInt();
-            mates.add(new TeamIntelPolicy.Presence(id,name,dim,x,z));
+            int x=buf.readInt(),y=buf.readInt(),z=buf.readInt();
+            mates.add(new TeamIntelPolicy.Presence(id,name,dim,x,y,z));
         }
         // Validate before presenting untrusted payload to HUD.
         new TeamIntelClientState.Snapshot(sequence,dimension,spawnX,spawnZ,inner,outer,mates);

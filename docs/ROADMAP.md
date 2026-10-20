@@ -1,3 +1,9 @@
+# v0.7.5 source update (2026-10-20)
+
+Implemented in source: per-client opt-in position HUD (worldspawn, own respawn, own placed base core, current teammates) configurable via `/roglerhud`; ephemeral team/base Xaero waypoints using a namespaced map; reduce duplicated FTB-to-Xaero marker noise by disabling mirror by default. Runtime/CI still pending. Next: pin exact Xaero World Map API and prove both displays and HUD menus in-game, then implement opt-in two-way waypoint sharing, and only then explore revocable Xaero terrain overlays.
+
+---
+
 # v0.7.2 update — 2026-10-19
 
 Implemented in source: secure teammate-only network presence snapshots and client HUD, preserving 0.7.1 server map sessions. Next: (1) NeoForge CI + two-team privacy tests; (2) native Xaero Minimap/World Map render adapters version-pinned to modpack trio; (3) revocable, nonpersistent team-only terrain tiles in both Xaero maps; (4) team-only waypoints via tested TeamPins or separate integration. This revision is NOT completion of the Xaero terrain/map sync milestone.

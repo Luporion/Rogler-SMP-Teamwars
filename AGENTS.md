@@ -1,3 +1,9 @@
+# Current v0.7.5 (2026-10-20): HUD + Xaero custom markers
+
+Read `README_Rogler_Core_v0.7.5.md`, `docs/releases/v0.7.5.md` and current `docs/PROJECT_STATE.md`. Base is v0.7.4 verified login; v0.7.5 is source candidate until CI and multiplayer testing. HUD off by default; `/roglerhud` client controls save under client `config/`; `TeamNavigationPayload` server-private per FTB current party; Xaero custom waypoint table namespaced, ephemeral markers T/B. FTB mirror F off by default because screenshot showed too many F labels. Do not claim native revocable terrain or full two-way waypoint sync. No new dependencies or world data migration. Keep Architectury-specific packet send path from v0.7.4.
+
+---
+
 # LATEST v0.7.2 SOURCE CANDIDATE
 
 Read `docs/releases/v0.7.2.md` and `docs/LLM_HANDOVER_v0.7.2.md`. The new client team intel HUD is **not a native Xaero map layer or terrain import**. FTB team membership is checked for both sender and each teammate; no enemy coordinates are emitted. Java-only tests do not establish NeoForge compilation or in-game privacy. Full-source ZIP + Git-format PATCH.cmd patch are required.

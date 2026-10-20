@@ -38,6 +38,7 @@ public final class FtbXaeroWaypointMirror {
     @SubscribeEvent
     public static void tick(ClientTickEvent.Post event) {
         Minecraft mc=Minecraft.getInstance();
+        if(!HudSettingsStore.get().ftbWaypointMirror()){clear();return;}
         if(mc.level==null || mc.player==null){ clear();return; }
         String dim=mc.level.dimension().location().toString();
         // A dimension change must not render previous-dimension waypoints.

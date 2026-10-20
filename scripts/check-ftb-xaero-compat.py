@@ -14,3 +14,16 @@ assert 'Map<Integer,Object>' in mirror
 assert 'clearInserted(own)' in mirror
 assert 'table.get(e.getKey())==e.getValue()' in mirror
 print('FTB/Architectury payload + Xaero 26.4.2 Map API regression check: OK')
+
+# v0.7.5 is additive: retain native NeoForge own payloads only;
+# use Xaero's *separate* namespaced waypoint map, never personal sets.
+markers=(src/'map/client/TeamXaeroMarkers.java').read_text()
+assert 'getCustomWaypoints' in markers and 'roglercore_team_navigation' in markers
+assert 'TeamIntelClientHandler.active()' in markers and 'TeamNavigationClient.active()' in markers
+assert 'clear()' in markers and 'removeInserted()' in markers
+hud=(src/'map/client/TeamIntelHud.java').read_text()
+assert '!settings.enabled()' in hud, 'HUD must be opt-in'
+nav=(src/'map/TeamIntelService.java').read_text()
+assert 'party.members().contains(id)' in nav, 'Do not leak base coordinates to an unverified player'
+assert 'viewer.getRespawnPosition()' in nav, 'Respawn targets must be per-viewer'
+print('v0.7.5 map privacy, HUD opt-in and Xaero namespacing check: OK')

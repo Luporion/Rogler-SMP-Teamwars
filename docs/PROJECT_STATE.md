@@ -1,3 +1,14 @@
+# Current milestone: v0.7.5 optional client HUD + own-base/respawn + Xaero team markers SOURCE CANDIDATE (2026-10-20)
+
+- Base: v0.7.4 (CI green in user logs; gameplay join confirmed). New v0.7.5 CI/real multiplayer **PENDING**.
+- New protocol version `2`: add private `TeamNavigationPayload` with own respawn + team-owned base core. Existing `TeamIntelPayload` now includes Y for Xaero teammate waypoints. Client HUD hidden by default. `/roglerhud` opens standalone client settings and changes corners/offsets and individual distances.
+- Xaero Minimap 26.4.2 mod-owned custom waypoint map for teammates and home core; ephemeral, filtered, reconnect cleanup. Disable FTB F marker mirror by default to address clutter. No terrain sync or bidirectional private/team waypoint sharing yet.
+- Existing FTB privacy Mixin + Architectury sender from v0.7.4 retained. FTB long-range tracker must still be explicitly disabled for strict team secrecy.
+- Java tests and static shape checks pass offline; **do not claim compile or world-map rendering before CI and 2-client run**.
+- See `README_Rogler_Core_v0.7.5.md` and `docs/releases/v0.7.5.md`.
+
+---
+
 # Current milestone: v0.7.2 — Team Intel HUD SOURCE CANDIDATE (2026-10-19)
 
 New server-authoritative teammate-only presence packets and volatile client HUD. Pure Java tests added. Previous v0.7.1 CI success: commit `e2fddd57`; no 0.7.2 CI/runtime evidence yet. Xaero terrain import/revocation, native minimap icons and FTB<->Xaero waypoints still NOT implemented. See `docs/releases/v0.7.2.md`. No SavedData schema migration.

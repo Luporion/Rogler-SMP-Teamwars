@@ -1,6 +1,8 @@
 package dev.rogler.teamwars.neoforge.map;
 
 import dev.rogler.teamwars.core.TeamIntelPolicy;
+import dev.rogler.teamwars.core.base.BaseCoreLedger;
+import dev.rogler.teamwars.neoforge.base.BaseCoreSavedData;
 import dev.rogler.teamwars.core.teams.TeamAssignmentPolicy;
 import dev.rogler.teamwars.neoforge.RoglerTeamWarsMod;
 import dev.rogler.teamwars.neoforge.teams.FtbPartyReader;
@@ -37,7 +39,7 @@ public final class TeamIntelService {
             UUID id=member.getUUID();
             verified.put(id,FTB.partyFor(id));
             online.add(new TeamIntelPolicy.Presence(id,member.getGameProfile().getName(),
-                member.level().dimension().location().toString(),member.blockPosition().getX(),member.blockPosition().getZ()));
+                member.level().dimension().location().toString(),member.blockPosition().getX(),member.blockPosition().getY(),member.blockPosition().getZ()));
         }
         var baseConfig=RoglerTeamWarsMod.baseConfig();
         var spawn=server.overworld().getSharedSpawnPos();
@@ -48,6 +50,26 @@ public final class TeamIntelService {
             PacketDistributor.sendToPlayer(viewer,new TeamIntelPayload(sequence,
                 viewer.level().dimension().location().toString(),spawn.getX(),spawn.getZ(),
                 baseConfig.innerRadius(),baseConfig.outerRadius(),authorized));
+            // Personal bed/anchor spawn remains private. Base coordinates are only
+            // sent when the current effective FTB party authorizes this viewer.
+            String respawnDim="",coreDim="";
+            int rx=0,ry=0,rz=0,bx=0,by=0,bz=0;
+            var respawn=viewer.getRespawnPosition();
+            if(respawn!=null){
+                respawnDim=viewer.getRespawnDimension().location().toString();
+                rx=respawn.getX();ry=respawn.getY();rz=respawn.getZ();
+            }
+            var party=verified.get(id);
+            if(party!=null && party.members().contains(id)){
+                var saved=BaseCoreSavedData.get(server,baseConfig.zone(server),baseConfig.carrySeconds());
+                var core=saved.ledger().get(party.id());
+                if(core!=null && core.mode()==BaseCoreLedger.Mode.PLACED && core.location()!=null){
+                    var position=core.location();
+                    coreDim=position.dimension();bx=position.x();by=position.y();bz=position.z();
+                }
+            }
+            PacketDistributor.sendToPlayer(viewer,new TeamNavigationPayload(sequence,
+                respawnDim,rx,ry,rz,coreDim,bx,by,bz));
         }
         SEQUENCES.keySet().retainAll(players.stream().map(ServerPlayer::getUUID).toList());
     }

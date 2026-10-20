@@ -18,7 +18,8 @@ public final class TeamIntelPolicy {
     public static final int MAX_MARKERS = 32;
     private TeamIntelPolicy() {}
 
-    public record Presence(UUID playerId, String name, String dimension, int x, int z) {
+    public record Presence(UUID playerId, String name, String dimension, int x, int y, int z) {
+        public Presence(UUID playerId,String name,String dimension,int x,int z){this(playerId,name,dimension,x,64,z);}
         public Presence {
             Objects.requireNonNull(playerId);
             Objects.requireNonNull(name);
@@ -38,7 +39,7 @@ public final class TeamIntelPolicy {
         for (Presence p : online) {
             if (p.playerId().equals(viewer) || !party.members().contains(p.playerId())) continue;
             if (!sameParty(verified.get(p.playerId()), party.id(), p.playerId())) continue;
-            result.add(new Presence(p.playerId(), safeName(p.name()), safeDimension(p.dimension()), p.x(), p.z()));
+            result.add(new Presence(p.playerId(), safeName(p.name()), safeDimension(p.dimension()), p.x(), p.y(), p.z()));
         }
         result.sort(Comparator.comparing(p -> p.playerId().toString()));
         return List.copyOf(result.subList(0, Math.min(result.size(), MAX_MARKERS)));
