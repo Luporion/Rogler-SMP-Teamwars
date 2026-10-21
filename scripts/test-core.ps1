@@ -101,3 +101,9 @@ if ($LASTEXITCODE -ne 0) { throw "FTB Chunks enemy visibility policy tests faile
 
 & java -ea -cp build/classes dev.rogler.teamwars.core.HudPreferencesTests
 if ($LASTEXITCODE -ne 0) { throw "HUD preferences tests failed: $LASTEXITCODE" }
+
+& java -ea -cp build/classes dev.rogler.teamwars.core.WaypointSyncPolicyTests
+if ($LASTEXITCODE -ne 0) { throw "WaypointSyncPolicyTests failed: $LASTEXITCODE" }
+
+& python scripts/check-waypoint-bridge.py
+if ($LASTEXITCODE -ne 0) { throw "Waypoint bridge static checks failed: $LASTEXITCODE" }

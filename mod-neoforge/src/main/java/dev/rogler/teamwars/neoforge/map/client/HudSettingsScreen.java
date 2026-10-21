@@ -18,7 +18,7 @@ public final class HudSettingsScreen extends Screen {
     private void rebuild(){
         clearWidgets();
         var p=HudSettingsStore.get();
-        int width=310,x=(this.width-width)/2, y=Math.max(42,(this.height-286)/2);
+        int width=310,x=(this.width-width)/2, y=Math.max(34,(this.height-310)/2);
         button("HUD: "+on(p.enabled()),x,y,width,()->set(p.withEnabled(!p.enabled()))); y+=24;
         button("Worldspawn: "+on(p.worldSpawn()),x,y,152,()->set(p.withSection("world_spawn",!p.worldSpawn())));
         button("Respawnpoint: "+on(p.respawn()),x+158,y,152,()->set(p.withSection("respawn",!p.respawn()))); y+=24;
@@ -32,6 +32,7 @@ public final class HudSettingsScreen extends Screen {
         button("X +8",x+78,y,72,()->set(p.withOffset(p.offsetX()+8,p.offsetY())));
         button("Y -8",x+158,y,72,()->set(p.withOffset(p.offsetX(),p.offsetY()-8)));
         button("Y +8",x+238,y,72,()->set(p.withOffset(p.offsetX(),p.offsetY()+8)));y+=25;
+        button("Wegpunkte: Synchronisieren / Teilen",x,y,width,()->{if(minecraft!=null)minecraft.setScreen(new WaypointSettingsScreen(this));});y+=24;
         button("Zurueck",x,y,width,()->{if(minecraft!=null)minecraft.setScreen(parent);});
     }
     private void set(HudPreferences p){HudSettingsStore.update(p);}

@@ -45,3 +45,6 @@ java -ea -cp build/classes dev.rogler.teamwars.core.TeamIntelPolicyTests
 java -ea -cp build/classes dev.rogler.teamwars.core.FtbMapVisibilityPolicyTests
 
 java -ea -cp build/classes dev.rogler.teamwars.core.HudPreferencesTests
+
+python3 scripts/check-waypoint-bridge.py
+java -ea -cp build/classes dev.rogler.teamwars.core.WaypointSyncPolicyTests

@@ -1,3 +1,11 @@
+# Current roadmap update — v0.7.6 (2026-10-21)
+
+- v0.7.6 source: explicit private create-only FTB↔Xaero imports, team-scoped selected shares with author-only revoke and temporary markers. **Not yet compiled/tested in game.**
+- Next gates: NeoForge build, 2-team/OP privacy tests, 2-client markers, Xaero persistence and network packet sanity.
+- Next work after gates: conflict-safe edits/deletes across both private waypoint stores; version-pinned Xaero integration; then real revocable shared exploration tiles; team voice & independent core chunkloading afterwards.
+
+---
+
 # v0.7.5 source update (2026-10-20)
 
 Implemented in source: per-client opt-in position HUD (worldspawn, own respawn, own placed base core, current teammates) configurable via `/roglerhud`; ephemeral team/base Xaero waypoints using a namespaced map; reduce duplicated FTB-to-Xaero marker noise by disabling mirror by default. Runtime/CI still pending. Next: pin exact Xaero World Map API and prove both displays and HUD menus in-game, then implement opt-in two-way waypoint sharing, and only then explore revocable Xaero terrain overlays.

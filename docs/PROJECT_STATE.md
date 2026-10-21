@@ -1,3 +1,11 @@
+# Current milestone: v0.7.6 — Explicit shared pins + optional two-way private import SOURCE CANDIDATE (2026-10-21)
+
+- Based on v0.7.5. Added bounded team-scoped server SavedData and play payloads, opt-in per-waypoint team share/revoke, privacy-filtered transient Xaero/FTB markers, and **manual create-only** FTB↔Xaero private import.
+- No automatic rename/edit/delete synchronization or native Xaero map terrain revocation. Keep privacy model and v0.7.4 FTB Architectury fix. New protocol `3`: all clients and server require the exact same 0.7.6 version.
+- Local Java tests and source guards passed; NeoForge Actions and multiplayer/runtime acceptance **NOT YET VERIFIED**. See `docs/releases/v0.7.6.md` and `docs/plans/2026-10-21-v0.7.6-waypoints.md`.
+
+---
+
 # Current milestone: v0.7.5 optional client HUD + own-base/respawn + Xaero team markers SOURCE CANDIDATE (2026-10-20)
 
 - Base: v0.7.4 (CI green in user logs; gameplay join confirmed). New v0.7.5 CI/real multiplayer **PENDING**.

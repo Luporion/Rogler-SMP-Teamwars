@@ -1,3 +1,9 @@
+# v0.7.6 source handover (2026-10-21)
+
+Read `README_Rogler_Core_v0.7.6.md`, `docs/releases/v0.7.6.md`, `docs/PROJECT_STATE.md`. Source-only test pass, CI compile/runtime pending. New bounded team-only waypoint network and SavedData; explicit private missing-only imports from both FTB/Xaero; no automatic edits/deletes. All clients and server protocol 3. Keep old Architectury FTB packet path, no default public shares, no world/waypoint data wipe.
+
+---
+
 # Current v0.7.5 (2026-10-20): HUD + Xaero custom markers
 
 Read `README_Rogler_Core_v0.7.5.md`, `docs/releases/v0.7.5.md` and current `docs/PROJECT_STATE.md`. Base is v0.7.4 verified login; v0.7.5 is source candidate until CI and multiplayer testing. HUD off by default; `/roglerhud` client controls save under client `config/`; `TeamNavigationPayload` server-private per FTB current party; Xaero custom waypoint table namespaced, ephemeral markers T/B. FTB mirror F off by default because screenshot showed too many F labels. Do not claim native revocable terrain or full two-way waypoint sync. No new dependencies or world data migration. Keep Architectury-specific packet send path from v0.7.4.

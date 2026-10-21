@@ -1,6 +1,7 @@
 package dev.rogler.teamwars.neoforge.map.client;
 
 import dev.rogler.teamwars.neoforge.RoglerTeamWarsMod;
+import dev.rogler.teamwars.core.WaypointSyncPolicy;
 import net.minecraft.client.Minecraft;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -85,12 +86,41 @@ public final class FtbXaeroWaypointMirror {
 
     private record SourceWaypoint(int x,int y,int z,String name) {}
 
-    private static List<SourceWaypoint> readFtb() throws ReflectiveOperationException {
+    public static Object ftbManager() throws ReflectiveOperationException {
         Class<?> apiClass=Class.forName("dev.ftb.mods.ftbchunks.api.FTBChunksAPI");
         Object client=apiClass.getMethod("clientApi").invoke(null);
         Object result=client.getClass().getMethod("getWaypointManager").invoke(client);
-        if(!(result instanceof Optional<?> optional)||optional.isEmpty())return List.of();
-        Object manager=optional.get();
+        return result instanceof Optional<?> value ? value.orElse(null) : null;
+    }
+    /** Only actual locally stored private FTB points, not ephemeral team imports. */
+    public static List<WaypointSyncPolicy.Point> readFtbPoints() throws ReflectiveOperationException {
+        Object manager=ftbManager();if(manager==null)return List.of();
+        Object raw=manager.getClass().getMethod("getAllWaypoints").invoke(manager);
+        if(!(raw instanceof Collection<?> entries))return List.of();
+        List<WaypointSyncPolicy.Point> result=new ArrayList<>();
+        String dim=Minecraft.getInstance().level.dimension().location().toString();
+        for(Object waypoint:entries){
+            if(result.size()>=256)break;
+            Class<?> type=waypoint.getClass();
+            if((Boolean)type.getMethod("isDeathpoint").invoke(waypoint) ||
+               (Boolean)type.getMethod("isHidden").invoke(waypoint) ||
+               (Boolean)type.getMethod("isTransient").invoke(waypoint))continue;
+            Object pos=type.getMethod("getPos").invoke(waypoint);
+            int x=(int)pos.getClass().getMethod("getX").invoke(pos);
+            int y=(int)pos.getClass().getMethod("getY").invoke(pos);
+            int z=(int)pos.getClass().getMethod("getZ").invoke(pos);
+            String name=String.valueOf(type.getMethod("getName").invoke(waypoint)).trim();
+            if(name.length()>WaypointSyncPolicy.MAX_NAME)name=name.substring(0,WaypointSyncPolicy.MAX_NAME);
+            if(name.isBlank())continue;
+            int color=(int)type.getMethod("getColor").invoke(waypoint) & 0xffffff;
+            try{result.add(new WaypointSyncPolicy.Point(dim,x,y,z,name,color));}
+            catch(IllegalArgumentException ignored){}
+        }
+        return result;
+    }
+
+    private static List<SourceWaypoint> readFtb() throws ReflectiveOperationException {
+        Object manager=ftbManager();if(manager==null)return List.of();
         Object raw=manager.getClass().getMethod("getAllWaypoints").invoke(manager);
         if(!(raw instanceof Collection<?> entries)) return List.of();
         List<SourceWaypoint> resultList=new ArrayList<>();
@@ -98,7 +128,8 @@ public final class FtbXaeroWaypointMirror {
             if(resultList.size()>=256)break;
             Class<?> type=waypoint.getClass();
             if((Boolean)type.getMethod("isDeathpoint").invoke(waypoint) ||
-               (Boolean)type.getMethod("isHidden").invoke(waypoint))continue;
+               (Boolean)type.getMethod("isHidden").invoke(waypoint) ||
+               (Boolean)type.getMethod("isTransient").invoke(waypoint))continue;
             Object pos=type.getMethod("getPos").invoke(waypoint);
             int x=(int)pos.getClass().getMethod("getX").invoke(pos);
             int y=(int)pos.getClass().getMethod("getY").invoke(pos);

@@ -6,7 +6,7 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 public final class TeamIntelNetwork {
     private TeamIntelNetwork() {}
     public static void register(RegisterPayloadHandlersEvent event) {
-        var registrar=event.registrar("2");
+        var registrar=event.registrar("3");
         registrar.playToClient(
             TeamIntelPayload.TYPE,
             TeamIntelPayload.STREAM_CODEC,
@@ -16,5 +16,8 @@ public final class TeamIntelNetwork {
             TeamNavigationPayload.TYPE, TeamNavigationPayload.STREAM_CODEC,
             (payload,context) -> dev.rogler.teamwars.neoforge.map.client.TeamNavigationClient.receive(payload)
         );
+        registrar.playToServer(WaypointMutationPayload.TYPE, WaypointMutationPayload.STREAM_CODEC, TeamWaypointService::handle);
+        registrar.playToClient(WaypointSnapshotPayload.TYPE, WaypointSnapshotPayload.STREAM_CODEC,
+            (payload,context) -> context.enqueueWork(() -> dev.rogler.teamwars.neoforge.map.client.TeamWaypointClient.receive(payload)));
     }
 }
