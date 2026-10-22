@@ -107,3 +107,7 @@ if ($LASTEXITCODE -ne 0) { throw "WaypointSyncPolicyTests failed: $LASTEXITCODE"
 
 & python scripts/check-waypoint-bridge.py
 if ($LASTEXITCODE -ne 0) { throw "Waypoint bridge static checks failed: $LASTEXITCODE" }
+
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+java -ea -cp build/classes dev.rogler.teamwars.core.WaypointReconcilePolicyTests
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

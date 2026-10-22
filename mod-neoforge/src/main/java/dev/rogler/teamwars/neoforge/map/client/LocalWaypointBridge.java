@@ -1,6 +1,7 @@
 package dev.rogler.teamwars.neoforge.map.client;
 
 import dev.rogler.teamwars.core.WaypointSyncPolicy;
+import dev.rogler.teamwars.core.WaypointReconcilePolicy;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import java.lang.reflect.Method;
@@ -38,9 +39,8 @@ public final class LocalWaypointBridge {
             String name=String.valueOf(type.getMethod("getName").invoke(obj)).trim();
             if(name.length()>WaypointSyncPolicy.MAX_NAME)name=name.substring(0,WaypointSyncPolicy.MAX_NAME);
             if(name.isEmpty())continue;
-            // Xaero's getColor() is a PALETTE INDEX, not a 24-bit RGB color.
-            int xaeroColor=(int)type.getMethod("getColor").invoke(obj);
-            int color=(xaeroColor>=0 && xaeroColor<16)? 0xffffff : xaeroColor & 0xffffff;
+            // Read the actual RGB via WaypointColor.getHex(), not getColor()'s palette ordinal.
+            int color=XaeroWaypointPalette.rgb(obj);
             try{result.add(new WaypointSyncPolicy.Point(dim,x,y,z,name,color));}catch(IllegalArgumentException ignored){}
         }
         return result;
@@ -51,8 +51,8 @@ public final class LocalWaypointBridge {
         Object raw=xaeroList();Object ftb=FtbXaeroWaypointMirror.ftbManager();
         if(!(raw instanceof List<?> list)||ftb==null)return "Xaero/FTB manager is not ready";
         var fromXaero=xaeroPoints();var fromFtb=FtbXaeroWaypointMirror.readFtbPoints();
-        var ftbMissing=WaypointSyncPolicy.missing(fromXaero,fromFtb);
-        var xaeroMissing=WaypointSyncPolicy.missing(fromFtb,fromXaero);
+        var ftbMissing=WaypointReconcilePolicy.safeMissing(fromXaero,fromFtb);
+        var xaeroMissing=WaypointReconcilePolicy.safeMissing(fromFtb,fromXaero);
         Method createFtb=ftb.getClass().getMethod("addWaypointAt",BlockPos.class,String.class);
         for(var p:ftbMissing){
             Object created=createFtb.invoke(ftb,new BlockPos(p.x(),p.y(),p.z()),p.name());
@@ -62,12 +62,82 @@ public final class LocalWaypointBridge {
         var ctor=Class.forName("xaero.common.minimap.waypoints.Waypoint")
             .getConstructor(int.class,int.class,int.class,String.class,String.class,int.class);
         for(var p:xaeroMissing){
-            Object obj=ctor.newInstance(p.x(),p.y(),p.z(),p.name(),"W",Math.floorMod(p.color(),16));
+            Object obj=ctor.newInstance(p.x(),p.y(),p.z(),p.name(),"W",XaeroWaypointPalette.index(p.color()));
             xaeroWaypoints.add(obj);
         }
         Object manager=xaeroManager();
         if(manager!=null)manager.getClass().getMethod("updateWaypoints").invoke(manager);
-        return "Private Wegpunkte importiert: Xaero -> FTB " + ftbMissing.size() + ", FTB -> Xaero " + xaeroMissing.size()
-            + ". Originale wurden nicht geloescht; Xaero-Speicherung bitte testen.";
+        var report=WaypointReconcilePolicy.compare(fromFtb,fromXaero);
+        return "Sicherer Privatimport: Xaero -> FTB " + ftbMissing.size() + ", FTB -> Xaero " + xaeroMissing.size()
+            + "; " + report.conflicts() + " Konflikte/Mehrdeutigkeiten uebersprungen. Originale unveraendert.";
     }
+
+    /** Dry run only; reads two personal stores without any file or network mutation. */
+    public static WaypointReconcilePolicy.Report preview() throws ReflectiveOperationException {
+        return WaypointReconcilePolicy.compare(FtbXaeroWaypointMirror.readFtbPoints(),xaeroPoints());
+    }
+
+    /**
+     * Explicit name/color resolution at the SAME coordinates only. Never moves or deletes.
+     * Token binds both prior values and source side; rejects changes since preview.
+     */
+    public static String resolveMetadata(String source, int index, String token) throws ReflectiveOperationException {
+        if(!source.equals("ftb") && !source.equals("xaero"))return "Quelle muss ftb oder xaero sein";
+        var ftb=FtbXaeroWaypointMirror.readFtbPoints();var xaero=xaeroPoints();
+        var from=source.equals("ftb")?ftb:xaero;
+        var to=source.equals("ftb")?xaero:ftb;
+        if(index<0||index>=from.size())return "Index existiert nicht";
+        var selected=from.get(index);
+        if(!WaypointReconcilePolicy.canReplaceMetadata(from,to,selected))
+            return "Abbruch: Ziel fehlt, mehrfach vorhanden oder moeglicherweise verschoben";
+        var target=to.stream().filter(p->p.locationKey().equals(selected.locationKey())).findFirst().orElseThrow();
+        if(!WaypointReconcilePolicy.token(source,selected,target).equals(token))
+            return "Abbruch: Wegpunkt seit Vorschau geaendert. /roglerwaypoints preview erneut ausfuehren";
+        if(selected.name().equals(target.name())&&selected.color()==target.color())return "Bereits identisch";
+        if(source.equals("ftb")) {
+            Object raw=xaeroList();if(!(raw instanceof List<?> list))return "Xaero-Speicher nicht verfuegbar";
+            Object match=null;int count=0;
+            for(Object obj:list){
+                var t=obj.getClass();
+                if((Boolean)t.getMethod("isTemporary").invoke(obj)||
+                   (Boolean)t.getMethod("isServerWaypoint").invoke(obj)||
+                   (Boolean)t.getMethod("isThirdParty").invoke(obj)||
+                   (Boolean)t.getMethod("isDisabled").invoke(obj))continue;
+                if((int)t.getMethod("getX").invoke(obj)==selected.x()&&
+                   (int)t.getMethod("getY").invoke(obj)==selected.y()&&
+                   (int)t.getMethod("getZ").invoke(obj)==selected.z()){match=obj;count++;}
+            }
+            if(count!=1)return "Abbruch: Xaero-Ziel nicht eindeutig";
+            int palette=XaeroWaypointPalette.index(selected.color()); // prepare before mutation
+            Object manager=xaeroManager();if(manager==null)return "Xaero-Manager nicht bereit";
+            var rename=match.getClass().getMethod("setName",String.class);
+            var recolor=match.getClass().getMethod("setColor",int.class);
+            var refresh=manager.getClass().getMethod("updateWaypoints");
+            rename.invoke(match,selected.name());
+            recolor.invoke(match,palette);
+            refresh.invoke(manager);
+        } else {
+            Object manager=FtbXaeroWaypointMirror.ftbManager();if(manager==null)return "FTB nicht bereit";
+            Object all=manager.getClass().getMethod("getAllWaypoints").invoke(manager);
+            if(!(all instanceof java.util.Collection<?> collection))return "FTB-Speicher nicht verfuegbar";
+            Object match=null;int count=0;
+            var mc=Minecraft.getInstance(); if(mc.level==null)return "Nicht in einer Welt";
+            for(Object obj:collection){
+                var t=obj.getClass();
+                if(!mc.level.dimension().equals(t.getMethod("getDimension").invoke(obj)))continue;
+                if((Boolean)t.getMethod("isDeathpoint").invoke(obj)||
+                   (Boolean)t.getMethod("isTransient").invoke(obj)||
+                   (Boolean)t.getMethod("isHidden").invoke(obj))continue;
+                Object pos=t.getMethod("getPos").invoke(obj);
+                if(pos.equals(new BlockPos(selected.x(),selected.y(),selected.z()))){match=obj;count++;}
+            }
+            if(count!=1)return "Abbruch: FTB-Ziel nicht eindeutig";
+            var rename=match.getClass().getMethod("setName",String.class);
+            var recolor=match.getClass().getMethod("setColor",int.class);
+            rename.invoke(match,selected.name());
+            recolor.invoke(match,selected.color());
+        }
+        return "Name/Farbe von "+source+" uebernommen: "+selected.name()+". Keine Koordinaten oder Dateien geloescht.";
+    }
+
 }

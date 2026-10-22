@@ -48,3 +48,5 @@ java -ea -cp build/classes dev.rogler.teamwars.core.HudPreferencesTests
 
 python3 scripts/check-waypoint-bridge.py
 java -ea -cp build/classes dev.rogler.teamwars.core.WaypointSyncPolicyTests
+
+java -ea -cp build/classes dev.rogler.teamwars.core.WaypointReconcilePolicyTests

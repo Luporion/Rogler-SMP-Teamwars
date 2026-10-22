@@ -11,6 +11,7 @@
 | HUD aus per Default; Respawn-/Worldspawn-/Basisdistanz | v0.7.5 12 Policychecks | Offen | Clientmenü, Relog, Dimension, keine Chatüberlagerung |
 | Xaero Team-/Coremarker | v0.7.5 Quellcode vorhanden | Offen | Minimap und World Map, Keine Fremdteams |
 | Waypoint Privatimport FTB→Xaero, Xaero→FTB | v0.7.6 14 Policychecks inkl. Sharing | Offen | Erstellen nur fehlender Punkte, keine Duplikate, Backup-/Reboot-Persistenz |
+| v0.7.7 Privat-Abgleich/Konflikte | 27 neue Policychecks und statische API-Guards | Offen | Vorschau read-only, korrektes Dimension-Gating, Token bei Änderung ungültig, keine unautorisierten Löschungen |
 | Individuelles Teilen/Widerrufen, Teamaustritt | Team-Scope-/Ownership-Tests | Offen | Anzeige A, keine B, nach Widerruf/Wechsel sofort weg |
 | Geteilte Gelände-Erkundung und Cache-Widerruf | Union/Revocation-P0-Tests | **Funktion nicht fertig** | Nicht als umgesetzt markieren |
 | Core platzieren/transportieren/retten | Java-/Ledger-Tests | Teilweise | 1h, Außenrand, Lava, Escrow, Reload, Inventar voll |

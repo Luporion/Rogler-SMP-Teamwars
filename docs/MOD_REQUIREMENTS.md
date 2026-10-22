@@ -1,3 +1,12 @@
+# Aktuelle Mod-Anforderungen – v0.7.7 (Quellcode)
+
+- Minecraft **1.21.1**, NeoForge **21.1.249**, Create **6.0.10**, FTB Teams **2101.1.11**, FTB Chunks **2101.1.22** und FTB Library **2101.1.37** sind die bisher geprüften Zielversionen; **keine** neuen Drittanbieter-Mods für v0.7.7.
+- Clientseitige optionale Waypoint-/HUD-Integration ist auf Xaero Minimap **26.4.2** und World Map **1.45.0** ausgerichtet; bei abweichender Version API-Kompatibilität erneut prüfen.
+- Registrate **MC1.21-1.3.0+67** wird zum Bauen benötigt; CI verwendet den SHA-geprüften Create-JarJar-Bootstrap. Das ist **kein zusätzlicher** Modpack-Download.
+- Alle Spieler und der Dedicated Server benötigen dieselbe Rogler-Core-Version; Netzwerkprotokoll bleibt bei **3**. Ein erfolgreicher Java-Test ist keine Minecraft-Freigabe.
+
+## Historische Anforderungen
+
 # Modanforderungen – aktueller Entwicklungsstand v0.7.6
 
 **Zielumgebung aus vorhandener Projektdokumentation und Nutzerdiagnosen** (keine automatische Prüfung der gegenwärtig installierten Server-/Client-JARs):

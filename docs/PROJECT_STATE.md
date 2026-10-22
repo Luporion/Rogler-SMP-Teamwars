@@ -1,5 +1,10 @@
 # Rogler Core – aktueller Projektstatus
 
+**23. Oktober 2026 – v0.7.7 Quellcode-Testversion (noch keine erfolgreiche NeoForge-Kompilierung oder In-Game-Abnahme nachgewiesen).** Auf `feat/v0.7.6-update` und der Dokumentationsbereinigung aufbauend. Der nächste Branch soll `feat/v0.7.7-update` heißen. v0.7.7 enthält eine rein lokale Konfliktvorschau (`/roglerwaypoints preview`), einen expliziten Metadaten-Abgleich mit Änderungs-Token (`resolve`), konservativen Import ohne wahrscheinliche verschobene/gelöschte Punkte, echte Dimensionsfilterung für FTB sowie Xaeros RGB→Palettenkonvertierung. Es gibt **keinen** automatischen Delete-/Move-Sync und **keinen** Netzwerkprotokollwechsel (bleibt 3). Der Registrate-CI-Bootstrap ist weiterhin Bestandteil des Builds. Siehe [Release v0.7.7](releases/v0.7.7.md).
+
+---
+
+
 **Stand der übergebenen Repository-ZIP: 22. Oktober 2026 · Entwicklungsbranch `feat/v0.7.6-update` · Modversion v0.7.6.** Dies ist der **Entwicklungsstatus**, keine neue Release-Freigabe. Die ZIP enthält Quellcode und den Registrate-CI-Bootstrap, aber keinen bestätigten erfolgreichen v0.7.6-NeoForge-Build. [Release v0.7.6](releases/v0.7.6.md) · [Buildfix](guides/REGISTRATE_CI_BOOTSTRAP_v0.7.6.md).
 
 ## Verifizierte Evidenz (Tests streng unterscheiden)

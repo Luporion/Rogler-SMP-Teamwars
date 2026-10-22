@@ -19,7 +19,7 @@
 
 ## Release-, Planungs- und Forschungsunterlagen
 
-- [v0.7.6 Release](releases/v0.7.6.md) · [v0.7.5 Release](releases/v0.7.5.md) · [vollständige Versionshistorie](releases/)
+- [v0.7.7 Release](releases/v0.7.7.md) · [v0.7.6 Release](releases/v0.7.6.md) · [v0.7.5 Release](releases/v0.7.5.md) · [vollständige Versionshistorie](releases/)
 - [Pläne](plans/) – damalige Implementierungspläne, **keine** automatisch aktuelle Roadmap.
 - [Forschung](research/) – FTB-/Xaero-/Core-API-Spikes und Feasibility.
 - [Verträge](contracts/) – Basis-/Explorationskontrakte.

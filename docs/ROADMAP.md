@@ -2,12 +2,13 @@
 
 **Stand: 22. Oktober 2026.** Die Roadmap beschreibt Ziele und Prioritäten, **nicht** automatisch freigegebene Spielmechaniken. Technischer Iststand mit Belegen: [PROJECT_STATE.md](PROJECT_STATE.md). Ursprüngliche vollständige Roadmap und ältere Milestones sind [unverändert archiviert](archive/legacy/ROADMAP_before_cleanup_2026-10-22.md).
 
-## Priorität 0 – Stabilität und v0.7.6 freigeben
+## Priorität 0 – Stabilität und v0.7.6/v0.7.7 freigeben
 
 - [x] v0.7.4: FTB-Architectury-Join-Fehler korrigiert; Beitritt im Spiel bestätigt.
 - [x] v0.7.5: HUD standardmäßig aus, Position und Entfernungen konfigurierbar; NeoForge CI grün.
 - [x] v0.7.6: Explizite teamgebundene Wegpunktfreigabe, Urheber-Widerruf, private fehlende FTB↔Xaero-Wegpunkte importieren – **als Quellcode**.
-- [ ] v0.7.6: Registrate-Bootstrap im Actions-Workflow erfolgreich und NeoForge-JAR erstellt.
+- [x] v0.7.7 (Quellcode): Konfliktvorschau, sicherer Namens-/Farbabgleich mit Token, Dimensions- und Palettenkorrektur. Keine automatische Löschung/Verschiebung.
+- [ ] v0.7.6/v0.7.7: Registrate-Bootstrap im Actions-Workflow erfolgreich und NeoForge-JAR erstellt.
 - [ ] v0.7.6: 2-Team-/OP-Datenschutz, Xaero- und FTB-Rendering, Freigabe/Widerruf, Rejoin, Dimension, Restart, Backup und Duplikate praktisch testen.
 - [ ] Zeitkritische Integrationsregressionen zu Modupdates/Packet-Encodern/Kompatibilität systematisch absichern.
 
@@ -42,7 +43,7 @@
 ## Reihenfolge nach v0.7.6
 
 1. v0.7.6-Build und Multiplayer-Abnahme abschließen; ggf. kompakte v0.7.6.x-Hotfixes.
-2. Sichere Wegpunkt-Änderungs-/Löschsynchronisierung mit expliziten Freigaben und deduplizierten Quellen.
+2. v0.7.7-Abnahme: sichere Vorschau, nichtdestruktiver Import und ausdrücklich bestätigte Namen-/Farbübernahme. Danach persistente Identitäts-/Tombstone-Verwaltung für Move/Delete.
 3. Widerrufbare echte Xaero-Geländekacheln prototypisch beweisen, bevor Team-Map-Sharing als fertig gilt.
 4. Danach Teamfunk/Chunkloading und Core-Integrationen; anschließend Wettbewerb/Wirtschaft/Events.
 

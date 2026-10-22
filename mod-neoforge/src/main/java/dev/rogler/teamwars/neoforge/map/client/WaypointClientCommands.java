@@ -3,6 +3,7 @@ package dev.rogler.teamwars.neoforge.map.client;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import dev.rogler.teamwars.core.WaypointSyncPolicy;
+import dev.rogler.teamwars.core.WaypointReconcilePolicy;
 import dev.rogler.teamwars.neoforge.RoglerTeamWarsMod;
 import dev.rogler.teamwars.neoforge.map.WaypointMutationPayload;
 import net.minecraft.client.Minecraft;
@@ -26,8 +27,20 @@ public final class WaypointClientCommands {
     }
     @SubscribeEvent public static void register(RegisterClientCommandsEvent e){
         e.getDispatcher().register(Commands.literal("roglerwaypoints")
-            .executes(c->{chat("/roglerwaypoints list | sync | share ftb|xaero <Index> | unshare <UUID>");return 1;})
+            .executes(c->{chat("/roglerwaypoints list | preview | sync | resolve ftb|xaero <Index> <Token> | share | unshare");return 1;})
             .then(Commands.literal("list").executes(c->{list();return 1;}))
+            .then(Commands.literal("preview").executes(c->{preview();return 1;}))
+            .then(Commands.literal("resolve")
+                .then(Commands.argument("source",StringArgumentType.word())
+                .then(Commands.argument("index",IntegerArgumentType.integer(0,255))
+                .then(Commands.argument("token",StringArgumentType.word()).executes(c->{
+                    String source=StringArgumentType.getString(c,"source");
+                    int index=IntegerArgumentType.getInteger(c,"index");
+                    String token=StringArgumentType.getString(c,"token");
+                    try{chat(LocalWaypointBridge.resolveMetadata(source,index,token));}
+                    catch(Exception fail){chat("Abgleich abgebrochen: "+fail.getClass().getSimpleName());}
+                    return 1;
+                })))))
             .then(Commands.literal("sync").executes(c->{
                 try{chat(LocalWaypointBridge.syncPrivate());}
                 catch(Exception failure){chat("Private Sync nicht verfuegbar: "+failure.getClass().getSimpleName());}
@@ -45,6 +58,31 @@ public final class WaypointClientCommands {
                 catch(IllegalArgumentException invalid){chat("Ungueltige Wegpunkt-UUID");}
                 return 1;
             }))));
+    }
+    public static void preview(){
+        try {
+            var ftb=FtbXaeroWaypointMirror.readFtbPoints();
+            var xaero=LocalWaypointBridge.xaeroPoints();
+            var report=WaypointReconcilePolicy.compare(ftb,xaero);
+            chat("Nur Vorschau, keine Aenderungen: gleich="+report.same()+", Metadaten-Konflikte="+report.metadata()+
+                ", moeglicherweise verschoben/geloescht="+report.possibleMoves()+
+                ", mehrdeutig="+report.ambiguous()+", nur FTB="+report.ftbOnly()+", nur Xaero="+report.xaeroOnly());
+            int shown=0;
+            for(var diff:report.rows()) {
+                if(diff.kind()!=WaypointReconcilePolicy.Kind.METADATA_CONFLICT)continue;
+                if(shown++>=8){chat("Weitere Konflikte nicht angezeigt; Index pruefen.");break;}
+                int fi=ftb.indexOf(diff.ftb()),xi=xaero.indexOf(diff.xaero());
+                if(!WaypointReconcilePolicy.canReplaceMetadata(ftb,xaero,diff.ftb()) ||
+                   !WaypointReconcilePolicy.canReplaceMetadata(xaero,ftb,diff.xaero())){
+                    chat("Nicht eindeutig: "+diff.ftb().locationKey()+" - bitte in der Kartenmod manuell pruefen");continue;
+                }
+                chat("Konflikt "+diff.ftb().locationKey()+": FTB '"+diff.ftb().name()+"' / Xaero '"+diff.xaero().name()+"'");
+                chat("FTB behalten: /roglerwaypoints resolve ftb "+fi+" "+WaypointReconcilePolicy.token("ftb",diff.ftb(),diff.xaero()));
+                chat("Xaero behalten: /roglerwaypoints resolve xaero "+xi+" "+WaypointReconcilePolicy.token("xaero",diff.xaero(),diff.ftb()));
+            }
+            if(report.possibleMoves()>0||report.ambiguous()>0)
+                chat("Verschobene, geloeschte und doppelte Wegpunkte werden NIE automatisch ueberschrieben oder geloescht.");
+        }catch(Exception ex){chat("Abgleichvorschau nicht verfuegbar: "+ex.getClass().getSimpleName());}
     }
     private static void list(){
         try{

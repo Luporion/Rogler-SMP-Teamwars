@@ -1,6 +1,6 @@
 # AGENTS.md – verbindliche Entwicklungsregeln für Rogler Core
 
-**Einstieg:** [Dokumentationsindex](docs/INDEX.md) → [Projektstatus](docs/PROJECT_STATE.md) → [Roadmap](docs/ROADMAP.md) → relevante [Release-Notiz](docs/releases/v0.7.6.md) und [Tests](docs/TEST_MATRIX.md). Das historische, ausführliche Regelwerk steht vollständig im [Archiv](docs/archive/legacy/AGENTS_before_cleanup_2026-10-22.md). Historische Versionsaussagen sind keine aktuellen Freigaben.
+**Einstieg:** [Dokumentationsindex](docs/INDEX.md) → [Projektstatus](docs/PROJECT_STATE.md) → [Roadmap](docs/ROADMAP.md) → relevante [Release-Notiz](docs/releases/v0.7.7.md) und [Tests](docs/TEST_MATRIX.md). Das historische, ausführliche Regelwerk steht vollständig im [Archiv](docs/archive/legacy/AGENTS_before_cleanup_2026-10-22.md). Historische Versionsaussagen sind keine aktuellen Freigaben.
 
 ## Vor jeder Änderung
 
@@ -25,7 +25,7 @@
 
 - Minecraft 1.21.1 / NeoForge 21.1.249, Create 6.0.10, FTB Teams/Chunks und Xaero-Integrationen laut [Modanforderungen](docs/MOD_REQUIREMENTS.md).
 - FTB Chunks `PlayerVisibilityPacket` verwendet **Architectury NetworkManager**, nicht direkten NeoForge-`PacketDistributor` für denselben Drittanbieter-Payload. Regression v0.7.3 führte zu Join-Fehler; v0.7.4 änderte den Versandweg.
-- Keine falschen Versprechen: v0.7.6 hat manuelle private, nur fehlende Waypoints importierende FTB↔Xaero-Synchronisierung; **keine automatische Änderungs-/Löschsynchronisierung** oder native widerrufbare Xaero-Geländekachelansicht.
+- Keine falschen Versprechen: v0.7.7 hat manuelle, konfliktbewusste private, nur fehlende Waypoints importierende FTB↔Xaero-Synchronisierung; **keine automatische Änderungs-/Löschsynchronisierung** oder native widerrufbare Xaero-Geländekachelansicht.
 - Aktueller Build-Fix: [Registrate-Bootstrap](docs/guides/REGISTRATE_CI_BOOTSTRAP_v0.7.6.md). SHA-256-Prüfung niemals umgehen, um CI künstlich grün zu bekommen.
 
 ## Lieferung und Sicherheit

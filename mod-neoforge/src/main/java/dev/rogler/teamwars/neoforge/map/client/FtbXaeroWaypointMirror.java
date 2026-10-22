@@ -98,10 +98,14 @@ public final class FtbXaeroWaypointMirror {
         Object raw=manager.getClass().getMethod("getAllWaypoints").invoke(manager);
         if(!(raw instanceof Collection<?> entries))return List.of();
         List<WaypointSyncPolicy.Point> result=new ArrayList<>();
-        String dim=Minecraft.getInstance().level.dimension().location().toString();
+        var level=Minecraft.getInstance().level;
+        if(level==null)return List.of();
+        String dim=level.dimension().location().toString();
         for(Object waypoint:entries){
             if(result.size()>=256)break;
             Class<?> type=waypoint.getClass();
+            // getAllWaypoints() can contain other dimensions. Never assign current dimension blindly.
+            if(!level.dimension().equals(type.getMethod("getDimension").invoke(waypoint)))continue;
             if((Boolean)type.getMethod("isDeathpoint").invoke(waypoint) ||
                (Boolean)type.getMethod("isHidden").invoke(waypoint) ||
                (Boolean)type.getMethod("isTransient").invoke(waypoint))continue;
@@ -124,9 +128,11 @@ public final class FtbXaeroWaypointMirror {
         Object raw=manager.getClass().getMethod("getAllWaypoints").invoke(manager);
         if(!(raw instanceof Collection<?> entries)) return List.of();
         List<SourceWaypoint> resultList=new ArrayList<>();
+        var level=Minecraft.getInstance().level; if(level==null)return List.of();
         for(Object waypoint:entries){
             if(resultList.size()>=256)break;
             Class<?> type=waypoint.getClass();
+            if(!level.dimension().equals(type.getMethod("getDimension").invoke(waypoint)))continue;
             if((Boolean)type.getMethod("isDeathpoint").invoke(waypoint) ||
                (Boolean)type.getMethod("isHidden").invoke(waypoint) ||
                (Boolean)type.getMethod("isTransient").invoke(waypoint))continue;
