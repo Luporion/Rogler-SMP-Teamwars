@@ -6,7 +6,7 @@
 - **Core-only raids:** Default `raids_enabled=false`. After manually setting `true` and OP `/teamwars admin reload`, an OP can `/teamwars admin raidstart <defenderPlayer> <minutes>` (1..30 minutes). One online defender required, grace must have expired. Surviving attackers must hit the real Core 10 times at least 750 ms apart with left click. First attacking FTB team is locked for the raid. On 10th hit, the block goes away; core state becomes recoverable ESCROW, attacking team receives exactly one persistent war point, defeated team gets fresh grace. Every other block stays guarded. Active raids prevent core pack; they end on timeout or when no defender remains online.
 - Commands: `/teamwars war status`, `/teamwars war scores`, `/teamwars admin raidstart <player> <minutes>`, `/teamwars admin raidstop <player>`, existing `/teamwars base recover` and `/teamwars base protection`.
 - **This is NOT a full siege system:** no standard TNT/Create/Sable raid damage, no automated raid scheduling, no general block editing during raids, no Xaero team map, no force-load quota. For dedicated server use, require two separate clients and an FTB claim privacy audit first.
-- Docs: `docs/releases/v0.4.0.md`, `docs/plans/2026-10-12-v0.4.0-core-raid.md`, `docs/LLM_HANDOVER_v0.4.0.md`, `AGENTS.md`, `docs/PROJECT_STATE.md`. Source ZIP includes all tracked project files for LLM handover.
+- Docs: `docs/releases/v0.4.0.md`, `docs/plans/2026-10-12-v0.4.0-core-raid.md`, `docs/archive/handovers/LLM_HANDOVER_v0.4.0.md`, `AGENTS.md`, `docs/PROJECT_STATE.md`. Source ZIP includes all tracked project files for LLM handover.
 
 
 See earlier historical state in the original `README.md` file.

@@ -1,28 +1,44 @@
-# Setup and deployment — Windows / Crafty
+# Setup, Build, Deployment und Rollback
 
-## Local source checkout
-1. Extract ZIP to a stable development folder; `cd` into the folder containing `.git` and `AGENTS.md`.
-2. JDK 21: `java -version`.
-3. Verify core: `powershell -ExecutionPolicy Bypass -File scripts/test-core.ps1`.
-4. Inspect: `git log --oneline -3`, `git status --short`.
-5. Create private empty GitHub remote, then `git remote add origin ...` and `git push -u origin main`.
+## 1. Repository / Git-Arbeitsstand
 
-## NeoForge scaffold build
-- Use JDK 21. Obtain real official Gradle wrapper binaries from the official NeoForge MDK or install compatible Gradle; don't fabricate a wrapper jar.
-- `cd mod-neoforge` ; `gradle build` ; capture output. A failed build must be documented, not hidden.
-- If successful, install the resulting mod JAR *in a copy of the test profile*, never directly in the production world.
-- Test `/teamwars status`; it only prints a scaffold message, **no teamwars gameplay implemented**.
-- Confirm versions from `docs/MODPACK_BASELINE.md` and Minecraft logs.
+```powershell
+cd E:\Entwicklung\rogler-smp-core
+git branch --show-current
+git status --short
+git log -1 --oneline
+```
 
-## No-panic Monday fallback (no custom JAR)
-- Back up entire test profile and world before any config changes.
-- FTB Teams max party size 4 (if 3–4 teams of 3–4 players), set private claim visibility and appropriate claim quotas in **world/serverconfig overrides**, not just client config.
-- Keep FTB Chunks map out of the player workflow; continue using existing Xaero Minimap + World Map.
-- Use Simple Voice Chat + FTB Teams; manual team channels if API integration not ready.
-- Admin controls grace/raids/score manually; prevent untested explosions in base claims.
-- Never deploy the standalone `rogler-teamwars-core-P0.jar` into Minecraft `mods/`.
+Eine `git archive`-ZIP enthält den **committeten Quellstand, aber nicht `.git` oder uncommittete Änderungen**. Für eine Quelle ohne Git-Historie: `git archive --format=zip --output="M:\Downloads\Rogler-Core-Repository.zip" HEAD`.
 
-## Backups and rollback
-- Stop server before copying/modifying live world or replacing core persistence.
-- Keep at least two dated backups; test restore on a staging server.
-- If custom mod crashes, roll back BOTH JAR + its versioned world data from matched backup; changing only the JAR may corrupt state.
+## 2. Einmaliger Update-Patch vs. Zusatzkorrektur
+
+- **Neuer Versionspatch:** Nur aus dem vom Patch genannten Ausgangsbranch bei sauberem Arbeitsverzeichnis `PATCH.cmd "M:\Downloads\...patch"` ausführen. Script erstellt Zielbranch, prüft, pusht und beobachtet Actions.
+- **Patch für vorhandenen Branch** wie den v0.7.6-CI-Fix: Zielbranch auschecken, `git status --short`, dann `git am "M:\Downloads\...patch"`, `VERIFY.cmd`, `git push origin <branch>`.
+- **Nie** denselben Patch mehrfach anwenden, sobald sein Zielbranch existiert. Fehler zunächst lesen, keine Git-Reparatur mit pauschalen `reset --hard`/`clean -fdx`.
+
+## 3. Tests und CI
+
+```powershell
+.\VERIFY.cmd
+python scripts/test-registrate-bootstrap.py
+# Optional mit lokaler voller Create-JAR:
+python scripts/bootstrap-registrate.py --create-jar "M:\Downloads\create-1.21.1-6.0.10.jar"
+# Neuester Commit nach Push in GitHub Actions:
+.\scripts\watch-actions.ps1
+```
+
+Für lokale NeoForge-Builds JDK 21 und eine kompatible Gradle-Version verwenden (`gradle -p mod-neoforge build --no-daemon`). CI erzeugt eine JAR nur bei vollständigem erfolgreichen Workflow, die danach **noch unverified-runtime** ist. [Abhängigkeits-/Checksummschutz](guides/REGISTRATE_CI_BOOTSTRAP_v0.7.6.md) nicht umgehen.
+
+## 4. DEV vor Produktion
+
+- Server stoppen und vollständiges Backup: Welt, FTB-Team-/Claim-Daten, Rogler SavedData sowie bei Waypoint-Tests private Xaero-Verzeichnisse aller beteiligten Clients.
+- Nur eine Rogler-Core-JAR pro Mods-Ordner; Client und Server gleiche Version / Protokoll; alle Referenz-Modversionen kontrollieren.
+- Zwei Teams und mindestens zwei Clients (inkl. OP und Nicht-OP) testen: Join, HUD, FTB/Xaero-Spielersichtbarkeit, Share/Revoke, private Waypoints, Teamwechsel, Neustart, Claim und Kernschutz. [Testmatrix](TEST_MATRIX.md).
+- Erst nach bestandenem Laufzeittest in produktive Welt übernehmen. **Nie** alte Core-/FTB-SavedData pauschal löschen.
+
+## 5. Rollback
+
+Bei Laufzeitfehlern Service anhalten, Diagnosen und Backup sichern, kompatible letzte getestete JAR auf **Server und allen Clients** einsetzen. Neues SavedData separat sichern; exakte Migration/Abwärtskompatibilität pro Release beachten. Für v0.7.6 enthält `world/data/roglerteamwars_shared_waypoints.dat` ausschließlich explizit geteilte Marker und sollte bei Rollback erhalten/gesichert bleiben. Die Modifikation der Dokumentation benötigt keine Weltmigration.
+
+[Weitere Guides](INDEX.md) · [letzter Projektstatus](PROJECT_STATE.md)

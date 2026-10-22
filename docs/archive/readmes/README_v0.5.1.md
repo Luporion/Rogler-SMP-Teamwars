@@ -3,8 +3,8 @@
 *Status:* Java rules offline-tested; NeoForge CI and Minecraft gameplay are NOT verified.
 
 - `docs/releases/v0.5.1.md` – implementation details and explicit exclusions.
-- `docs/PROJECT_STATE_v0.5.1.md` – verified/unverified state.
-- `docs/HANDOVER_v0.5.1.md` – instructions for future LLM agents.
+- `docs/archive/project-states/PROJECT_STATE_v0.5.1.md` – verified/unverified state.
+- `docs/archive/handovers/HANDOVER_v0.5.1.md` – instructions for future LLM agents.
 - `docs/research/CORE_CREATE_AE2_SOPHISTICATED_DESIGN.md` – Create, AE2, Sophisticated architecture and security tradeoffs.
 
 ### New commands

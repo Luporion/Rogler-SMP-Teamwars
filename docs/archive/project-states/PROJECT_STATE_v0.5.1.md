@@ -6,4 +6,4 @@ This milestone: persistent owner-only 9-slot menu, bounded world-configurable 20
 
 Offline Java 21 tests: run `scripts/test-core.sh` and record actual result. NeoForge 21.1.249 GitHub Actions: **PENDING**. DEV-world Minecraft runtime and 2-client privacy tests: **PENDING**. Source install with git patch only on an exact v0.5.0 branch. No runtime JAR from this environment.
 
-Read `docs/releases/v0.5.1.md`, `docs/HANDOVER_v0.5.1.md`, `docs/research/CORE_CREATE_AE2_SOPHISTICATED_DESIGN.md` before continuing the integrations.
+Read `docs/releases/v0.5.1.md`, `docs/archive/handovers/HANDOVER_v0.5.1.md`, `docs/research/CORE_CREATE_AE2_SOPHISTICATED_DESIGN.md` before continuing the integrations.

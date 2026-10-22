@@ -2,7 +2,7 @@
 
 Base SHA `48433f4` (v0.6.1 including watch-actions.ps1 fix). This release must keep legacy MOD_ID `roglerteamwars` and SavedData IDs to protect existing worlds. Core tests 491 assertions offline, NeoForge CI / dedicated server not verified at source packaging time.
 
-Read `docs/releases/v0.6.2.md` and `docs/TEST_PLAN_v0.6.2.md` FIRST. No hard-coded Warium APIs introduced; v0.6.1's opt-in FusionBlast recovery is untouched.
+Read `docs/releases/v0.6.2.md` and `docs/archive/test-plans/TEST_PLAN_v0.6.2.md` FIRST. No hard-coded Warium APIs introduced; v0.6.1's opt-in FusionBlast recovery is untouched.
 
 Changes: `CoreExplosionIndex` (pure Java, event-local primitive chunk hash table; explosion `removeIf` uses O(1) lookup, no per-position core-ledger scan); `CoreRecoveryPolicy` (5-second observed-air window and 2 restorations per 2 minutes, in-memory counts); `CoreClaimCleanupPolicy` (clear expired/foreign receipts without unclaim); `BaseGuardService` integration with handler-only microsecond counters, read-only coreaudit, explicit corerepair apply. New P0 policy tests both Windows and Linux. No save-schema changes.
 

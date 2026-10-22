@@ -2,7 +2,7 @@
 
 **Project:** Same existing repository, not a replacement mod. Original GitHub repository: `Luporion/Rogler-SMP-Teamwars`; original commit `a10c7d4e` (v0.6.0). v0.6.1 is a compile-candidate unless GitHub Actions has subsequently passed.
 
-Read `AGENTS.md`, `docs/releases/v0.6.1.md`, `docs/TEST_PLAN_v0.6.1.md`, `docs/ROADMAP.md`, `docs/ARCHITECTURE.md`, and user technical handover from 2026-10-15. Never claim the Handover's raw crash-ZIPs were inspected in the v0.6.1 source build unless actually verified.
+Read `AGENTS.md`, `docs/releases/v0.6.1.md`, `docs/archive/test-plans/TEST_PLAN_v0.6.1.md`, `docs/ROADMAP.md`, `docs/ARCHITECTURE.md`, and user technical handover from 2026-10-15. Never claim the Handover's raw crash-ZIPs were inspected in the v0.6.1 source build unless actually verified.
 
 **IDs DO NOT CHANGE:** `@Mod("roglerteamwars")`, `mod_id`, Java packages `dev.rogler.teamwars`, Resources `assets/roglerteamwars`, `roglerteamwars_basecores`, `roglerteamwars_protection`, `roglerteamwars_infrastructure`, old serverconfig names. Only name, JAR basename (`roglercore`), command alias (`/rogler`), UI title, log name and release metadata are renamed. `/teamwars` stays the full command tree. No migration tool needed and none may be invented.
 

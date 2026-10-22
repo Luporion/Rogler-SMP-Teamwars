@@ -1,6 +1,6 @@
 # v0.5.4 maintainer / LLM handover
 
-1. Read `AGENTS.md`, `docs/releases/v0.5.4.md`, `docs/PROJECT_STATE_v0.5.4.md` and `docs/CORE_DASHBOARD_ARCHITECTURE.md`.
+1. Read `AGENTS.md`, `docs/releases/v0.5.4.md`, `docs/archive/project-states/PROJECT_STATE_v0.5.4.md` and `docs/CORE_DASHBOARD_ARCHITECTURE.md`.
 2. Base expected: actual GitHub branch `feat/v0.5.3-update`, SHA prefix **731c0bd1**. The patch modifies only blobs whose original SHA were checked against that commit. It does not overwrite historical README / PROJECT_STATE.
 3. Migrate inventory dynamically using `CorePowerPolicy.SLOTS=27`. NEVER use hardcoded 9 in Java menu shift-click and saved-data loops. Unchanged SavedData schema and name; no item duplication in packed/ESCROW.
 4. Create BE: client cannot query TeamWars party ledger. `TeamWarsDriveEnabled` sync tag is required to align tooltip & Create kinetic rendering with server. `tick()` only server and compares actual `getTheoreticalSpeed` against desired `getGeneratedSpeed` periodically, no work when matched. Do not run `updateGeneratedRotation()` every game tick.

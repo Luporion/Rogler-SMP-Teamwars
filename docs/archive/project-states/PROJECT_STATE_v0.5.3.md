@@ -12,4 +12,4 @@ Deferred: direct AE2 ME network node, ME drive/terminal, Sophisticated upgrades,
 
 Required: MC 1.21.1, NeoForge 21.1.249, Create 6.0.10, FTB Teams/Chunks/Library as in prior release. No additional mods. Preserve all v0.5.2 SavedData.
 
-Next: apply v0.5.3 patch on actual commit `367ccdc2`, inspect NeoForge CI; after green build test GUI, inventory, material costs, FE side indicators, Create and no ownership bypass. See `docs/releases/v0.5.3.md`, `docs/CORE_DASHBOARD_ARCHITECTURE.md`, `docs/TEST_PLAN_v0.5.3.md`.
+Next: apply v0.5.3 patch on actual commit `367ccdc2`, inspect NeoForge CI; after green build test GUI, inventory, material costs, FE side indicators, Create and no ownership bypass. See `docs/releases/v0.5.3.md`, `docs/CORE_DASHBOARD_ARCHITECTURE.md`, `docs/archive/test-plans/TEST_PLAN_v0.5.3.md`.

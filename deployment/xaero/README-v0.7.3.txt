@@ -10,4 +10,4 @@ Ensure Xaero Minimap and World Map are installed SERVER-SIDE and enforce the def
 server profile. Reconnect clients / restart after changing. Do not bypass server
 profile enforcement permission unless you intend admins to override radar.
 
-Separately edit <world>/serverconfig/ftbchunks-world.snbt (see README_Rogler_Core_v0.7.3.md).
+Separately edit <world>/serverconfig/ftbchunks-world.snbt (see docs/archive/readmes/README_Rogler_Core_v0.7.3.md).

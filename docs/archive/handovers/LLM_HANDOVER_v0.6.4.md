@@ -9,5 +9,5 @@
 - Separate `world/serverconfig/roglercore-sable-lifecycle.properties`, never edits original Sable common TOML. `/rogler admin compat lifecycle`, `report`, `reload`.
 - Existing Warium recovery and FTB claim guard unchanged. No regional edits. For future rescue scripts always retain UID/GID/mode/ACL/xattrs, atomic replace, backed-up dry-run; no global region deletion.
 - **Remaining major issue:** Reentrancy when another SplitListener removes owner after preflight. Also shutdown Rapier Body removed, Mahou huge AABBs, heavy Warium/Mianbao events. Need integration testing with real Sable/Shtreimel installed and serialisation verification.
-- Ship split reproducibility, server perf, backup and exact accepted versions in `docs/TEST_PLAN_v0.6.4.md`.
+- Ship split reproducibility, server perf, backup and exact accepted versions in `docs/archive/test-plans/TEST_PLAN_v0.6.4.md`.
 - Give user git-format patch AND complete tracked sources incl AGENTS.md, every historical doc/workflow, as well as test plan. Offline repo snapshots may include historic condensed watcher, so `PATCH.cmd` generates authoritative `full-source-exact.zip` from user's current real Git clone.
