@@ -19,3 +19,6 @@
 
 # Local GitHub Actions build downloads, never commit binary artifacts
 /artifacts/
+
+# Auto-generated, SHA-256 checked local CI Maven mirror (never commit vendored third-party JARs)
+/.ci-maven/

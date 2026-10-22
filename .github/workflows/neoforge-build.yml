@@ -19,6 +19,10 @@ jobs:
           gradle-version: '8.14'
       - name: Core invariants
         run: bash scripts/test-core.sh
+      - name: Test pinned Registrate bootstrap
+        run: python3 scripts/test-registrate-bootstrap.py
+      - name: Bootstrap Registrate from official Create JarJar
+        run: python3 scripts/bootstrap-registrate.py
       - name: Compile and package NeoForge mod
         run: gradle -p mod-neoforge build --stacktrace --no-daemon
       - uses: actions/upload-artifact@v4

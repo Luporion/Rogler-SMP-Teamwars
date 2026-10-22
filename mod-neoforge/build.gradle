@@ -10,6 +10,13 @@ base { archivesName = "roglercore" }
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
 repositories {
+    // GitHub Actions generates this small Maven repository from Create's
+    // SHA-256-verified embedded Registrate. Local developer builds keep the
+    // regular remote-Maven resolution when the directory is absent.
+    maven {
+        url = uri("${rootProject.projectDir}/../.ci-maven")
+        content { includeGroup 'com.tterrag.registrate' }
+    }
     mavenCentral()
     maven { url = 'https://maven.createmod.net' }
     maven { url = 'https://maven.ithundxr.dev/snapshots' }
