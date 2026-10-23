@@ -53,7 +53,16 @@ public final class LocalWaypointBridge {
         var fromXaero=xaeroPoints();var fromFtb=FtbXaeroWaypointMirror.readFtbPoints();
         // Never resurrect a linked waypoint that was intentionally deleted from one map.
         // A corrupt/private journal must abort the import instead of ignoring the safety gate.
-        var blocked=WaypointLinkClient.reservedLocations();
+        final java.util.Set<String> blocked;
+        try {
+            blocked=WaypointLinkClient.reservedLocations();
+        } catch (Exception journalError) {
+            // Fail closed: a missing or corrupt private link journal must never
+            // cause previously linked/deleted waypoints to be re-imported.
+            // Do not change either third-party waypoint store on this path.
+            return "Privatimport abgebrochen: lokales Wegpunkt-Journal nicht lesbar ("
+                + journalError.getClass().getSimpleName() + "). Keine Wegpunkte veraendert.";
+        }
         var ftbMissing=WaypointReconcilePolicy.safeMissing(fromXaero,fromFtb).stream()
             .filter(p->!blocked.contains(p.locationKey())).toList();
         var xaeroMissing=WaypointReconcilePolicy.safeMissing(fromFtb,fromXaero).stream()

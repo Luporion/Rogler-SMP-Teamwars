@@ -1,5 +1,7 @@
 # Rogler Core – aktueller Projektstatus
 
+**v0.8.0 CI-Korrektur (23. Oktober 2026):** GitHub Actions `39936204517` konnte nach erfolgreich geladenen Registrate-/NeoForge-Abhängigkeiten nicht kompilieren: `LocalWaypointBridge.syncPrivate()` rief `WaypointLinkClient.reservedLocations()` (deklariert `throws Exception`) ohne Abfangen auf, obwohl die aufrufende Methode nur `ReflectiveOperationException` weiterreicht. Separater Buildfix-Patch fängt den Journalzugriff ab und bricht den Privatimport bei Fehlern vollständig ab (kein sicherheitsgefährdendes Wiederherstellen gelöschter Marker). **Lokale Regel-/Strukturtests grün; neuer CI-Build und Multiplayer-Test noch offen.**
+
 **Stand 23. Oktober 2026: v0.8.0 SOURCE CANDIDATE**, basierend auf `feat/v0.7.7-update`. Neu: lokal persistente, explizite FTB/Xaero-Wegpunktpaare mit eigener UUID, Vorschau und Token-gesicherter Übernahme von Name/Farbe, Blockierung versehentlicher Wiederherstellung zuvor verknüpfter gelöschter Punkte. Keine automatische Delete-/Move-Synchronisierung. Teamfreigaben bleiben unverändert explizit und serverautorisiert; Protokoll weiterhin `3`. Details: [v0.8.0 Release](releases/v0.8.0.md).
 
 **Verifiziert:** v0.7.7-Commit `9bdc08f3` – P0 Core Run `39875853278` und NeoForge Run `39875853255` erfolgreich, `roglercore-0.7.7.jar` heruntergeladen. **Nicht verifiziert:** Minecraft-Laufzeit v0.7.7 und NeoForge-Kompilierung/Spieltest v0.8.0. Die bisherigen Registrate-HTTP-521-Probleme sind für diesen grünen CI-Lauf überwunden, aber künftige Läufe bleiben von externen Abhängigkeiten abhängig.

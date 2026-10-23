@@ -14,6 +14,12 @@ assert 'WaypointLinkJournal.load' in client and 'WaypointLinkJournal.save' in cl
 assert 'safeToApply' in client and 'resolveMetadata' in client
 assert 'reservedLocations()' in client
 assert 'WaypointLinkClient.reservedLocations()' in local
+# Java compile regression v0.8.0: reservedLocations() declares Exception,
+# while syncPrivate() exposes only ReflectiveOperationException. The journal
+# safety lookup must be handled locally and must fail closed (no import).
+assert 'catch (Exception journalError)' in local
+assert 'Privatimport abgebrochen' in local
+assert local.index('return "Privatimport abgebrochen') < local.index('Method createFtb=')
 assert 'filter(p->!blocked.contains(p.locationKey()))' in local
 assert 'Commands.literal("link")' in cmd and 'Commands.literal("changes")' in cmd
 assert 'Commands.literal("apply")' in cmd and 'Commands.literal("unlink")' in cmd
