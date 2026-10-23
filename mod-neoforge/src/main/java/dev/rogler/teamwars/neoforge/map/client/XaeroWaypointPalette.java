@@ -8,6 +8,11 @@ public final class XaeroWaypointPalette {
         Object color=waypoint.getClass().getMethod("getWaypointColor").invoke(waypoint);
         return (int)color.getClass().getMethod("getHex").invoke(color) & 0xffffff;
     }
+    public static int nearestRgb(int rgb) throws ReflectiveOperationException {
+        Class<?> type=Class.forName("xaero.hud.minimap.waypoint.WaypointColor");
+        Object[] values=type.getEnumConstants();
+        return (int)type.getMethod("getHex").invoke(values[index(rgb)]) & 0xffffff;
+    }
     public static int index(int rgb) throws ReflectiveOperationException {
         Class<?> type=Class.forName("xaero.hud.minimap.waypoint.WaypointColor");
         Object[] colors=type.getEnumConstants();

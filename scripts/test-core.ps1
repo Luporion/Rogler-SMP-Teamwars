@@ -111,3 +111,10 @@ if ($LASTEXITCODE -ne 0) { throw "Waypoint bridge static checks failed: $LASTEXI
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 java -ea -cp build/classes dev.rogler.teamwars.core.WaypointReconcilePolicyTests
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+& java -ea -cp build/classes dev.rogler.teamwars.core.WaypointLinkPolicyTests
+if ($LASTEXITCODE -ne 0) { throw "WaypointLinkPolicyTests failed: $LASTEXITCODE" }
+& java -ea -cp build/classes dev.rogler.teamwars.core.WaypointLinkJournalTests
+if ($LASTEXITCODE -ne 0) { throw "WaypointLinkJournalTests failed: $LASTEXITCODE" }
+& python scripts/check-waypoint-link.py
+if ($LASTEXITCODE -ne 0) { throw "Waypoint link privacy guards failed: $LASTEXITCODE" }

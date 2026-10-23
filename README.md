@@ -2,7 +2,7 @@
 
 Minecraft **1.21.1 · NeoForge 21.1.249** — eigener TeamWars-Mod für ein teamorientiertes Rogler-SMP.
 
-> **Entwicklungsstand: v0.7.7, Quellcode-Testversion mit sicherem Wegpunkt-Abgleich; CI-Fix von v0.7.6 bleibt enthalten.** Die vollständige NeoForge-Kompilierung und der Multiplayer-Laufzeittest von v0.7.7 sind **noch nicht nachgewiesen**. Die v0.7.4-Serververbindung wurde im Spiel bestätigt; v0.7.5-CI war erfolgreich. [Nachweise und Einschränkungen](docs/PROJECT_STATE.md).
+> **Entwicklungsstand: v0.8.0, Quellcode-Testversion mit privatem, persistentem Wegpunkt-Verknüpfungsjournal.** Die v0.7.7-NeoForge-Kompilierung war in GitHub Actions erfolgreich (Run `39875853255`), aber der v0.7.7-/v0.8.0-Multiplayer-Laufzeittest ist **nicht nachgewiesen**. Die vollständige v0.8.0-Kompilierung steht noch aus. [Nachweise und Einschränkungen](docs/PROJECT_STATE.md).
 
 ## Hier beginnen
 

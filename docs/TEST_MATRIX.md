@@ -5,13 +5,14 @@
 | Bereich / Akzeptanzfall | Automatisierte Tests | Minecraft-DEV-Nachweis | Freigabegate |
 |---|---|---|---|
 | CI-Abhängigkeiten/Registrate SHA-256 | Bootstrap-Test vorhanden | N/A | Bootstrap und `compileJava` grün |
-| Minecraft Start / Join | Compiler/Packet-Guards alleine unzureichend | v0.7.4 Join bestätigt; **v0.7.6 offen** | 2 Spieler, Serverlog ohne Encoder/Mixin-Ausnahmen |
+| Minecraft Start / Join | Compiler/Packet-Guards alleine unzureichend | v0.7.4 Join bestätigt; **v0.8.0 offen** | 2 Spieler, Serverlog ohne Encoder/Mixin-Ausnahmen |
 | FTB Party-Beitritt/Austritt/OP | Regeltests vorhanden | Unvollständig | Auch OP keine fremden Marker/Koordinaten |
 | FTB Long-Range / Claim-Marker | Konfiguration prüfbar | Offen | Gegner mit aktueller FTB-Sichtbarkeit und anderen HUDs unsichtbar |
 | HUD aus per Default; Respawn-/Worldspawn-/Basisdistanz | v0.7.5 12 Policychecks | Offen | Clientmenü, Relog, Dimension, keine Chatüberlagerung |
 | Xaero Team-/Coremarker | v0.7.5 Quellcode vorhanden | Offen | Minimap und World Map, Keine Fremdteams |
 | Waypoint Privatimport FTB→Xaero, Xaero→FTB | v0.7.6 14 Policychecks inkl. Sharing | Offen | Erstellen nur fehlender Punkte, keine Duplikate, Backup-/Reboot-Persistenz |
 | v0.7.7 Privat-Abgleich/Konflikte | 27 neue Policychecks und statische API-Guards | Offen | Vorschau read-only, korrektes Dimension-Gating, Token bei Änderung ungültig, keine unautorisierten Löschungen |
+| v0.8.0 persistente private Wegpunkt-Links | 29 Link- und 10 Journalprüfungen plus Privacy-Guards | Offen | Verknüpfen, Client-Neustart, eindeutige einseitige Änderung mit Token, keine Wiederherstellung gelöschter Links, defektes Journal blockiert Import |
 | Individuelles Teilen/Widerrufen, Teamaustritt | Team-Scope-/Ownership-Tests | Offen | Anzeige A, keine B, nach Widerruf/Wechsel sofort weg |
 | Geteilte Gelände-Erkundung und Cache-Widerruf | Union/Revocation-P0-Tests | **Funktion nicht fertig** | Nicht als umgesetzt markieren |
 | Core platzieren/transportieren/retten | Java-/Ledger-Tests | Teilweise | 1h, Außenrand, Lava, Escrow, Reload, Inventar voll |

@@ -4,11 +4,11 @@ license="MIT"
 
 [[mods]]
 modId="roglerteamwars"
-version="0.7.7"
+version="0.8.0"
 displayName="Rogler Core"
 authors="Rogler Core contributors"
 description='''
-Rogler Core v0.7.7: conflict-aware private reconciliation, verified source-selected name/color updates, dimension isolation, Xaero palette normalization; explicit private Xaero/FTB imports and team-scoped shared pins;  optional client HUD, private navigation targets, server-authorized Xaero teammate/base markers, opt-in FTB waypoint mirror; Architectury-compatible FTB packet transport; FTB teammate-only player visibility, Xaero cave-mode preservation and experimental FTB-to-Xaero local waypoint mirror; server-filtered teammate coordinate packets, volatile session state and an optional companion HUD; enemy radar privacy, personal exploration provenance and membership-aware visibility snapshots; optional Sable 2.0.6 removed-owner/anchor split preflight without Sable Destructive, bounded diagnostics, existing base/claim recovery and optional Warium startup quarantine.
+Rogler Core v0.8.0: opt-in persistent private waypoint link journal, conflict-safe metadata transfer, guarded delete/move detection without automatic destructive edits; v0.7.7: conflict-aware private reconciliation, verified source-selected name/color updates, dimension isolation, Xaero palette normalization; explicit private Xaero/FTB imports and team-scoped shared pins;  optional client HUD, private navigation targets, server-authorized Xaero teammate/base markers, opt-in FTB waypoint mirror; Architectury-compatible FTB packet transport; FTB teammate-only player visibility, Xaero cave-mode preservation and experimental FTB-to-Xaero local waypoint mirror; server-filtered teammate coordinate packets, volatile session state and an optional companion HUD; enemy radar privacy, personal exploration provenance and membership-aware visibility snapshots; optional Sable 2.0.6 removed-owner/anchor split preflight without Sable Destructive, bounded diagnostics, existing base/claim recovery and optional Warium startup quarantine.
 The Warium quarantine is OFF by default; it does not rewrite entity regions or guarantee repair of malformed .mca files.
 '''
 

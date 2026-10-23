@@ -27,7 +27,7 @@ public final class WaypointClientCommands {
     }
     @SubscribeEvent public static void register(RegisterClientCommandsEvent e){
         e.getDispatcher().register(Commands.literal("roglerwaypoints")
-            .executes(c->{chat("/roglerwaypoints list | preview | sync | resolve ftb|xaero <Index> <Token> | share | unshare");return 1;})
+            .executes(c->{chat("/roglerwaypoints list | preview | sync | link <FTB> <Xaero> | changes | apply <UUID> <Token> | acknowledge <UUID> <Token> | unlink <UUID> | share | unshare");return 1;})
             .then(Commands.literal("list").executes(c->{list();return 1;}))
             .then(Commands.literal("preview").executes(c->{preview();return 1;}))
             .then(Commands.literal("resolve")
@@ -46,6 +46,37 @@ public final class WaypointClientCommands {
                 catch(Exception failure){chat("Private Sync nicht verfuegbar: "+failure.getClass().getSimpleName());}
                 return 1;
             }))
+            .then(Commands.literal("link")
+                .then(Commands.argument("ftbIndex",IntegerArgumentType.integer(0,255))
+                .then(Commands.argument("xaeroIndex",IntegerArgumentType.integer(0,255)).executes(c->{
+                    try {chat(WaypointLinkClient.link(IntegerArgumentType.getInteger(c,"ftbIndex"),IntegerArgumentType.getInteger(c,"xaeroIndex")));}
+                    catch(Exception err){chat("Verknuepfung fehlgeschlagen: "+err.getMessage());}return 1;
+                }))))
+            .then(Commands.literal("changes").executes(c->{
+                try{WaypointLinkClient.showChanges();}
+                catch(Exception err){chat("Journal nicht lesbar (keine Daten ueberschrieben): "+err.getMessage());}
+                return 1;
+            }))
+            .then(Commands.literal("apply")
+                .then(Commands.argument("linkId",StringArgumentType.word())
+                .then(Commands.argument("linkToken",StringArgumentType.word()).executes(c->{
+                    try{chat(WaypointLinkClient.apply(UUID.fromString(StringArgumentType.getString(c,"linkId")),StringArgumentType.getString(c,"linkToken")));}
+                    catch(Exception err){chat("Abgleich abgebrochen: "+err.getMessage());}
+                    return 1;
+                }))))
+            .then(Commands.literal("acknowledge")
+                .then(Commands.argument("linkId",StringArgumentType.word())
+                .then(Commands.argument("linkToken",StringArgumentType.word()).executes(c->{
+                    try{chat(WaypointLinkClient.acknowledge(UUID.fromString(StringArgumentType.getString(c,"linkId")),StringArgumentType.getString(c,"linkToken")));}
+                    catch(Exception err){chat("Bestaetigung abgebrochen: "+err.getMessage());}
+                    return 1;
+                }))))
+            .then(Commands.literal("unlink")
+                .then(Commands.argument("linkId",StringArgumentType.word()).executes(c->{
+                    try{chat(WaypointLinkClient.unlink(UUID.fromString(StringArgumentType.getString(c,"linkId"))));}
+                    catch(Exception err){chat("Unlink fehlgeschlagen: "+err.getMessage());}
+                    return 1;
+                })))
             .then(Commands.literal("share")
                 .then(Commands.argument("source",StringArgumentType.word())
                 .then(Commands.argument("index",IntegerArgumentType.integer(0,255)).executes(c->{

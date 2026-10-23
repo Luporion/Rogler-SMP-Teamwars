@@ -19,6 +19,8 @@
 
 ## Release-, Planungs- und Forschungsunterlagen
 
+- [v0.8.0 Release](releases/v0.8.0.md) – private Wegpunkt-Identitäten und sichere Bestätigungsbefehle.
+
 - [v0.7.7 Release](releases/v0.7.7.md) · [v0.7.6 Release](releases/v0.7.6.md) · [v0.7.5 Release](releases/v0.7.5.md) · [vollständige Versionshistorie](releases/)
 - [Pläne](plans/) – damalige Implementierungspläne, **keine** automatisch aktuelle Roadmap.
 - [Forschung](research/) – FTB-/Xaero-/Core-API-Spikes und Feasibility.

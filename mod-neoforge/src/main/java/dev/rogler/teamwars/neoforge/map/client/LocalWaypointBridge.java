@@ -51,8 +51,13 @@ public final class LocalWaypointBridge {
         Object raw=xaeroList();Object ftb=FtbXaeroWaypointMirror.ftbManager();
         if(!(raw instanceof List<?> list)||ftb==null)return "Xaero/FTB manager is not ready";
         var fromXaero=xaeroPoints();var fromFtb=FtbXaeroWaypointMirror.readFtbPoints();
-        var ftbMissing=WaypointReconcilePolicy.safeMissing(fromXaero,fromFtb);
-        var xaeroMissing=WaypointReconcilePolicy.safeMissing(fromFtb,fromXaero);
+        // Never resurrect a linked waypoint that was intentionally deleted from one map.
+        // A corrupt/private journal must abort the import instead of ignoring the safety gate.
+        var blocked=WaypointLinkClient.reservedLocations();
+        var ftbMissing=WaypointReconcilePolicy.safeMissing(fromXaero,fromFtb).stream()
+            .filter(p->!blocked.contains(p.locationKey())).toList();
+        var xaeroMissing=WaypointReconcilePolicy.safeMissing(fromFtb,fromXaero).stream()
+            .filter(p->!blocked.contains(p.locationKey())).toList();
         Method createFtb=ftb.getClass().getMethod("addWaypointAt",BlockPos.class,String.class);
         for(var p:ftbMissing){
             Object created=createFtb.invoke(ftb,new BlockPos(p.x(),p.y(),p.z()),p.name());

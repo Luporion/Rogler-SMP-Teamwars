@@ -1,5 +1,7 @@
 # AGENTS.md – verbindliche Entwicklungsregeln für Rogler Core
 
+**Aktueller Feature-Branch: v0.8.0 SOURCE CANDIDATE.** Client-private Wegpunkt-Verknüpfungen werden lokal und pro Serverprofil gespeichert. Keine automatischen Löschungen, Verschiebungen oder Team-Uploads. `/roglerwaypoints changes` zeigt konservative Konflikte. Siehe [Release v0.8.0](docs/releases/v0.8.0.md).
+
 **Einstieg:** [Dokumentationsindex](docs/INDEX.md) → [Projektstatus](docs/PROJECT_STATE.md) → [Roadmap](docs/ROADMAP.md) → relevante [Release-Notiz](docs/releases/v0.7.7.md) und [Tests](docs/TEST_MATRIX.md). Das historische, ausführliche Regelwerk steht vollständig im [Archiv](docs/archive/legacy/AGENTS_before_cleanup_2026-10-22.md). Historische Versionsaussagen sind keine aktuellen Freigaben.
 
 ## Vor jeder Änderung

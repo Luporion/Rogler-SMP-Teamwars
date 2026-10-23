@@ -50,3 +50,7 @@ python3 scripts/check-waypoint-bridge.py
 java -ea -cp build/classes dev.rogler.teamwars.core.WaypointSyncPolicyTests
 
 java -ea -cp build/classes dev.rogler.teamwars.core.WaypointReconcilePolicyTests
+
+java -ea -cp build/classes dev.rogler.teamwars.core.WaypointLinkPolicyTests
+java -ea -cp build/classes dev.rogler.teamwars.core.WaypointLinkJournalTests
+python3 scripts/check-waypoint-link.py
