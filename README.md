@@ -2,7 +2,7 @@
 
 Minecraft **1.21.1 · NeoForge 21.1.249** — eigener TeamWars-Mod für ein teamorientiertes Rogler-SMP.
 
-> **Entwicklungsstand: v0.8.0, Quellcode-Testversion mit privatem, persistentem Wegpunkt-Verknüpfungsjournal.** Die v0.7.7-NeoForge-Kompilierung war in GitHub Actions erfolgreich (Run `39875853255`), aber der v0.7.7-/v0.8.0-Multiplayer-Laufzeittest ist **nicht nachgewiesen**. Die vollständige v0.8.0-Kompilierung steht noch aus. [Nachweise und Einschränkungen](docs/PROJECT_STATE.md).
+> **Entwicklungsstand v0.8.1 (Quellcode):** private FTB/Xaero-Wegpunktpaare mit bestätigtem Verschieben/Löschen und optionalem automatischem *Name/Farbe*-Abgleich. v0.8.0 wurde in GitHub Actions erfolgreich gebaut (Run `39938411669`), aber Multiplayer-Abnahme und v0.8.1-NeoForge-Kompilierung stehen aus. Änderungen privater Wegpunkte gelangen nicht auf den Server. [Status](docs/PROJECT_STATE.md) · [Release](docs/releases/v0.8.1.md).
 
 ## Hier beginnen
 
@@ -34,4 +34,4 @@ Minecraft **1.21.1 · NeoForge 21.1.249** — eigener TeamWars-Mod für ein team
 
 `PATCH.cmd` nur **einmal** pro neuem Git-Update-Patch und **nur auf dem angegebenen Ausgangsbranch** ausführen. Ein bereits vorhandener Feature-Branch ist kein Grund, denselben Patch erneut anzuwenden. Ein grüner CI-Build ersetzt keinen Test mit einem Dedicated Server und mehreren Clients.
 
-Die ältere Versionsdokumentation und die ursprüngliche ausführliche README sind unverändert unter [Archiv](docs/archive/legacy/README_before_cleanup_2026-10-22.md) zugänglich. Alle existierenden Minecraft-Gameplay-Dateien und SavedData-Schemata bleiben bei dieser Dokumentationsbereinigung unangetastet.
+Die ältere Versionsdokumentation und die ursprüngliche ausführliche README sind unverändert unter [Archiv](docs/archive/legacy/README_before_cleanup_2026-10-22.md) zugänglich. Diese Version ändert kein Server-SavedData-Schema und keine FTB-Team-/Core-Eigentumsdaten; die neuen privaten Wegpunktaktionen sind vor produktiver Nutzung im DEV-Profil zu testen.

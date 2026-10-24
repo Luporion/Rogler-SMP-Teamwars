@@ -1,6 +1,6 @@
 # AGENTS.md – verbindliche Entwicklungsregeln für Rogler Core
 
-**Aktueller Feature-Branch: v0.8.0 SOURCE CANDIDATE.** Client-private Wegpunkt-Verknüpfungen werden lokal und pro Serverprofil gespeichert. Keine automatischen Löschungen, Verschiebungen oder Team-Uploads. `/roglerwaypoints changes` zeigt konservative Konflikte. Siehe [Release v0.8.0](docs/releases/v0.8.0.md).
+**Aktueller Feature-Branch: v0.8.0 SOURCE CANDIDATE.** Client-private Wegpunkt-Verknüpfungen werden lokal und pro Serverprofil gespeichert. Keine automatischen Löschungen, Verschiebungen oder Team-Uploads. `/roglerwaypoints changes` zeigt konservative Konflikte. Siehe [Release v0.8.0](docs/releases/v0.8.1.md).
 
 **Einstieg:** [Dokumentationsindex](docs/INDEX.md) → [Projektstatus](docs/PROJECT_STATE.md) → [Roadmap](docs/ROADMAP.md) → relevante [Release-Notiz](docs/releases/v0.7.7.md) und [Tests](docs/TEST_MATRIX.md). Das historische, ausführliche Regelwerk steht vollständig im [Archiv](docs/archive/legacy/AGENTS_before_cleanup_2026-10-22.md). Historische Versionsaussagen sind keine aktuellen Freigaben.
 
@@ -36,3 +36,8 @@
 - `PATCH.cmd` **nicht erneut** ausführen, wenn Zielbranch/Commit bereits erstellt ist; für Korrekturen auf existierendem Branch mit `git am`, `VERIFY.cmd`, Commit/Push arbeiten.
 - Keine produktiven Saves, persönliche Xaero-Dateien oder Team-/Claim-Daten ohne Backup überschreiben. Diagnose-ZIPs mit tatsächlichen Ergebnissen dokumentieren; ein grüner GitHub Actions-Workflow allein ist kein In-Game-Test.
 - Für ältere, release-spezifische Sonderregeln im unveränderten [AGENTS-Archiv](docs/archive/legacy/AGENTS_before_cleanup_2026-10-22.md) und unter `docs/archive/handovers/` nachschlagen.
+
+## v0.8.1 Wegpunkt-Sicherheit
+- `autosync on` darf ausschließlich eindeutige einseitige Name/Farbe-Aenderungen umsetzen, nie Loeschungen/Verschiebungen, Teamfreigaben oder Serverpakete.
+- Bei verschwundenen verbundenen Punkten kein blindes Wiederherstellen: `delete-linked` nur mit aktuellem Token und unveraenderter Gegenstelle; altes Journal als Tombstone behalten. `move-linked` nur mit explizitem Index, aktuellem Token, gleicher Dimension und unveraendertem Namen/Farbwert.
+- Originaldateien vor ersten DEV-Tests sichern. FTB hat kein `setPos`; Neuanlage + Entfernen ist kein garantierter atomarer Drittmod-Vorgang. Bei Fehler Benutzer auf manuelle Prüfung verweisen.

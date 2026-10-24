@@ -84,6 +84,45 @@ public final class WaypointLinkPolicy {
         return r.canApply() && r.token().equals(token) && r.ftb()!=null && r.xaero()!=null &&
             r.ftb().locationKey().equals(r.link().locationKey()) && r.xaero().locationKey().equals(r.link().locationKey());
     }
+    /** A missing side is NOT proof of deletion. A human must explicitly confirm it.
+     *  The surviving point must exactly equal the last trusted baseline. */
+    public static boolean safeToDelete(Review r, String token) {
+        if (token == null || !token.equals(r.token())) return false;
+        return switch (r.state()) {
+            case MISSING_FTB -> r.ftb() == null && r.link().xaeroBaseline().equals(r.xaero());
+            case MISSING_XAERO -> r.xaero() == null && r.link().ftbBaseline().equals(r.ftb());
+            default -> false;
+        };
+    }
+
+    /** A move cannot be inferred safely: caller must select the moved waypoint.
+     *  It must retain the original name and color, and be unique at its NEW location.
+     *  Neither map may already contain another point at the new location.
+     */
+    public static boolean safeToMove(Review r, String token, String source, WaypointSyncPolicy.Point moved,
+                                    Collection<WaypointSyncPolicy.Point> ftbAll,
+                                    Collection<WaypointSyncPolicy.Point> xaeroAll,
+                                    Collection<Link> existing) {
+        if (token == null || !token.equals(r.token()) || moved == null || source == null) return false;
+        WaypointSyncPolicy.Point original;
+        if (source.equals("ftb") && r.state() == State.MISSING_FTB &&
+            r.link().xaeroBaseline().equals(r.xaero())) original=r.link().ftbBaseline();
+        else if (source.equals("xaero") && r.state() == State.MISSING_XAERO &&
+            r.link().ftbBaseline().equals(r.ftb())) original=r.link().xaeroBaseline();
+        else return false;
+        if (!original.dimension().equals(moved.dimension()) || original.locationKey().equals(moved.locationKey()) ||
+            !original.name().equals(moved.name()) || original.color()!=moved.color()) return false;
+        if (existing.stream().anyMatch(l -> !l.id().equals(r.link().id()) && l.locationKey().equals(moved.locationKey()))) return false;
+        return ftbAll.stream().filter(p->p.locationKey().equals(moved.locationKey())).count() == (source.equals("ftb")?1:0)
+            && xaeroAll.stream().filter(p->p.locationKey().equals(moved.locationKey())).count() == (source.equals("xaero")?1:0);
+    }
+
+    /** Journal persists both real colors separately after a confirmed move. */
+    public static Link moved(Link old, WaypointSyncPolicy.Point ftb, WaypointSyncPolicy.Point xaero) {
+        if (!ftb.locationKey().equals(xaero.locationKey())) throw new IllegalArgumentException("move is not converged");
+        return new Link(old.id(),ftb,xaero);
+    }
+
     public static Link committed(Review r) {
         if (!r.canApply() && r.state()!=State.CONVERGED) throw new IllegalArgumentException("not resolved");
         WaypointSyncPolicy.Point winner = r.state()==State.XAERO_METADATA_CHANGED ? r.xaero() : r.ftb();

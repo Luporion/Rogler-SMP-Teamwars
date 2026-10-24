@@ -3,6 +3,7 @@ package dev.rogler.teamwars.neoforge.map.client;
 import dev.rogler.teamwars.core.WaypointLinkJournal;
 import dev.rogler.teamwars.core.WaypointLinkPolicy;
 import dev.rogler.teamwars.core.WaypointReconcilePolicy;
+import dev.rogler.teamwars.core.WaypointSyncPolicy;
 import net.minecraft.client.Minecraft;
 
 import java.nio.charset.StandardCharsets;
@@ -11,12 +12,41 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import dev.rogler.teamwars.neoforge.RoglerTeamWarsMod;
 
 /**
  * Explicit, local-only persistent waypoint pair journal. No server packets,
- * no destructive deletion/move, and no modification of third-party save files.
+ * destructive counterpart operations require explicit token-checked commands;
+ * no modification of third-party raw save files.
  */
+@EventBusSubscriber(modid=RoglerTeamWarsMod.MOD_ID,value=Dist.CLIENT)
 public final class WaypointLinkClient {
+    private static boolean autoMetadata;
+    private static int autoTicks;
+    private static boolean autoBusy;
+    /** Session-only opt-in: moves/deletes and team sharing are NEVER automatic. */
+    public static boolean autoMetadataEnabled(){return autoMetadata;}
+    public static String setAutoMetadata(boolean enable) {
+        autoMetadata=enable;autoTicks=0;
+        return enable ? "Automatischer privater Name/Farbe-Abgleich AN (nur eindeutige Paare; keine Moves/Deletes)"
+                      : "Automatischer privater Name/Farbe-Abgleich AUS";
+    }
+    @SubscribeEvent public static void tick(ClientTickEvent.Post event) {
+        var mc=Minecraft.getInstance();
+        if(mc.level==null||mc.player==null){autoMetadata=false;autoTicks=0;return;}
+        if(!autoMetadata || autoBusy || ++autoTicks%200!=0)return;
+        autoBusy=true;
+        try {syncLinkedMetadata();}
+        catch(Exception failure) {
+            autoMetadata=false;
+            WaypointClientCommands.chat("Auto-Abgleich deaktiviert: "+failure.getClass().getSimpleName()+" (keine unsichere Fortsetzung)");
+        } finally {autoBusy=false;}
+    }
+
     private WaypointLinkClient() {}
     private static Path journalPath() throws Exception {
         Minecraft mc=Minecraft.getInstance();
@@ -65,6 +95,12 @@ public final class WaypointLinkClient {
             if(++shown>12){WaypointClientCommands.chat("Weitere Links nicht angezeigt");break;}
             WaypointClientCommands.chat(r.link().id()+" : "+r.state());
             if(r.canApply())WaypointClientCommands.chat("Nur Name/Farbe: /roglerwaypoints apply "+r.link().id()+" "+r.token());
+            if(r.state()==WaypointLinkPolicy.State.MISSING_FTB||r.state()==WaypointLinkPolicy.State.MISSING_XAERO){
+                WaypointClientCommands.chat("VORSICHT: Geloescht ODER verschoben? Nie automatisch entscheiden.");
+                WaypointClientCommands.chat("Wirklich geloescht: /roglerwaypoints delete-linked "+r.link().id()+" "+r.token());
+                String source=r.state()==WaypointLinkPolicy.State.MISSING_FTB?"ftb":"xaero";
+                WaypointClientCommands.chat("Tatsaechlich verschoben: /roglerwaypoints move-linked "+r.link().id()+" "+source+" <Index> "+r.token());
+            }
             else if(r.state()==WaypointLinkPolicy.State.CONVERGED)
                 WaypointClientCommands.chat("Beide gleich: /roglerwaypoints acknowledge "+r.link().id()+" "+r.token());
         }
@@ -85,14 +121,111 @@ public final class WaypointLinkClient {
         if(!replaced)throw new IllegalStateException("Link wurde waehrend Aktion veraendert");
         WaypointLinkJournal.save(path,links);
     }
+    /** Associate points just created by the EXPLICIT import, once both real mod stores confirm
+     *  one personal point per location. No existing point is claimed by an ambient scan.
+     */
+    public static int linkImported(List<WaypointSyncPolicy.Point> imported) throws Exception {
+        if(imported.isEmpty())return 0;
+        var path=journalPath();var saved=new ArrayList<>(WaypointLinkJournal.load(path));
+        var ftb=FtbXaeroWaypointMirror.readFtbPoints();var xaero=LocalWaypointBridge.xaeroPoints();
+        var seen=new java.util.HashSet<String>();int added=0;
+        for(var entry:imported){
+            if(!seen.add(entry.locationKey()))continue;
+            var f=ftb.stream().filter(p->p.locationKey().equals(entry.locationKey())).toList();
+            var x=xaero.stream().filter(p->p.locationKey().equals(entry.locationKey())).toList();
+            if(f.size()!=1 || x.size()!=1 || !f.get(0).name().equals(x.get(0).name()))continue;
+            if(!WaypointLinkPolicy.canLink(saved,f.get(0),x.get(0),ftb,xaero))continue;
+            saved.add(new WaypointLinkPolicy.Link(UUID.randomUUID(),f.get(0),x.get(0)));
+            added++;
+        }
+        if(added>0)WaypointLinkJournal.save(path,saved);
+        return added;
+    }
+
+    /** Explicitly reconcile only clean one-sided NAME/COLOR changes of linked private pairs.
+     *  No deletion, teleportation, movement, share or collision resolution is performed.
+     */
+    public static String syncLinkedMetadata() throws Exception {
+        int count=0,skipped=0;
+        for(var r:current()) {
+            if(!r.canApply()) {if(r.state()!=WaypointLinkPolicy.State.UNCHANGED)skipped++;continue;}
+            String response=apply(r.link().id(),r.token());
+            if(response.startsWith("Name/Farbe uebernommen und reale Farben"))count++;
+            else {skipped++; throw new IllegalStateException("Abgleich fehlgeschlagen: "+response);}
+        }
+        return "Verknuepfte private Punkte: "+count+" sichere Name/Farbe-Aenderungen uebernommen; "+skipped+
+            " Konflikte/Moves/Deletes nicht angefasst.";
+    }
     /** Linked entries block import resurrection after a deliberate delete in either map. */
     public static java.util.Set<String> reservedLocations() throws Exception {
         var dim=dimension();
-        return WaypointLinkJournal.load(journalPath()).stream()
-            .filter(l->l.ftbBaseline().dimension().equals(dim))
-            .map(WaypointLinkPolicy.Link::locationKey)
+        var links=WaypointLinkJournal.load(journalPath()).stream()
+            .filter(l->l.ftbBaseline().dimension().equals(dim)).toList();
+        // A moved AND renamed waypoint could otherwise look like a brand-new
+        // waypoint to safeMissing(). Block EVERY add-only import until that
+        // unfinished one-sided move/delete has been explicitly resolved.
+        var reviews=WaypointLinkPolicy.review(links,
+            FtbXaeroWaypointMirror.readFtbPoints(),LocalWaypointBridge.xaeroPoints());
+        for(var review:reviews) {
+            if(review.state()==WaypointLinkPolicy.State.MISSING_FTB ||
+               review.state()==WaypointLinkPolicy.State.MISSING_XAERO ||
+               review.state()==WaypointLinkPolicy.State.CONFLICT ||
+               review.state()==WaypointLinkPolicy.State.AMBIGUOUS)
+                throw new IllegalStateException("Ungelöster Link: /roglerwaypoints changes; zuerst klaeren");
+        }
+        return links.stream().map(WaypointLinkPolicy.Link::locationKey)
             .collect(java.util.stream.Collectors.toUnmodifiableSet());
     }
+    /** EXPLICIT confirmed deletion of the surviving counterpart only. No automatic deletion.
+     *  Leave the journal record as a permanent tombstone, blocking /sync resurrection.
+     */
+    public static String confirmDeletion(UUID id, String token) throws Exception {
+        var r=find(id);
+        if(!WaypointLinkPolicy.safeToDelete(r,token))
+            return "Abbruch: kein eindeutiger einseitiger Verlust oder Gegenstelle geaendert. /roglerwaypoints changes";
+        var path=journalPath(); // abort on unavailable/invalid journal BEFORE any mutation
+        if(WaypointLinkJournal.load(path).stream().noneMatch(l->l.equals(r.link())))
+            return "Abbruch: Journal geaendert";
+        if(r.state()==WaypointLinkPolicy.State.MISSING_FTB)
+            WaypointMutationBridge.deleteXaero(r.xaero());
+        else WaypointMutationBridge.deleteFtb(r.ftb());
+        // Keep baseline as a tombstone, never re-import either side at these coordinates.
+        return "Gegenstelle geloescht; Rogler-Link bleibt als Wiederherstellungs-Sperre erhalten: "+id;
+    }
+
+    /** The caller EXPLICITLY selects a potential moved point by index. Missing does not imply moved.
+     *  Metadata must still match last baseline; anything ambiguous must be fixed manually.
+     */
+    public static String confirmMove(UUID id, String source, int index, String token) throws Exception {
+        if(!source.equals("ftb")&&!source.equals("xaero"))return "Quelle muss ftb oder xaero sein";
+        var path=journalPath();var links=WaypointLinkJournal.load(path);
+        var r=find(id);
+        var ftb=FtbXaeroWaypointMirror.readFtbPoints();
+        var xaero=LocalWaypointBridge.xaeroPoints();
+        var points=source.equals("ftb")?ftb:xaero;
+        if(index<0||index>=points.size())return "Ungueltiger Quell-Index: /roglerwaypoints list";
+        var moved=points.get(index);
+        if(!WaypointLinkPolicy.safeToMove(r,token,source,moved,ftb,xaero,links))
+            return "Abbruch: keine eindeutig bestaetigte reine Verschiebung; Quelle oder Ziel geaendert/mehrdeutig";
+        if(source.equals("ftb"))WaypointMutationBridge.moveXaero(r.xaero(),moved);
+        else WaypointMutationBridge.moveFtb(r.ftb(),moved);
+        var nowFtb=FtbXaeroWaypointMirror.readFtbPoints();
+        var nowXaero=LocalWaypointBridge.xaeroPoints();
+        var ff=nowFtb.stream().filter(p->p.locationKey().equals(moved.locationKey())).toList();
+        var xx=nowXaero.stream().filter(p->p.locationKey().equals(moved.locationKey())).toList();
+        if(ff.size()!=1||xx.size()!=1 || !ff.get(0).name().equals(r.link().ftbBaseline().name()) ||
+           !xx.get(0).name().equals(r.link().xaeroBaseline().name()))
+            return "Verschiebung nicht bestaetigt: Link-Journal unveraendert. Bitte beide Karten pruefen";
+        // Re-read journal, no merge if another action modified it.
+        var before=WaypointLinkJournal.load(path);
+        if(!before.equals(links))return "Journal parallel geaendert: bitte pruefen /roglerwaypoints changes";
+        var updated=new ArrayList<>(links);
+        if(!updated.remove(r.link()))return "Link nicht mehr vorhanden";
+        updated.add(WaypointLinkPolicy.moved(r.link(),ff.get(0),xx.get(0)));
+        WaypointLinkJournal.save(path,updated);
+        return "Private Verschiebung in beide Karten uebernommen und Link-Basis aktualisiert: "+id;
+    }
+
     /** Applies one explicitly confirmed metadata-only change, with re-read optimistic guard. */
     public static String apply(UUID id,String token) throws Exception {
         var r=find(id);

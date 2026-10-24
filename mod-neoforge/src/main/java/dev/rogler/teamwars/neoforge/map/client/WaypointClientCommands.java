@@ -27,7 +27,7 @@ public final class WaypointClientCommands {
     }
     @SubscribeEvent public static void register(RegisterClientCommandsEvent e){
         e.getDispatcher().register(Commands.literal("roglerwaypoints")
-            .executes(c->{chat("/roglerwaypoints list | preview | sync | link <FTB> <Xaero> | changes | apply <UUID> <Token> | acknowledge <UUID> <Token> | unlink <UUID> | share | unshare");return 1;})
+            .executes(c->{chat("/roglerwaypoints list | preview | sync | link <FTB> <Xaero> | changes | apply <UUID> <Token> | acknowledge <UUID> <Token> | unlink <UUID> | sync-linked | autosync on/off | delete-linked <UUID> <Token> | move-linked <UUID> ftb/xaero <Index> <Token> | share | unshare");return 1;})
             .then(Commands.literal("list").executes(c->{list();return 1;}))
             .then(Commands.literal("preview").executes(c->{preview();return 1;}))
             .then(Commands.literal("resolve")
@@ -46,6 +46,36 @@ public final class WaypointClientCommands {
                 catch(Exception failure){chat("Private Sync nicht verfuegbar: "+failure.getClass().getSimpleName());}
                 return 1;
             }))
+            .then(Commands.literal("sync-linked").executes(c->{
+                try{chat(WaypointLinkClient.syncLinkedMetadata());}
+                catch(Exception fail){chat("Link-Abgleich gestoppt: "+fail.getMessage());}
+                return 1;
+            }))
+            .then(Commands.literal("autosync")
+                .then(Commands.literal("on").executes(c->{chat(WaypointLinkClient.setAutoMetadata(true));return 1;}))
+                .then(Commands.literal("off").executes(c->{chat(WaypointLinkClient.setAutoMetadata(false));return 1;})))
+            .then(Commands.literal("delete-linked")
+                .then(Commands.argument("linkId",StringArgumentType.word())
+                .then(Commands.argument("linkToken",StringArgumentType.word()).executes(c->{
+                    try{chat(WaypointLinkClient.confirmDeletion(
+                        UUID.fromString(StringArgumentType.getString(c,"linkId")),
+                        StringArgumentType.getString(c,"linkToken")));}
+                    catch(Exception err){chat("Loeschung abgebrochen: "+err.getMessage());}
+                    return 1;
+                }))))
+            .then(Commands.literal("move-linked")
+                .then(Commands.argument("linkId",StringArgumentType.word())
+                .then(Commands.argument("source",StringArgumentType.word())
+                .then(Commands.argument("index",IntegerArgumentType.integer(0,255))
+                .then(Commands.argument("linkToken",StringArgumentType.word()).executes(c->{
+                    try{chat(WaypointLinkClient.confirmMove(
+                        UUID.fromString(StringArgumentType.getString(c,"linkId")),
+                        StringArgumentType.getString(c,"source"),
+                        IntegerArgumentType.getInteger(c,"index"),
+                        StringArgumentType.getString(c,"linkToken")));}
+                    catch(Exception err){chat("Verschiebung abgebrochen: "+err.getMessage());}
+                    return 1;
+                }))))))
             .then(Commands.literal("link")
                 .then(Commands.argument("ftbIndex",IntegerArgumentType.integer(0,255))
                 .then(Commands.argument("xaeroIndex",IntegerArgumentType.integer(0,255)).executes(c->{

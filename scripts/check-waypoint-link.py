@@ -10,7 +10,8 @@ cmd=read('WaypointClientCommands.java')
 assert 'PacketDistributor' not in client
 assert 'WaypointMutationPayload' not in client
 assert 'private-waypoint-links' in client and 'SHA-256' in client
-assert 'WaypointLinkJournal.load' in client and 'WaypointLinkJournal.save' in client
+assert 'WaypointLinkJournal.load' in client
+assert 'linkImported' in client and 'WaypointLinkClient.linkImported(imported)' in local and 'WaypointLinkJournal.save' in client
 assert 'safeToApply' in client and 'resolveMetadata' in client
 assert 'reservedLocations()' in client
 assert 'WaypointLinkClient.reservedLocations()' in local
@@ -26,4 +27,17 @@ assert 'Commands.literal("apply")' in cmd and 'Commands.literal("unlink")' in cm
 assert 'Commands.literal("acknowledge")' in cmd
 assert 'registrar("3")' in (r/'mod-neoforge/src/main/java/dev/rogler/teamwars/neoforge/map/TeamIntelNetwork.java').read_text()
 assert 'dev.architectury.networking.NetworkManager' in (r/'mod-neoforge/src/main/java/dev/rogler/teamwars/neoforge/compat/ftbvisibility/FtbVisibilityPacketMixin.java').read_text()
-print('v0.8.0 local waypoint journal, opt-in updates, no network uploads and no import resurrection guards: OK')
+bridge=read('WaypointMutationBridge.java')
+assert 'PacketDistributor' not in bridge and 'WaypointMutationPayload' not in bridge
+assert 'safeToDelete' in client and 'safeToMove' in client
+assert 'confirmDeletion' in client and 'confirmMove' in client
+assert 'WaypointLinkJournal.load' in client
+assert 'linkImported' in client and 'WaypointLinkClient.linkImported(imported)' in local
+assert 'WaypointMutationBridge.deleteXaero' in client and 'WaypointMutationBridge.deleteFtb' in client
+assert 'WaypointMutationBridge.moveXaero' in client and 'WaypointMutationBridge.moveFtb' in client
+assert 'removeWaypoint' in bridge and 'setX' in bridge and 'setZ' in bridge
+assert 'Commands.literal("delete-linked")' in cmd and 'Commands.literal("move-linked")' in cmd
+assert 'Commands.literal("sync-linked")' in cmd and 'Commands.literal("autosync")' in cmd
+assert 'Ungelöster Link' in client and 'WaypointLinkPolicy.State.MISSING_FTB' in client
+assert 'ClientTickEvent.Post' in client and 'autoMetadata=false' in client
+print('v0.8.1 local waypoint sync, explicit delete/move, opt-in metadata only and privacy guards: OK')

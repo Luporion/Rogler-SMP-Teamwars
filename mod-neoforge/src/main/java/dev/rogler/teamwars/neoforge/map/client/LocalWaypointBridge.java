@@ -82,8 +82,17 @@ public final class LocalWaypointBridge {
         Object manager=xaeroManager();
         if(manager!=null)manager.getClass().getMethod("updateWaypoints").invoke(manager);
         var report=WaypointReconcilePolicy.compare(fromFtb,fromXaero);
+        int linked=0;
+        try {
+            var imported=new ArrayList<WaypointSyncPolicy.Point>(ftbMissing);
+            imported.addAll(xaeroMissing);
+            linked=WaypointLinkClient.linkImported(imported);
+        } catch(Exception journalError){
+            return "Import ausgefuehrt, aber Journal-Verknuepfung fehlgeschlagen ("+
+                journalError.getClass().getSimpleName()+"). /roglerwaypoints changes pruefen!";
+        }
         return "Sicherer Privatimport: Xaero -> FTB " + ftbMissing.size() + ", FTB -> Xaero " + xaeroMissing.size()
-            + "; " + report.conflicts() + " Konflikte/Mehrdeutigkeiten uebersprungen. Originale unveraendert.";
+            + "; neu verknuepft="+linked+"; "+report.conflicts()+" Konflikte/Mehrdeutigkeiten uebersprungen.";
     }
 
     /** Dry run only; reads two personal stores without any file or network mutation. */

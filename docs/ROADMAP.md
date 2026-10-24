@@ -1,8 +1,8 @@
 # Rogler Core – Produktroadmap
 
-**Stand: 23. Oktober 2026.** Die Roadmap beschreibt Ziele und Prioritäten, **nicht** automatisch freigegebene Spielmechaniken. Technischer Iststand mit Belegen: [PROJECT_STATE.md](PROJECT_STATE.md). Ursprüngliche vollständige Roadmap und ältere Milestones sind [unverändert archiviert](archive/legacy/ROADMAP_before_cleanup_2026-10-22.md).
+**Stand: 24. Oktober 2026.** Die Roadmap beschreibt Ziele und Prioritäten, **nicht** automatisch freigegebene Spielmechaniken. Technischer Iststand mit Belegen: [PROJECT_STATE.md](PROJECT_STATE.md). Ursprüngliche vollständige Roadmap und ältere Milestones sind [unverändert archiviert](archive/legacy/ROADMAP_before_cleanup_2026-10-22.md).
 
-## Priorität 0 – v0.8.0 bauen und im Multiplayer abnehmen
+## Priorität 0 – v0.8.1 bauen und im Multiplayer abnehmen
 
 - [x] v0.7.4: FTB-Architectury-Join-Fehler korrigiert; Beitritt im Spiel bestätigt.
 - [x] v0.7.5: HUD standardmäßig aus, Position und Entfernungen konfigurierbar; NeoForge CI grün.
@@ -10,7 +10,9 @@
 - [x] v0.7.7 (Quellcode): Konfliktvorschau, sicherer Namens-/Farbabgleich mit Token, Dimensions- und Palettenkorrektur. Keine automatische Löschung/Verschiebung.
 - [x] v0.7.7: NeoForge-JAR erfolgreich gebaut (CI `39875853255`); Laufzeit noch offen.
 - [x] v0.8.0 (Quellcode): private Wegpunktverknüpfungen mit persistenter ID, Konfliktanzeige und Schutz vor ungewollter Wiederherstellung.
-- [ ] v0.8.0: Neuer NeoForge-Build und In-Game-Wegpunkt-/Datenschutztests erfolgreich.
+- [x] v0.8.0: NeoForge-Build erfolgreich (Run `39938411669`), aber In-Game-Tests weiter offen.
+- [x] v0.8.1 Quellcode: explizite, Token-geschuetzte Verschiebungen/Loeschungen und optionale Name/Farbe-Automatik implementiert.
+- [ ] v0.8.1: NeoForge-Build, Client-Persistenz, Gegenseiten-Aenderungen und Multiplayer-Privacy nachweisen.
 - [ ] v0.7.6: 2-Team-/OP-Datenschutz, Xaero- und FTB-Rendering, Freigabe/Widerruf, Rejoin, Dimension, Restart, Backup und Duplikate praktisch testen.
 - [ ] Zeitkritische Integrationsregressionen zu Modupdates/Packet-Encodern/Kompatibilität systematisch absichern.
 
@@ -20,7 +22,7 @@
 |---|---|---|
 | Persönliche Exploration pro UUID/Dimension | Kernlogik/Session-Verwaltung vorhanden | Reale Client-Karte und vollständige Revoke-Tests |
 | Freigegebene Team-Wegpunkte | v0.7.6 Source: explizit teilen/zurücknehmen; ephemeral Marker | CI, In-Game-Nachweis, OP- und Ex-Mitglied-Tests |
-| Private FTB↔Xaero-Synchronisierung | v0.7.6 Source: **manueller Import nur fehlender Einträge** | Automatische Edit-/Delete-/Rename-Sync, Revisionen, Konflikte, saubere Dimensionszuordnung |
+| Private FTB↔Xaero-Synchronisierung | v0.8.1 Source: Auto-Verknüpfung neuer Imports; Name/Farbe opt-in automatisch, Moves/Deletes mit explizitem Token | Minecraft-DEV-Abnahme; native ID/Event-Forschung für künftig automatische Moves/Deletes ohne Datenverlust |
 | Verbündete und eigene Basis auf Xaero | v0.7.5 Source mit Namenraum-Markern | Minimap + World Map verifizieren, tote Marker verhindern |
 | Widerrufbare gemeinsame Geländekarte | Serverseitig personenbezogene Exploration | Echte Terrain-Tiles in Xaero übernehmen, persönliche Daten unverändert lassen, Widerruf bei Austritt/Rejoin/Cache-Clear |
 | HUD & Distanznavigation | v0.7.5 optionale, Client-Einstellungen | Komforttests, Überlagerungen anderer HUDs, ggf. Drag & Drop ohne zusätzliche Pflichtmod |
@@ -42,10 +44,10 @@
 - Starter-/Spawn-Hub, strukturierte Zonen auf Xaero und optional Admin-Webkarte ohne versteckte Gegnerdaten.
 - Mobile Basen mit Sable/Create: Core-Position auf Schiffen, Dock/Undock/Restart, kumulativ 10 Minuten außerhalb der Zone, kontrollierte Warnung und sichere Selbstzerstörung – **nicht produktiv ohne umfangreiche Sicherheits- und Performance-Tests**.
 
-## Reihenfolge nach v0.7.6
+## Reihenfolge nach v0.8.1
 
-1. v0.7.6-Build und Multiplayer-Abnahme abschließen; ggf. kompakte v0.7.6.x-Hotfixes.
-2. v0.8.0: Journal-gestützten Namens-/Farbabgleich in beiden Karten praktisch prüfen. Danach native Identitäts- oder Tombstone-Strategie für sichere Move-/Delete-Synchronisierung erforschen (ohne irreführende automatische Wiederherstellung).
+1. v0.8.1-Build und Multiplayer-/Datenschutzabnahme abschließen; ggf. gezielte Hotfixes.
+2. v0.8.1: explizite Move-/Delete- und automatische Name/Farbe-Synchronisierung in beiden Karten praktisch prüfen. Native IDs bzw. echte plattformübergreifende Änderungs-Events bleiben Forschung; keine automatische Move-/Delete-Propagierung ohne nachweisbar stabile Identität.
 3. Widerrufbare echte Xaero-Geländekacheln prototypisch beweisen, bevor Team-Map-Sharing als fertig gilt.
 4. Danach Teamfunk/Chunkloading und Core-Integrationen; anschließend Wettbewerb/Wirtschaft/Events.
 

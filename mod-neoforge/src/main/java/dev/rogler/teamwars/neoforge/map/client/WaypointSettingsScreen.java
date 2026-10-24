@@ -22,7 +22,7 @@ public final class WaypointSettingsScreen extends Screen {
         addRenderableWidget(Button.builder(Component.literal(label),b->{action.run();rebuild();})
             .bounds(x,y,w,20).build());
     }
-    private int pageSize(){return Math.max(1,Math.min(7,(height-215)/23));}
+    private int pageSize(){return Math.max(1,Math.min(7,(height-265)/23));}
     private void rebuild(){
         clearWidgets();int w=Math.min(470,width-22),x=(width-w)/2,y=50;
         button("FTB",x,y,w/3-4,()->{tab=Page.FTB;first=0;});
@@ -38,6 +38,13 @@ public final class WaypointSettingsScreen extends Screen {
         button("Verknuepfte Wegpunkte pruefen (Chat)",x,y,w,()->{
             try{WaypointLinkClient.showChanges();message="Link-Status steht im Chat. Keine Loeschungen.";}
             catch(Exception ex){message="Link-Journal nicht lesbar: "+ex.getClass().getSimpleName();}
+        });y+=25;
+        button("Nur sichere Aenderungen abgleichen",x,y,w,()->{
+            try{message=WaypointLinkClient.syncLinkedMetadata();}
+            catch(Exception ex){message="Abgleich gestoppt: "+ex.getClass().getSimpleName();}
+        });y+=25;
+        button(WaypointLinkClient.autoMetadataEnabled()?"Auto Name/Farbe: AN":"Auto Name/Farbe: AUS",x,y,w,()->{
+            message=WaypointLinkClient.setAutoMetadata(!WaypointLinkClient.autoMetadataEnabled());
         });y+=31;
         try{
             var mc=net.minecraft.client.Minecraft.getInstance();
@@ -82,7 +89,7 @@ public final class WaypointSettingsScreen extends Screen {
             for(int i=first;i<Math.min(first+pageSize(),count);i++){
                 String name=tab==Page.TEAM?team.get(i).point().name():points.get(i).name();
                 if(name.length()>30)name=name.substring(0,30)+"...";
-                g.drawString(font,i+": "+name,(width-Math.min(470,width-22))/2+4,158+(i-first)*23,0xe3e3e3,false);
+                g.drawString(font,i+": "+name,(width-Math.min(470,width-22))/2+4,205+(i-first)*23,0xe3e3e3,false);
             }
         }catch(Exception ignored){}
         String line=message.length()>75?message.substring(0,75):message;

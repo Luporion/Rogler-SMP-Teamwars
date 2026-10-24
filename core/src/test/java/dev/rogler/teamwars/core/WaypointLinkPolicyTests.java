@@ -47,6 +47,33 @@ public final class WaypointLinkPolicyTests {
         try {WaypointLinkPolicy.committed(one(link,List.of(),List.of()));throw new AssertionError("must reject");}
         catch(IllegalArgumentException expected){checks++;}
         ok(WaypointLinkPolicy.review(List.of(),List.of(),List.of()).isEmpty());
-        System.out.println("v0.8.0 WaypointLinkPolicyTests: "+checks+" checks OK");
+        var missingF=one(link,List.of(),List.of(base));
+        var missingX=one(link,List.of(base),List.of());
+        ok(WaypointLinkPolicy.safeToDelete(missingF,missingF.token()));
+        ok(WaypointLinkPolicy.safeToDelete(missingX,missingX.token()));
+        ok(!WaypointLinkPolicy.safeToDelete(missingF,"old"));
+        ok(!WaypointLinkPolicy.safeToDelete(one(link,List.of(),List.of(renamed)),missingF.token()));
+        ok(!WaypointLinkPolicy.safeToDelete(one(link,List.of(),List.of()),one(link,List.of(),List.of()).token()));
+        var moved=p(40,"Home",0x112233);
+        ok(WaypointLinkPolicy.safeToMove(missingF,missingF.token(),"ftb",moved,
+            List.of(moved),List.of(base),List.of(link)));
+        ok(WaypointLinkPolicy.safeToMove(missingX,missingX.token(),"xaero",moved,
+            List.of(base),List.of(moved),List.of(link)));
+        ok(!WaypointLinkPolicy.safeToMove(missingF,"old","ftb",moved,
+            List.of(moved),List.of(base),List.of(link)));
+        ok(!WaypointLinkPolicy.safeToMove(missingF,missingF.token(),"ftb",p(40,"Other",0x112233),
+            List.of(p(40,"Other",0x112233)),List.of(base),List.of(link)));
+        ok(!WaypointLinkPolicy.safeToMove(missingF,missingF.token(),"ftb",moved,
+            List.of(moved),List.of(base,moved),List.of(link)));
+        ok(!WaypointLinkPolicy.safeToMove(missingF,missingF.token(),"ftb",moved,
+            List.of(moved,moved),List.of(base),List.of(link)));
+        ok(!WaypointLinkPolicy.safeToMove(one(link,List.of(changed),List.of(base)),
+            one(link,List.of(changed),List.of(base)).token(),"ftb",moved,
+            List.of(moved,changed),List.of(base),List.of(link)));
+        var m=WaypointLinkPolicy.moved(link,moved,moved);
+        ok(m.id().equals(link.id())&&m.locationKey().equals(moved.locationKey()));
+        try{WaypointLinkPolicy.moved(link,base,moved);throw new AssertionError("must reject");}
+        catch(IllegalArgumentException expected){checks++;}
+        System.out.println("v0.8.1 WaypointLinkPolicyTests: "+checks+" checks OK");
     }
 }
