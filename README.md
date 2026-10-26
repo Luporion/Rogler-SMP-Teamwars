@@ -2,7 +2,7 @@
 
 Minecraft **1.21.1 · NeoForge 21.1.249** — eigener TeamWars-Mod für ein teamorientiertes Rogler-SMP.
 
-> **Entwicklungsstand v0.8.1 (Quellcode):** private FTB/Xaero-Wegpunktpaare mit bestätigtem Verschieben/Löschen und optionalem automatischem *Name/Farbe*-Abgleich. v0.8.0 wurde in GitHub Actions erfolgreich gebaut (Run `39938411669`), aber Multiplayer-Abnahme und v0.8.1-NeoForge-Kompilierung stehen aus. Änderungen privater Wegpunkte gelangen nicht auf den Server. [Status](docs/PROJECT_STATE.md) · [Release](docs/releases/v0.8.1.md).
+> **Entwicklungsstand v0.8.2 (Quellcode, NeoForge-Build offen):** einheitliches Ingame-**Rogler Control Center** mit Spieler-, Team-, Core- und berechtigungsgeprueften Admin-Seiten, Live-Edit der 24 Rogler-eigenen Welt-Einstellungen und bestehenden Admin-Aktionen. Keine neuen Pflichtmods oder Weltmigration. v0.8.1 CI erfolgreich (Runs `40360115893`, `40360115915`), Gameplay-Tests auf dem Server laufen. [Control-Center-Handbuch](docs/UI_CONTROL_CENTER.md) · [Status](docs/PROJECT_STATE.md) · [Release](docs/releases/v0.8.2.md).
 
 ## Hier beginnen
 

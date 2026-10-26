@@ -1,3 +1,7 @@
+# Neue UI-Anforderungen v0.8.2
+
+Keine neuen Drittanbieter-Pflichtmods. Gleicher Minecraft-/NeoForge-/FTB-/Xaero-/Create-Stand wie v0.8.1. **Client und Server muessen gemeinsam auf v0.8.2 aktualisiert werden**, da zwei neue UI-Payloadtypen im unveraenderten Protocol-Registrar `3` hinzukommen. Noch kein GitHub-Actions-Buildnachweis fuer v0.8.2; alle unten stehenden v0.7.7-/v0.7.6-Hinweise als historische Voraussetzung lesen.
+
 # Aktuelle Mod-Anforderungen – v0.7.7 (Quellcode)
 
 - Minecraft **1.21.1**, NeoForge **21.1.249**, Create **6.0.10**, FTB Teams **2101.1.11**, FTB Chunks **2101.1.22** und FTB Library **2101.1.37** sind die bisher geprüften Zielversionen; **keine** neuen Drittanbieter-Mods für v0.7.7.

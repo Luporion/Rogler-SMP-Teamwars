@@ -1,10 +1,13 @@
 # Testmatrix – verbindliche Release-Gates
 
-**Spalten niemals vermischen:** `Regeltest` (Java), `Build` (NeoForge CI), `Laufzeit` (Minecraft DEV mit realen Mods) und `Produktiv` (nach Freigabe). Stand der vorhandenen Evidenz: [PROJECT_STATE.md](PROJECT_STATE.md). Historischer Stand im [Archiv](archive/legacy/TEST_MATRIX_before_cleanup_2026-10-22.md).
+**Stand v0.8.2; Spalten niemals vermischen:** `Regeltest` (Java), `Build` (NeoForge CI), `Laufzeit` (Minecraft DEV mit realen Mods) und `Produktiv` (nach Freigabe). Stand der vorhandenen Evidenz: [PROJECT_STATE.md](PROJECT_STATE.md). Historischer Stand im [Archiv](archive/legacy/TEST_MATRIX_before_cleanup_2026-10-22.md).
 
 | Bereich / Akzeptanzfall | Automatisierte Tests | Minecraft-DEV-Nachweis | Freigabegate |
 |---|---|---|---|
 | CI-Abhängigkeiten/Registrate SHA-256 | Bootstrap-Test vorhanden | N/A | Bootstrap und `compileJava` grün |
+| v0.8.2 UI/Keybind `/roglerui` | ControlCenterPolicyTests 107 Checks + statische Privacy-Guards | Noch offen | OP2/OP4/Nicht-OP, O-Taste, unterschiedliche GUI-Skalierungen |
+| Live-Settings/Persistenz | Server-Schema + Property-Validation, NeoForge-Integration offen | Noch offen | 24 Werte, ungültige Kreuzkombinationen, Restart, Audit, FTB Limit-Hinweis |
+| Admin-UI Aktionen | Whitelist-Pfade + Servercommand-Permissions | Noch offen | Grace, Raid, Core-Recovery, Repair-Confirm/OP4, Chat-Feedback |
 | Minecraft Start / Join | Compiler/Packet-Guards alleine unzureichend | v0.7.4 Join bestätigt; **v0.8.1 offen** | 2 Spieler, Serverlog ohne Encoder/Mixin-Ausnahmen |
 | FTB Party-Beitritt/Austritt/OP | Regeltests vorhanden | Unvollständig | Auch OP keine fremden Marker/Koordinaten |
 | FTB Long-Range / Claim-Marker | Konfiguration prüfbar | Offen | Gegner mit aktueller FTB-Sichtbarkeit und anderen HUDs unsichtbar |

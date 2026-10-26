@@ -54,3 +54,6 @@ java -ea -cp build/classes dev.rogler.teamwars.core.WaypointReconcilePolicyTests
 java -ea -cp build/classes dev.rogler.teamwars.core.WaypointLinkPolicyTests
 java -ea -cp build/classes dev.rogler.teamwars.core.WaypointLinkJournalTests
 python3 scripts/check-waypoint-link.py
+
+java -ea -cp build/classes dev.rogler.teamwars.core.ui.ControlCenterPolicyTests
+python3 scripts/check-control-center.py

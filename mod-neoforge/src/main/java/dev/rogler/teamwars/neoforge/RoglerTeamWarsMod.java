@@ -41,7 +41,7 @@ import java.nio.file.Path;
 @Mod(RoglerTeamWarsMod.MOD_ID)
 public final class RoglerTeamWarsMod {
     public static final String MOD_ID = "roglerteamwars";
-    public static final String VERSION = "0.7.6";
+    public static final String VERSION = "0.8.2";
     private static RoglerTeamWarsMod INSTANCE;
     private BaseCoreConfig baseConfig = BaseCoreConfig.DEFAULT;
     private dev.rogler.teamwars.neoforge.base.CorePowerConfig powerConfig = dev.rogler.teamwars.neoforge.base.CorePowerConfig.DEFAULT;
@@ -49,6 +49,20 @@ public final class RoglerTeamWarsMod {
         dev.rogler.teamwars.neoforge.protection.BaseProtectionConfig.DEFAULT;
 
     public static BaseCoreConfig baseConfig() { return INSTANCE.baseConfig; }
+    public static TeamWarsSettings teamSettings(){return INSTANCE.settings;}
+    /** All GUI writes are server-side and validated BEFORE this reload. */
+    public static void reloadUiSettings(MinecraftServer server) throws IOException {
+        if(INSTANCE==null||INSTANCE.activeServer!=server)throw new IOException("Server is not active");
+        TeamWarsSettings teams=TeamWarsSettings.load(INSTANCE.configPath(server));
+        BaseCoreConfig base=BaseCoreConfig.load(server);
+        dev.rogler.teamwars.neoforge.protection.BaseProtectionConfig protection =
+            dev.rogler.teamwars.neoforge.protection.BaseProtectionConfig.load(server);
+        dev.rogler.teamwars.neoforge.base.CorePowerConfig power =
+            dev.rogler.teamwars.neoforge.base.CorePowerConfig.load(server);
+        INSTANCE.settings=teams;INSTANCE.baseConfig=base;INSTANCE.protectionConfig=protection;INSTANCE.powerConfig=power;
+        INSTANCE.scoreboard.refresh(server,teams);
+        dev.rogler.teamwars.neoforge.protection.BaseGuardService.reconcile(server);
+    }
     public static dev.rogler.teamwars.neoforge.base.CorePowerConfig powerConfig() {return INSTANCE.powerConfig;}
     public static dev.rogler.teamwars.neoforge.protection.BaseProtectionConfig protectionConfig() {
         return INSTANCE.protectionConfig;
@@ -92,6 +106,7 @@ public final class RoglerTeamWarsMod {
         dev.rogler.teamwars.neoforge.map.ExplorationService.start(activeServer);
         dev.rogler.teamwars.neoforge.map.TeamIntelService.reset();
         dev.rogler.teamwars.neoforge.map.TeamWaypointService.clear();
+        dev.rogler.teamwars.neoforge.ui.ControlCenterService.clear();
         dev.rogler.teamwars.neoforge.compat.SableCompatibilityService.initialize(activeServer);
         dev.rogler.teamwars.neoforge.compat.SableRemovedSublevelGuard.initialize(activeServer);
         reloadSettings(activeServer);
@@ -119,6 +134,7 @@ public final class RoglerTeamWarsMod {
         dev.rogler.teamwars.neoforge.map.ExplorationService.stop();
         dev.rogler.teamwars.neoforge.map.TeamIntelService.reset();
         dev.rogler.teamwars.neoforge.map.TeamWaypointService.clear();
+        dev.rogler.teamwars.neoforge.ui.ControlCenterService.clear();
         dev.rogler.teamwars.neoforge.protection.BaseGuardService.resetRuntimeState();
         dev.rogler.teamwars.neoforge.compat.WariumRecoveryGuard.shutdown();
         dev.rogler.teamwars.neoforge.compat.SableCompatibilityService.shutdown();
@@ -141,6 +157,7 @@ public final class RoglerTeamWarsMod {
             dev.rogler.teamwars.neoforge.map.ExplorationService.logout(player.getUUID());
             dev.rogler.teamwars.neoforge.map.TeamIntelService.logout(player.getUUID());
             dev.rogler.teamwars.neoforge.map.TeamWaypointService.logout(player.getUUID());
+            dev.rogler.teamwars.neoforge.ui.ControlCenterService.logout(player.getUUID());
         }
     }
 

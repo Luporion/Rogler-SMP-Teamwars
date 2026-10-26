@@ -4,6 +4,8 @@
 
 ## Aktive Referenzdokumente
 
+- [Control-Center-UI-Handbuch](UI_CONTROL_CENTER.md) – Spieler, Teams, Admin-Regler, sichere Aktionen und Bedienung.
+
 | Datei | Warum lesen? |
 |---|---|
 | [PROJECT_STATE](PROJECT_STATE.md) | Nachgewiesener Entwicklungsstand, Build-/Runtime-Status und Blocker |
@@ -21,6 +23,7 @@
 
 - [v0.8.1 Release](releases/v0.8.1.md) – bestätigte Move/Delete-Behandlung und optionale lokale Metadaten-Automatik.
 
+- [v0.8.2 Release](releases/v0.8.2.md) · [v0.8.1 Release](releases/v0.8.1.md)
 - [v0.8.0 Release](releases/v0.8.0.md) – private Wegpunkt-Identitäten und sichere Bestätigungsbefehle.
 
 - [v0.7.7 Release](releases/v0.7.7.md) · [v0.7.6 Release](releases/v0.7.6.md) · [v0.7.5 Release](releases/v0.7.5.md) · [vollständige Versionshistorie](releases/)
