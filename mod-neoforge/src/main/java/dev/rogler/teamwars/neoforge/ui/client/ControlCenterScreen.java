@@ -26,12 +26,13 @@ import java.util.UUID;
 /** One native, dependency-free, permission-aware entry point for all existing Rogler features. */
 public final class ControlCenterScreen extends Screen {
     private enum Page { START, HUD, WAYPOINTS, LINKS, TEAM, CORE, ADMIN_TEAMS, ADMIN_BASE,
-        ADMIN_PROTECTION, ADMIN_POWER, ADMIN_COMPAT, ADMIN_ACTIONS, ADMIN_DIAG }
+        ADMIN_PROTECTION, ADMIN_POWER, ADMIN_COMPAT, ADMIN_SEARCH, ADMIN_ACTIONS, ADMIN_DIAG }
     private static final int BACK=0xFF111B25, PANEL=0xFF1C2B37, ACCENT=0xFF5BD4D5,
         TEXT=0xFFE5EEF0, MUTED=0xFFA4B7C3, WARNING=0xFFFFC27A;
     private Page page=Page.START;
     private int firstSetting=0,firstAction=0,firstNav=0;
     private String compatGroup="warium";
+    private String settingFilter="";
     private String note="Einstellungen werden direkt gespeichert; bestehende Minecraft-Berechtigungen gelten.";
     private final Map<String,EditBox> fields=new LinkedHashMap<>();
     private String targetValue="", extraValue="", minutesValue="10", tokenValue="", indexValue="0", index2Value="0";
@@ -83,6 +84,7 @@ public final class ControlCenterScreen extends Screen {
             case ADMIN_PROTECTION -> settings("protection");
             case ADMIN_POWER -> settings("power");
             case ADMIN_COMPAT -> settingsCompat();
+            case ADMIN_SEARCH -> searchSettings();
             case ADMIN_ACTIONS -> actions(false);
             case ADMIN_DIAG -> actions(true);
         }
@@ -94,7 +96,7 @@ public final class ControlCenterScreen extends Screen {
         case LINKS -> "Waypoint-Links";case TEAM -> "Mein Team";case CORE -> "Mein Base-Core";
         case ADMIN_TEAMS -> "Admin: Teams";case ADMIN_BASE -> "Admin: Basis";
         case ADMIN_PROTECTION -> "Admin: Schutz";case ADMIN_POWER -> "Admin: Energie";
-        case ADMIN_COMPAT -> "Admin: Kompat";
+        case ADMIN_COMPAT -> "Admin: Kompat";case ADMIN_SEARCH -> "Admin: Suche";
         case ADMIN_ACTIONS -> "Admin: Aktionen";case ADMIN_DIAG -> "Admin: Diagnose";
     };}
     private void home(){
@@ -205,21 +207,38 @@ public final class ControlCenterScreen extends Screen {
         button("Metriken",x+(bodyWidth+6)/3,yy,(bodyWidth-12)/3,()->{compatGroup="sable";firstSetting=0;settingsPageReset();});
         button("Sable",x+2*(bodyWidth+6)/3,yy,(bodyWidth-12)/3,()->{compatGroup="lifecycle";firstSetting=0;settingsPageReset();});
     }
+    private void searchSettings(){
+        if(!admin()){page(Page.START);return;}
+        input("filter",settingFilter,x,y,Math.max(70,bodyWidth-92),64);
+        button("Suchen",x+bodyWidth-87,y,87,()->{
+            settingFilter=val("filter",settingFilter).trim();firstSetting=0;rebuild();
+        });
+        y+=24;
+        String term=settingFilter.toLowerCase(java.util.Locale.ROOT);
+        List<ControlCenterPolicy.Field> matching=ControlCenterPolicy.FIELDS.stream()
+            .filter(f->term.isEmpty() || (f.group()+"."+f.key()+" "+f.label()+" "+f.description())
+                .toLowerCase(java.util.Locale.ROOT).contains(term))
+            .toList();
+        renderSettings(matching,true);
+    }
     private void settingsPageReset(){rebuild();}
     private void settings(String group){
         if(!admin()){page(Page.START);return;}
         List<ControlCenterPolicy.Field> matching=ControlCenterPolicy.FIELDS.stream().filter(f->f.group().equals(group)).toList();
-        int visible=Math.min(5,Math.max(2,(height-145)/46));
+        renderSettings(matching,false);
+    }
+    private void renderSettings(List<ControlCenterPolicy.Field> matching,boolean showGroup){
+        int visible=Math.min(5,Math.max(2,(height-y-104)/46));
         firstSetting=Math.clamp(firstSetting,0,Math.max(0,matching.size()-visible));
         for(int i=firstSetting;i<Math.min(firstSetting+visible,matching.size());i++){
             var field=matching.get(i);String id=field.group()+"."+field.key();
             String current=state==null?"?":state.settings().getOrDefault(id,"?");
             final int yy=y;boolean editable=state!=null&&state.permission()>=field.permission();
             if(field.booleanValue()){
-                button(field.label()+": "+enabled(Boolean.parseBoolean(current))+(editable?"":" [OP4]"),x,yy,bodyWidth,
+                button((showGroup?field.group()+": ":"")+field.label()+": "+enabled(Boolean.parseBoolean(current))+(editable?"":" [OP4]"),x,yy,bodyWidth,
                     ()->{if(editable)settingSave(field,Boolean.toString(!Boolean.parseBoolean(current)));},field.description());
             }else{
-                button(text(field.label(),22),x,yy,Math.max(95,bodyWidth-140),()->{},field.description());
+                button(text((showGroup?field.group()+": ":"")+field.label(),22),x,yy,Math.max(95,bodyWidth-140),()->{},field.description());
                 input(id,current,x+Math.max(100,bodyWidth-135),yy,60,
                     32);
                 button(editable?"Speichern":"OP4",x+bodyWidth-70,yy,70,
@@ -231,7 +250,7 @@ public final class ControlCenterScreen extends Screen {
             button("<",x,y,42,()->{firstSetting=Math.max(0,firstSetting-visible);rebuild();});
             button(">",x+bodyWidth-42,y,42,()->{firstSetting=Math.min(matching.size()-visible,firstSetting+visible);rebuild();});y+=22;
         }
-        if(group.equals("teams") && note.startsWith("Einstellungen werden"))
+        if(!showGroup && matching.stream().anyMatch(f->f.group().equals("teams")) && note.startsWith("Einstellungen werden"))
             note="Teamgroesse/Anzahl sind nur Rogler-Beobachtungswerte. FTB-Teamlimits separat konfigurieren.";
     }
     private void settingSave(ControlCenterPolicy.Field field,String value){
@@ -337,7 +356,7 @@ public final class ControlCenterScreen extends Screen {
         g.fill(left+1,14,left+panelWidth-1,height-14,BACK);
         g.fill(left+4,18,left+panelWidth-4,39,PANEL);
         g.drawString(font,"ROGLER CORE // CONTROL CENTER",left+12,25,ACCENT,false);
-        g.drawString(font,"v0.8.2",left+panelWidth-52,25,MUTED,false);
+        g.drawString(font,"v0.8.3",left+panelWidth-52,25,MUTED,false);
         g.fill(left+141,42,left+142,height-60,0xFF304653);
         g.drawString(font,name(page),x,30,TEXT,false);
         if(state==null)g.drawString(font,"Lade Serverstatus ...",x,Math.max(52,height-91),WARNING,false);

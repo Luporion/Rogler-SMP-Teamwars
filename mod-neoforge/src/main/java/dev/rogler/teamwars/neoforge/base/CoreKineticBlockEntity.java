@@ -18,49 +18,65 @@ import java.util.UUID;
  */
 public class CoreKineticBlockEntity extends GeneratingKineticBlockEntity {
     public CoreKineticBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) { super(type,pos,state); }
-    private boolean clientDriveEnabled;
+    /** Cached on the server tick and included in block-entity packets and disk NBT.
+     * Create and C2ME may serialize a block entity while its chunk is saving:
+     * no world/ledger/level queries are permitted in write() or getGeneratedSpeed().
+     */
+    private boolean cachedDriveEnabled;
     private int serverRefreshCountdown=2;
-    private boolean enabled() {
-        // The owning team's saved-data is server-only. The client receives the
-        // purchased-drive bit with Create's BlockEntity update packet.
-        if(level!=null && level.isClientSide)return clientDriveEnabled;
-        if(!(level instanceof ServerLevel l))return false;
-        UUID team=CoreInfrastructureService.owner(l,worldPosition);
-        var data=team==null?null:CoreInfrastructureSavedData.get(l.getServer()).find(team);
-        return data!=null && data.createLevel>=1;
+
+    /** Server-thread reconciliation only; NEVER call from a serializer or an async task. */
+    private boolean refreshDriveFromLedger() {
+        if (!(level instanceof ServerLevel server)) return false;
+        UUID team=CoreInfrastructureService.recordedOwner(server,worldPosition);
+        var data=team==null?null:CoreInfrastructureSavedData.get(server.getServer()).find(team);
+        boolean nowEnabled=data!=null && data.createLevel>=1;
+        boolean changed=nowEnabled!=cachedDriveEnabled;
+        cachedDriveEnabled=nowEnabled;
+        return changed;
     }
-    @Override public float getGeneratedSpeed() {return enabled()?CoreKineticPolicy.RPM:0;}
+
+    private boolean enabled() { return cachedDriveEnabled; }
+
+    @Override public float getGeneratedSpeed() {
+        // This getter can run from Create's serialization or non-tick callbacks.
+        return cachedDriveEnabled?CoreKineticPolicy.RPM:0;
+    }
     @Override public void initialize() {
+        // If the chunk is being loaded, refresh from the authoritative ledger only
+        // on the main server thread. This does not inspect/load any world chunk.
+        if (level instanceof ServerLevel) refreshDriveFromLedger();
         super.initialize();
-        if(level!=null && !level.isClientSide &&
+        if(level instanceof ServerLevel &&
                 (!hasSource() || getGeneratedSpeed()>getTheoreticalSpeed()))
             updateGeneratedRotation();
     }
     @Override public void tick() {
         super.tick();
-        if(level==null || level.isClientSide)return;
-        // An in-place purchase can occur after Create initialized the entity
-        // with zero rotation. A bounded periodic reconciliation makes the
-        // generation start without requiring core relocation or chunk reload.
+        if(!(level instanceof ServerLevel))return;
+        // A Create purchase can happen in-place; reconcile at a bounded interval.
         if(--serverRefreshCountdown<=0){
             serverRefreshCountdown=20;
+            boolean changed=refreshDriveFromLedger();
             float desired=getGeneratedSpeed();
-            if(!hasSource() && getTheoreticalSpeed()!=desired) refreshEngine();
+            if(changed || (!hasSource() && getTheoreticalSpeed()!=desired))refreshEngine();
         }
     }
     @Override protected void write(CompoundTag tag,HolderLookup.Provider registries,boolean clientPacket){
         super.write(tag,registries,clientPacket);
-        tag.putBoolean("TeamWarsDriveEnabled",enabled());
+        // CRITICAL: never call owner(), getBlockState(), or consult SavedData here.
+        tag.putBoolean("TeamWarsDriveEnabled",cachedDriveEnabled);
     }
     @Override protected void read(CompoundTag tag,HolderLookup.Provider registries,boolean clientPacket){
-        clientDriveEnabled=tag.getBoolean("TeamWarsDriveEnabled");
+        cachedDriveEnabled=tag.getBoolean("TeamWarsDriveEnabled");
         super.read(tag,registries,clientPacket);
     }
     public void refreshEngine() {
-        if(level!=null && !level.isClientSide) {
-            updateGeneratedRotation(); // Creates/propagates the real kinetic network.
+        if(level instanceof ServerLevel) {
+            refreshDriveFromLedger();
+            updateGeneratedRotation(); // Real Create kinetic network, server thread only.
             setChanged();
-            sendData(); // Guarantees the purchase state reaches Create goggles.
+            sendData(); // Cached state reaches client and Create goggles.
         }
     }
     @Override public boolean addToGoggleTooltip(List<Component> tooltip,boolean sneaking) {

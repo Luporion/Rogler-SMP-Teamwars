@@ -23,8 +23,12 @@ import java.util.UUID;
  */
 public final class CoreInfrastructureService {
     private CoreInfrastructureService() {}
-    public static UUID owner(ServerLevel level,BlockPos pos) {
-        if(level!=level.getServer().overworld() || !level.getBlockState(pos).is(BaseCoreRegistries.CORE_BLOCK.get())) return null;
+    /** Authoritative saved owner by position, without loading or reading any chunks.
+     * Not sufficient alone for physical security/interaction checks: a stale ledger
+     * location may no longer contain a core block.
+     */
+    public static UUID recordedOwner(ServerLevel level,BlockPos pos) {
+        if(level!=level.getServer().overworld())return null;
         var cfg=RoglerTeamWarsMod.baseConfig();
         var cores=BaseCoreSavedData.get(level.getServer(),cfg.zone(level.getServer()),cfg.carrySeconds());
         for(var e:cores.ledger().all()) {
@@ -34,6 +38,16 @@ public final class CoreInfrastructureService {
                 && "minecraft:overworld".equals(at.dimension())) return e.teamId();
         }
         return null;
+    }
+
+    /** Physical owner: strictly loaded chunk lookup; never synchronously fetch a chunk.
+     * Fail closed while a chunk is loading/unloading or on an async callback.
+     */
+    public static UUID owner(ServerLevel level,BlockPos pos) {
+        if(level!=level.getServer().overworld())return null;
+        var chunk=level.getChunkSource().getChunkNow(pos.getX()>>4,pos.getZ()>>4);
+        if(chunk==null || !chunk.getBlockState(pos).is(BaseCoreRegistries.CORE_BLOCK.get()))return null;
+        return recordedOwner(level,pos);
     }
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
         event.registerBlock(Capabilities.EnergyStorage.BLOCK,

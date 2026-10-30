@@ -57,3 +57,7 @@ python3 scripts/check-waypoint-link.py
 
 java -ea -cp build/classes dev.rogler.teamwars.core.ui.ControlCenterPolicyTests
 python3 scripts/check-control-center.py
+
+python3 scripts/check-v083-safety.py
+python3 scripts/check-mod-version.py
+python3 scripts/test-core-kinetic-save.py

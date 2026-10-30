@@ -1,4 +1,4 @@
-name: NeoForge v0.8.2 Compile
+name: NeoForge v0.8.3 Compile
 on:
   push:
     branches: [main, 'feat/**', 'fix/**']
@@ -23,12 +23,16 @@ jobs:
         run: python3 scripts/test-registrate-bootstrap.py
       - name: Bootstrap Registrate from official Create JarJar
         run: python3 scripts/bootstrap-registrate.py
+      - name: Verify source metadata and serialization guards
+        run: python3 scripts/check-v083-safety.py && python3 scripts/test-core-kinetic-save.py
       - name: Compile and package NeoForge mod
         run: gradle -p mod-neoforge build --stacktrace --no-daemon
+      - name: Verify built JAR metadata
+        run: python3 scripts/check-mod-version.py --jar mod-neoforge/build/libs/*.jar
       - uses: actions/upload-artifact@v4
         if: success()
         with:
-          name: roglercore-0.8.2-unverified-runtime
+          name: roglercore-0.8.3-unverified-runtime
           path: mod-neoforge/build/libs/*.jar
           if-no-files-found: error
           retention-days: 14

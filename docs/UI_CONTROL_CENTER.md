@@ -31,4 +31,8 @@ Admin-Aktionen mit Ziel verwenden im ersten Feld **Spielernamen (z. B. Alex)** o
 
 ## Abnahme / Fehlerdiagnose
 
-Vor Produktivbetrieb: v0.8.2 CI-Lauf sowie Start/Join mit zwei gegnerischen Teams testen; bei GUI-Paketfehlern `latest.log` und CraftProbe-Sitzung exportieren. Bei unklarer Konfigaenderung `serverconfig/roglerteamwars*.properties` kontrollieren und Backup benutzen. Sicherheit und Autoritaet liegen stets auf dem Dedicated Server.
+Vor Produktivbetrieb: v0.8.3 CI-Lauf sowie Start/Join mit zwei gegnerischen Teams und den Create-C2ME-Chunk-Save-Pfad testen; bei GUI-Paketfehlern `latest.log` und CraftProbe-Sitzung exportieren. Bei unklarer Konfigaenderung `serverconfig/roglerteamwars*.properties` kontrollieren und Backup benutzen. Sicherheit und Autoritaet liegen stets auf dem Dedicated Server.
+
+## v0.8.3 Admin-Suche
+
+Admin-OP2/OP4: Im Control Center die Seite `Admin: Suche` öffnen, Schlagwort (z. B. `grace`, `fe`, `sable`) eintippen und `Suchen` anklicken. Gefilterte Rogler-Settings werden mit den bisherigen serverseitigen Freigaben und Validierungen bearbeitet. Die Suche umfasst nur die 24 bestehenden Rogler-Konfigurationsfelder, nicht Fremdmod-Dateien.

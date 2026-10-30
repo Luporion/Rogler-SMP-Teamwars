@@ -2,7 +2,7 @@
 
 Minecraft **1.21.1 · NeoForge 21.1.249** — eigener TeamWars-Mod für ein teamorientiertes Rogler-SMP.
 
-> **Entwicklungsstand v0.8.2 (Quellcode, NeoForge-Build offen):** einheitliches Ingame-**Rogler Control Center** mit Spieler-, Team-, Core- und berechtigungsgeprueften Admin-Seiten, Live-Edit der 24 Rogler-eigenen Welt-Einstellungen und bestehenden Admin-Aktionen. Keine neuen Pflichtmods oder Weltmigration. v0.8.1 CI erfolgreich (Runs `40360115893`, `40360115915`), Gameplay-Tests auf dem Server laufen. [Control-Center-Handbuch](docs/UI_CONTROL_CENTER.md) · [Status](docs/PROJECT_STATE.md) · [Release](docs/releases/v0.8.2.md).
+> **Entwicklungsstand v0.8.3 (Quellcodekandidat):** Sicherheitsfix fuer den am 30.10.2026 beobachteten C2ME/Create-Core-Watchdog-Hang: Kein potentiell blockierender Welt-/Chunkzugriff mehr bei der BlockEntity-NBT-Serialisierung und physische Core-Owner-Pruefung nur aus geladenen Chunks. Das Rogler Control Center erhaelt eine Admin-Suche ueber 24 bestehende Rogler-Einstellungen. Version im JAR-Metadata wird durch CI geprueft. **v0.8.2 NeoForge-CI erfolgreich** (Run `40389304252`), v0.8.3 Build und Minecraft-Test noch offen. Keine neuen Pflichtmods, kein SavedData-Schemawechsel. [Control-Center-Handbuch](docs/UI_CONTROL_CENTER.md) · [Status](docs/PROJECT_STATE.md) · [Release](docs/releases/v0.8.3.md).
 
 ## Hier beginnen
 

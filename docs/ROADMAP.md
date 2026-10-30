@@ -1,8 +1,14 @@
 # Rogler Core – Produktroadmap
 
-**Stand: 26. Oktober 2026.** Die Roadmap beschreibt Ziele und Prioritäten, **nicht** automatisch freigegebene Spielmechaniken. Technischer Iststand mit Belegen: [PROJECT_STATE.md](PROJECT_STATE.md). Ursprüngliche vollständige Roadmap und ältere Milestones sind [unverändert archiviert](archive/legacy/ROADMAP_before_cleanup_2026-10-22.md).
+**Stand: 31. Oktober 2026.** Die Roadmap beschreibt Ziele und Prioritäten, **nicht** automatisch freigegebene Spielmechaniken. Technischer Iststand mit Belegen: [PROJECT_STATE.md](PROJECT_STATE.md). Ursprüngliche vollständige Roadmap und ältere Milestones sind [unverändert archiviert](archive/legacy/ROADMAP_before_cleanup_2026-10-22.md).
 
-## Priorität 0 – Control Center v0.8.2 bauen und abnehmen
+## Priorität 0 – v0.8.3 Stabilitaet/C2ME/Control Center abnehmen
+
+- [x] v0.8.2 P0/NeoForge-Build erfolgreich (Runs `40389304266` / `40389304252`); Runtime weiterhin separat zu pruefen.
+- [x] v0.8.3 Quellcode: blockierungsfreie Create-NBT-Serialisierung, geladene Chunk-Pruefung, Admin-Suche, JAR-Version-CI-Guard.
+- [ ] v0.8.3 NeoForge/JAR-Metadaten-Build gruen; anschliessend Backup-DEV-Server mit C2ME, Core und FTB-Chunk-Unload/Logout testen.
+- [ ] Zwei-Team-OP-/Nicht-OP-Admin-/Wegpunkt-/Core-Regression nachweisen.
+
 
 - [x] v0.7.4: FTB-Architectury-Join-Fehler korrigiert; Beitritt im Spiel bestätigt.
 - [x] v0.7.5: HUD standardmäßig aus, Position und Entfernungen konfigurierbar; NeoForge CI grün.
@@ -15,7 +21,8 @@
 - [x] v0.8.1: NeoForge CI erfolgreich (Runs `40360115893` / `40360115915`), Test auf Liveserver begonnen.
 - [ ] v0.8.1: Client-Persistenz, Gegenseiten-Aenderungen und Multiplayer-Privacy im Spiel nachweisen.
 - [x] v0.8.2 (Quellcode): einheitliches HUD-/Waypoint-/Team-/Core-/Admin-Control-Center, 24 validierte Weltsettings, serverseitige Befehls-/Permissions-Grenzen.
-- [ ] v0.8.2: NeoForge-Build, GUI-/Admin-DEV-Abnahme, OP2/OP4 und Nicht-OP-Datenschutz testen.
+- [x] v0.8.2: NeoForge-Build erfolgreich.
+- [ ] v0.8.2/0.8.3: GUI-/Admin-DEV-Abnahme, OP2/OP4 und Nicht-OP-Datenschutz testen.
 - [ ] v0.7.6: 2-Team-/OP-Datenschutz, Xaero- und FTB-Rendering, Freigabe/Widerruf, Rejoin, Dimension, Restart, Backup und Duplikate praktisch testen.
 - [ ] Zeitkritische Integrationsregressionen zu Modupdates/Packet-Encodern/Kompatibilität systematisch absichern.
 
@@ -47,9 +54,9 @@
 - Starter-/Spawn-Hub, strukturierte Zonen auf Xaero und optional Admin-Webkarte ohne versteckte Gegnerdaten.
 - Mobile Basen mit Sable/Create: Core-Position auf Schiffen, Dock/Undock/Restart, kumulativ 10 Minuten außerhalb der Zone, kontrollierte Warnung und sichere Selbstzerstörung – **nicht produktiv ohne umfangreiche Sicherheits- und Performance-Tests**.
 
-## Reihenfolge nach v0.8.2
+## Reihenfolge nach v0.8.3
 
-1. Control Center CI-Build und Multiplayer-/OP-Berechtigungen abnehmen, inklusive Konfigspeicherung/Restart und bestaetigter Core-Aktionen.
+1. Kritischen C2ME/Create-Core-Serialisierungshotfix mit NeoForge-CI und eigenem Chunk-Save-/Unload-Test nachweisen; danach Control Center im Multiplayer (OP2/OP4/Nicht-OP), Konfigspeicherung/Restart und bestaetigte Core-Aktionen abnehmen.
 2. Bestehende Admin-Command-Ergebnisberichte schrittweise durch strukturierten UI-Status ersetzen; FTB Teams- und Sable-/Warium-eigene Konfig nur nach API-/Restart-Pruefung integrieren. Keine Pseudo-Regler.
 3. Geplantes Shared-Xaero-Terrain-Sharing spaeter als eigenstaendigen Fork von Xaero's Maps: Multiplayer+ pruefen (MIT-Quelle; FTB Team-Scopes und private Explorationsprovenienz).
 4. Teamfunk, Core-Chunkloading sowie AE2-/Sophisticated-Integrationen entwickeln und danach ebenfalls ueber das Control Center steuerbar machen; Wirtschaft und Events folgen.

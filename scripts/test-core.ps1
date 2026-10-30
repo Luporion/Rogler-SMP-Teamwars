@@ -123,3 +123,11 @@ if ($LASTEXITCODE -ne 0) { throw "Waypoint link privacy guards failed: $LASTEXIT
 if ($LASTEXITCODE -ne 0) { throw 'ControlCenterPolicyTests failed' }
 & python scripts/check-control-center.py
 if ($LASTEXITCODE -ne 0) { throw 'Control Center security regression checks failed' }
+
+& python scripts/check-v083-safety.py
+if ($LASTEXITCODE -ne 0) { throw 'C2ME-safe serialization checks failed' }
+& python scripts/check-mod-version.py
+if ($LASTEXITCODE -ne 0) { throw 'NeoForge mod version mismatch' }
+
+& python scripts/test-core-kinetic-save.py
+if ($LASTEXITCODE -ne 0) { throw 'Create kinetic serialization stub tests failed' }
