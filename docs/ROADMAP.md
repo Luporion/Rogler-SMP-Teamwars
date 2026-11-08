@@ -2,13 +2,15 @@
 
 **Stand: 8. November 2026.** Die Roadmap beschreibt Ziele und Prioritäten, **nicht** automatisch freigegebene Spielmechaniken. Technischer Iststand mit Belegen: [PROJECT_STATE.md](PROJECT_STATE.md). Ursprüngliche vollständige Roadmap und ältere Milestones sind [unverändert archiviert](archive/legacy/ROADMAP_before_cleanup_2026-10-22.md).
 
-## Priorität 0 – v0.8.4 Control Center 2.0 abnehmen
+## Priorität 0 – v0.8.5 Control Center 2.1 abnehmen
 
 - [x] v0.8.2 P0/NeoForge-Build erfolgreich (Runs `40389304266` / `40389304252`); Runtime weiterhin separat zu pruefen.
 - [x] v0.8.3 Quellcode: blockierungsfreie Create-NBT-Serialisierung, geladene Chunk-Pruefung, Admin-Suche, JAR-Version-CI-Guard.
 - [x] v0.8.3 NeoForge/JAR-Metadaten-Build gruen (Runs `41144210216` / `41144210282`), Minecraft-Stabilitaetstest noch offen.
 - [x] v0.8.4 Quellcode: Admin-Team-/Core-/Raid-Ansichten, OP-geschuetzte Live-Snapshots, serverseitige Aktions-IDs, Audit-Log, CAS-Konfigspeicherung.
-- [ ] v0.8.4: NeoForge-Kompilierung und echte GUI-Laufzeit mit OP2/OP4/Nicht-OP und zwei gegnerischen Teams nachweisen.
+- [x] v0.8.4: NeoForge-Kompilierung erfolgreich (P0 `42483148234`, NeoForge `42483147984`); echter GUI-/Mehrspieler-Laufzeittest offen.
+- [x] v0.8.5 Quellcode: Teamdetail-OP-Aktionen, Admin-Aktionssuche, HUD-Ziehen und clientseitig erhaltene ungespeicherte Konfig-Eingaben.
+- [ ] v0.8.5: NeoForge-Build und GUI-HUD-/Admin-DEV-Abnahme mit OP2/OP4/Nicht-OP.
 - [ ] Create/C2ME/FTB-Chunk-Unload und Logout mit v0.8.4 in gesicherter DEV-Welt stabil nachweisen.
 - [ ] Zwei-Team-OP-/Nicht-OP-Admin-/Wegpunkt-/Core-Regression nachweisen.
 
@@ -57,9 +59,9 @@
 - Starter-/Spawn-Hub, strukturierte Zonen auf Xaero und optional Admin-Webkarte ohne versteckte Gegnerdaten.
 - Mobile Basen mit Sable/Create: Core-Position auf Schiffen, Dock/Undock/Restart, kumulativ 10 Minuten außerhalb der Zone, kontrollierte Warnung und sichere Selbstzerstörung – **nicht produktiv ohne umfangreiche Sicherheits- und Performance-Tests**.
 
-## Reihenfolge nach v0.8.4
+## Reihenfolge nach v0.8.5
 
-1. v0.8.4 in NeoForge CI bauen, OP2/OP4/Nicht-OP-Screens, UI-Layouts, CAS/Wertepersistenz und C2ME/Create-Unload mit DEV-Server pruefen.
+1. v0.8.5 in NeoForge CI bauen; Teamdetail-Aktionen, HUD-Drag, Admin-Filter, CAS/Wertepersistenz und C2ME/Create-Unload mit DEV-Server pruefen. Die bislang nicht durchgefuehrte v0.8.4-Mehrspielerabnahme nachholen.
 2. FTB-Teams-Mutationen, echte tabellarische Diagnose-Detailantworten und bestaetigte Reparaturvorschauen erst nach API-/Rollenpruefung entwickeln. Fremdmod-Konfig nicht via Pseudo-Regler bearbeiten.
 3. Geplantes Shared-Xaero-Terrain-Sharing spaeter als eigenstaendigen Fork von Xaero's Maps: Multiplayer+ pruefen (MIT-Quelle; FTB Team-Scopes und private Explorationsprovenienz).
 4. Teamfunk, Core-Chunkloading sowie AE2-/Sophisticated-Integrationen entwickeln und danach ebenfalls ueber das Control Center steuerbar machen; Wirtschaft und Events folgen.

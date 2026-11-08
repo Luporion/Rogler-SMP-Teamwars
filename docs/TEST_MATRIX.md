@@ -1,9 +1,12 @@
 # Testmatrix – verbindliche Release-Gates
 
-**Stand v0.8.4; Spalten niemals vermischen:** `Regeltest` (Java), `Build` (NeoForge CI), `Laufzeit` (Minecraft DEV mit realen Mods) und `Produktiv` (nach Freigabe). Stand der vorhandenen Evidenz: [PROJECT_STATE.md](PROJECT_STATE.md). Historischer Stand im [Archiv](archive/legacy/TEST_MATRIX_before_cleanup_2026-10-22.md).
+**Stand v0.8.5; Spalten niemals vermischen:** `Regeltest` (Java), `Build` (NeoForge CI), `Laufzeit` (Minecraft DEV mit realen Mods) und `Produktiv` (nach Freigabe). Stand der vorhandenen Evidenz: [PROJECT_STATE.md](PROJECT_STATE.md). Historischer Stand im [Archiv](archive/legacy/TEST_MATRIX_before_cleanup_2026-10-22.md).
 
 | Bereich / Akzeptanzfall | Automatisierte Tests | Minecraft-DEV-Nachweis | Freigabegate |
 |---|---|---|---|
+| v0.8.5 HUD-Drag-and-drop | 220 Geometry-/Inverse-Java-Checks + statische Local-Only-Pruefung | Offen | Alle Anker, Drag, Persistenz, Cancel/ESC, GUI-Scale, keine privaten Serverpakete |
+| v0.8.5 Teamdetails/Action-Suche | AdminActionPolicy 91 Checks + statische v0.8.5-Guards | Offen | OP2/OP4/Nicht-OP, Team-UUID-Autoritaet, sichere Button-Bestaetigungen, Filter |
+| v0.8.5 Konfig-Entwuerfe | CAS- und UI-Strukturtests | Offen | Unbestaetigte Eingabe + passives Update, CAS-Konflikt, Neustart |
 | CI-Abhängigkeiten/Registrate SHA-256 | Bootstrap-Test vorhanden | N/A | Bootstrap und `compileJava` grün |
 | v0.8.4 Admin Teams/Cores | 91 Admin-Action-Policychecks + statische Snapshot-Gates | Offen | Nur OP2+ sieht Team-UUID/Koordinaten, valide Team-Auswahl, keine Chunk-Ladung |
 | v0.8.4 Raid-Steuerung | Allowlist und Range-Checks | Offen | OP2 denied, OP4 mit Confirmation, echte Raid-Fenster, Restart/Teamwechsel |

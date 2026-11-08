@@ -21,6 +21,7 @@
 
 ## Release-, Planungs- und Forschungsunterlagen
 
+- [v0.8.5 Release](releases/v0.8.5.md) – HUD per Maus verschieben, Admin-Teamdetails und Aktionssuche.
 - [v0.8.4 Release](releases/v0.8.4.md) – Control Center 2.0, Team-/Core-/Raid-Ansichten, Audit und Aktionsschutz.
 - [v0.8.3 Release](releases/v0.8.3.md) – Create/C2ME Chunk-Speicher-Hotfix, Admin-Suche.
 

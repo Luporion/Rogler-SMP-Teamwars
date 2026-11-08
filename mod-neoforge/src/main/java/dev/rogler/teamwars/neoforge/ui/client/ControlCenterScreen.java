@@ -5,6 +5,7 @@ import dev.rogler.teamwars.core.ui.ControlCenterPolicy;
 import dev.rogler.teamwars.core.ui.AdminActionPolicy;
 import dev.rogler.teamwars.neoforge.map.client.HudSettingsStore;
 import dev.rogler.teamwars.neoforge.map.client.HudSettingsScreen;
+import dev.rogler.teamwars.neoforge.map.client.HudPositionScreen;
 import dev.rogler.teamwars.neoforge.map.client.WaypointSettingsScreen;
 import dev.rogler.teamwars.neoforge.map.client.WaypointClientCommands;
 import dev.rogler.teamwars.neoforge.map.client.WaypointLinkClient;
@@ -28,23 +29,37 @@ import java.util.UUID;
 /** One native, dependency-free, permission-aware entry point for all existing Rogler features. */
 public final class ControlCenterScreen extends Screen {
     private enum Page { START, HUD, WAYPOINTS, LINKS, TEAM, CORE, ADMIN_TEAMS, ADMIN_BASE,
-        ADMIN_PROTECTION, ADMIN_POWER, ADMIN_COMPAT, ADMIN_SEARCH, ADMIN_DIRECTORY, ADMIN_RAIDS, ADMIN_AUDIT, ADMIN_STATUS, ADMIN_ACTIONS, ADMIN_DIAG }
+        ADMIN_PROTECTION, ADMIN_POWER, ADMIN_COMPAT, ADMIN_SEARCH, ADMIN_DIRECTORY, ADMIN_DETAIL, ADMIN_RAIDS, ADMIN_AUDIT, ADMIN_STATUS, ADMIN_ACTIONS, ADMIN_DIAG }
     private static final int BACK=0xFF111B25, PANEL=0xFF1C2B37, ACCENT=0xFF5BD4D5,
         TEXT=0xFFE5EEF0, MUTED=0xFFA4B7C3, WARNING=0xFFFFC27A;
     private Page page=Page.START;
     private int firstSetting=0,firstAction=0,firstNav=0,adminOffset=0;
     private String compatGroup="warium";
     private String settingFilter="";
+    private String actionFilter="";
+    private int detailActionOffset=0;
+    private ControlCenterAdminPayload.TeamRow selectedTeam;
     private String note="Einstellungen werden direkt gespeichert; bestehende Minecraft-Berechtigungen gelten.";
     private final Map<String,EditBox> fields=new LinkedHashMap<>();
+    private final Map<String,String> draftSettings=new LinkedHashMap<>();
+    private String pendingSettingKey, pendingSettingValue;
     private String targetValue="", extraValue="", minutesValue="10", tokenValue="", indexValue="0", index2Value="0";
     private int x,y,bodyWidth;
     private ControlCenterStatePayload state;
 
     public ControlCenterScreen(){super(Component.literal("Rogler Core – Control Center"));}
     public void refreshState(){
+        // A passive server refresh must not erase a field the admin is still typing.
+        saveInputs();
         state=ControlCenterClient.latest();
-        if(state!=null){note=state.message();rebuild();}
+        if(state!=null){
+            if(pendingSettingKey!=null && pendingSettingValue!=null
+                && pendingSettingValue.equals(state.settings().get(pendingSettingKey))){
+                draftSettings.remove(pendingSettingKey);
+                pendingSettingKey=null;pendingSettingValue=null;
+            }
+            note=state.message();rebuild();
+        }
     }
     public void refreshAdminData(){rebuild();}
     @Override protected void init(){super.init();state=ControlCenterClient.latest();rebuild();}
@@ -70,7 +85,8 @@ public final class ControlCenterScreen extends Screen {
         x=left+145;bodyWidth=Math.max(156,panelWidth-158);y=46;
         int xx=left+7, navY=48;
         var pages=java.util.Arrays.stream(Page.values())
-            .filter(p->!p.name().startsWith("ADMIN")||admin()).toList();
+            .filter(p->!p.name().startsWith("ADMIN")||admin())
+            .filter(p->p!=Page.ADMIN_DETAIL || selectedTeam!=null).toList();
         int navVisible=Math.max(4,(height-132)/21);
         firstNav=Math.clamp(firstNav,0,Math.max(0,pages.size()-navVisible));
         for(int i=firstNav;i<Math.min(firstNav+navVisible,pages.size());i++){
@@ -95,20 +111,22 @@ public final class ControlCenterScreen extends Screen {
             case ADMIN_COMPAT -> settingsCompat();
             case ADMIN_SEARCH -> searchSettings();
             case ADMIN_DIRECTORY -> adminDirectory(false);
+            case ADMIN_DETAIL -> adminDetail();
             case ADMIN_RAIDS -> adminDirectory(true);
             case ADMIN_AUDIT -> adminAudit();
             case ADMIN_STATUS -> adminStatus();
             case ADMIN_ACTIONS -> actions(false);
             case ADMIN_DIAG -> actions(true);
         }
-        button("Aktualisieren",x,Math.max(y+8,height-48),100,()->{
+        button(page==Page.ADMIN_DETAIL?"Zur Teamliste":"Aktualisieren",x,height-48,110,()->{
+            if(page==Page.ADMIN_DETAIL){page(Page.ADMIN_DIRECTORY);return;}
             ControlCenterClient.request("view","","");
             if(page==Page.ADMIN_AUDIT)ControlCenterClient.requestAdmin("audit",adminOffset);
             else if(page==Page.ADMIN_STATUS)ControlCenterClient.requestAdmin("status",0);
             else if(page==Page.ADMIN_DIRECTORY || page==Page.ADMIN_RAIDS)
                 ControlCenterClient.requestAdmin("teams",adminOffset);
         });
-        button("Schliessen",x+Math.max(110,bodyWidth-100),Math.max(y+8,height-48),100,this::onClose);
+        button("Schliessen",x+Math.max(110,bodyWidth-100),height-48,100,this::onClose);
     }
     private String name(Page item){return switch(item){
         case START -> "Uebersicht";case HUD -> "HUD & Navigation";case WAYPOINTS -> "Wegpunkte";
@@ -116,7 +134,7 @@ public final class ControlCenterScreen extends Screen {
         case ADMIN_TEAMS -> "Admin: Teams";case ADMIN_BASE -> "Admin: Basis";
         case ADMIN_PROTECTION -> "Admin: Schutz";case ADMIN_POWER -> "Admin: Energie";
         case ADMIN_COMPAT -> "Admin: Kompat";case ADMIN_SEARCH -> "Admin: Suche";
-        case ADMIN_DIRECTORY -> "Admin: Teams/Cores";case ADMIN_RAIDS -> "Admin: Raidsteuerung";
+        case ADMIN_DIRECTORY -> "Admin: Teams/Cores";case ADMIN_DETAIL -> "Admin: Teamdetails";case ADMIN_RAIDS -> "Admin: Raidsteuerung";
         case ADMIN_AUDIT -> "Admin: Audit-Log";case ADMIN_STATUS -> "Admin: Status";
         case ADMIN_ACTIONS -> "Admin: Aktionen";case ADMIN_DIAG -> "Admin: Diagnose";
     };}
@@ -141,13 +159,10 @@ public final class ControlCenterScreen extends Screen {
         button("Teammarker: "+enabled(p.teammateMarkers()),x,y,half,()->hudSet(p.withSection("team_markers",!p.teammateMarkers())));
         button("Basismarker: "+enabled(p.baseMarker()),x+half+5,y,half,()->hudSet(p.withSection("base_marker",!p.baseMarker())));y+=23;
         button("FTB-Mirror: "+enabled(p.ftbWaypointMirror()),x,y,bodyWidth,()->hudSet(p.withSection("ftb_waypoints",!p.ftbWaypointMirror())));y+=23;
-        button("Position: "+p.anchor(),x,y,bodyWidth,()->hudSet(p.withAnchor(
-            HudPreferences.Anchor.values()[(p.anchor().ordinal()+1)%4])));y+=23;
-        button("X -8",x,y,(bodyWidth-9)/4,()->hudSet(p.withOffset(p.offsetX()-8,p.offsetY())));
-        button("X +8",x+((bodyWidth+3)/4),y,(bodyWidth-9)/4,()->hudSet(p.withOffset(p.offsetX()+8,p.offsetY())));
-        button("Y -8",x+2*((bodyWidth+3)/4),y,(bodyWidth-9)/4,()->hudSet(p.withOffset(p.offsetX(),p.offsetY()-8)));
-        button("Y +8",x+3*((bodyWidth+3)/4),y,(bodyWidth-9)/4,()->hudSet(p.withOffset(p.offsetX(),p.offsetY()+8)));y+=23;
-        button("Erweiterte HUD-Ansicht",x,y,bodyWidth,()->minecraft.setScreen(new HudSettingsScreen(this)));
+        button("HUD frei positionieren (Drag & Drop)",x,y,bodyWidth,
+            ()->minecraft.setScreen(new HudPositionScreen(this)),"Aktueller Anker: "+p.anchor()+" / X "+p.offsetX()+" / Y "+p.offsetY());y+=23;
+        button("Weitere HUD-Optionen & Feinausrichtung",x,y,bodyWidth,
+            ()->minecraft.setScreen(new HudSettingsScreen(this)));
     }
     private void hudSet(HudPreferences p){HudSettingsStore.update(p);rebuild();}
     private static String enabled(boolean b){return b?"AN":"AUS";}
@@ -165,13 +180,23 @@ public final class ControlCenterScreen extends Screen {
     private void runLocal(LocalAction action){try{note=action.run();}catch(Exception failure){note="Aktion abgebrochen: "+failure.getMessage();}rebuild();}
     private EditBox input(String key,String value,int xx,int yy,int ww,int max){
         EditBox field=new EditBox(font,xx,yy,ww,19,Component.literal(key));
-        field.setMaxLength(max);field.setValue(value);addRenderableWidget(field);fields.put(key,field);return field;
+        field.setMaxLength(max);field.setValue(value);
+        if(key.indexOf('.')>=0){
+            field.setResponder(updated->{
+                String baseline=state==null?null:state.settings().get(key);
+                if(updated.equals(baseline)) draftSettings.remove(key);
+                else draftSettings.put(key,updated);
+            });
+        }
+        addRenderableWidget(field);fields.put(key,field);return field;
     }
     private String val(String key,String defaultValue){return fields.containsKey(key)?fields.get(key).getValue():defaultValue;}
     private void saveInputs(){
         targetValue=val("target",targetValue);extraValue=val("extra",extraValue);
         minutesValue=val("minutes",minutesValue);tokenValue=val("token",tokenValue);
         indexValue=val("index",indexValue);index2Value=val("index2",index2Value);
+        actionFilter=val("actionFilter",actionFilter);
+        settingFilter=val("filter",settingFilter);
     }
     private void links(){
         input("index",indexValue,x,y,(bodyWidth-6)/2,8);input("index2",index2Value,x+(bodyWidth+6)/2,y,(bodyWidth-6)/2,8);y+=23;
@@ -263,7 +288,7 @@ public final class ControlCenterScreen extends Screen {
                     ()->{if(editable)settingSave(field,Boolean.toString(!Boolean.parseBoolean(current)));},field.description());
             }else{
                 button(text((showGroup?field.group()+": ":"")+field.label(),22),x,yy,Math.max(95,bodyWidth-140),()->{},field.description());
-                input(id,current,x+Math.max(100,bodyWidth-135),yy,60,
+                input(id,draftSettings.getOrDefault(id,current),x+Math.max(100,bodyWidth-135),yy,60,
                     32);
                 button(editable?"Speichern":"OP4",x+bodyWidth-70,yy,70,
                     ()->{if(editable)settingSave(field,val(id,current));});
@@ -285,7 +310,8 @@ public final class ControlCenterScreen extends Screen {
                 String before=state.settings().get(id);
                 if(before==null)throw new IllegalStateException("Einstellung nicht geladen");
                 String after=field.normalize(value);
-                if(before.equals(after)){note="Keine Aenderung: "+field.label();return;}
+                if(before.equals(after)){draftSettings.remove(id);note="Keine Aenderung: "+field.label();rebuild();return;}
+                pendingSettingKey=id;pendingSettingValue=after;
                 ControlCenterClient.request("cas",id,before+"|"+after);
                 note="Server prueft: "+field.label();
             }catch(Exception e){note="Ungueltiger Wert: "+e.getMessage();}
@@ -312,7 +338,7 @@ public final class ControlCenterScreen extends Screen {
                 final String id=row.id().toString();
                 button("Auswaehlen",x+bodyWidth-92,y+9,92,()->{
                     saveInputs();targetValue=id;note="FTB Team: "+row.name()+" ("+id+")";
-                    if(!raids)page(Page.ADMIN_ACTIONS);else rebuild();
+                    if(!raids){selectedTeam=row;detailActionOffset=0;page(Page.ADMIN_DETAIL);}else rebuild();
                 },"Team-UUID ins Aktionsformular uebernehmen");
                 y+=47;
             }
@@ -322,6 +348,45 @@ public final class ControlCenterScreen extends Screen {
             y+=22;
             // Preserve server action status instead of overwriting it with the selected target.
         }else button("Daten laden",x,y,bodyWidth,()->requestAdminPage("teams",adminOffset));
+    }
+    /** Contextual admin details, only from a server-authored OP directory snapshot.
+     * Every action still passes through the server allowlist and permissions.
+     */
+    private void adminDetail(){
+        if(!admin()){page(Page.START);return;}
+        if(selectedTeam==null){page(Page.ADMIN_DIRECTORY);return;}
+        // The full UUID is server-provided; no player-entered command strings.
+        targetValue=selectedTeam.id().toString();
+        y=124;
+        input("minutes",minutesValue,x,y,80,5);
+        button("Aktionen fuer gewaehltes Team",x+85,y,Math.max(70,bodyWidth-85),()->page(Page.ADMIN_ACTIONS));
+        y+=25;
+        var permitted=List.of("claimaudit","graceteam","raidstartteam","raidstopteam","reclaimlostteam")
+            .stream().map(AdminActionPolicy::require)
+            .filter(a->state!=null && state.permission()>=a.permission()).toList();
+        int visible=Math.max(1,Math.min(4,(height-y-94)/22));
+        detailActionOffset=Math.clamp(detailActionOffset,0,Math.max(0,permitted.size()-visible));
+        for(int i=detailActionOffset;i<Math.min(detailActionOffset+visible,permitted.size());i++){
+            var action=permitted.get(i);
+            button(action.label()+(action.dangerous()?" [Bestaetigung]":""),x,y,bodyWidth,
+                ()->detailAction(action));
+            y+=22;
+        }
+        if(permitted.size()>visible){
+            button("< Aktionen",x,y,Math.max(75,bodyWidth/2-3),()->{detailActionOffset=Math.max(0,detailActionOffset-visible);saveInputs();rebuild();});
+            button("Aktionen >",x+bodyWidth/2+3,y,Math.max(75,bodyWidth/2-3),()->{detailActionOffset=Math.min(permitted.size()-visible,detailActionOffset+visible);saveInputs();rebuild();});
+        }
+    }
+    private void detailAction(AdminActionPolicy.Action action){
+        if(selectedTeam==null)return;
+        saveInputs();
+        String team=selectedTeam.id().toString();
+        String value=switch(action.argument()) {
+            case "TEAM_MIN" -> team+"|"+minutesValue.trim();
+            case "TEAM" -> team;
+            default -> "";
+        };
+        adminRequest(action.id(),value);
     }
     private void raidSelected(boolean start){
         saveInputs();
@@ -361,7 +426,14 @@ public final class ControlCenterScreen extends Screen {
     }
     private void actions(boolean diagnostics){
         if(!admin()){page(Page.START);return;}
-        List<AdminActionPolicy.Action> list=diagnostics?AdminActionPolicy.DIAGNOSTICS:AdminActionPolicy.ACTIONS;
+        List<AdminActionPolicy.Action> all=diagnostics?AdminActionPolicy.DIAGNOSTICS:AdminActionPolicy.ACTIONS;
+        input("actionFilter",actionFilter,x,y,Math.max(68,bodyWidth-91),64);
+        button("Suchen",x+bodyWidth-86,y,86,()->{
+            actionFilter=val("actionFilter",actionFilter).trim();firstAction=0;saveInputs();rebuild();
+        });y+=23;
+        String term=actionFilter.trim().toLowerCase(java.util.Locale.ROOT);
+        List<AdminActionPolicy.Action> list=all.stream().filter(a->term.isEmpty()
+            || (a.label()+" "+a.id()+" "+a.argument()).toLowerCase(java.util.Locale.ROOT).contains(term)).toList();
         if(!diagnostics){
             // Ziel: Spielername oder FTB-Team-UUID; zweites Feld: Minuten.
             input("target",targetValue,x,y,Math.max(70,bodyWidth-85),36);input("minutes",minutesValue,x+bodyWidth-79,y,79,5);y+=23;
@@ -404,7 +476,7 @@ public final class ControlCenterScreen extends Screen {
         g.fill(left+1,14,left+panelWidth-1,height-14,BACK);
         g.fill(left+4,18,left+panelWidth-4,39,PANEL);
         g.drawString(font,"ROGLER CORE // CONTROL CENTER",left+12,25,ACCENT,false);
-        g.drawString(font,"v0.8.4",left+panelWidth-52,25,MUTED,false);
+        g.drawString(font,"v0.8.5",left+panelWidth-52,25,MUTED,false);
         g.fill(left+141,42,left+142,height-60,0xFF304653);
         g.drawString(font,name(page),x,30,TEXT,false);
         if(state==null)g.drawString(font,"Lade Serverstatus ...",x,Math.max(52,height-91),WARNING,false);
@@ -436,6 +508,15 @@ public final class ControlCenterScreen extends Screen {
                 g.drawString(font,"Teams "+(snapshot.total()==0?0:adminOffset+1)+"-"+
                     Math.min(snapshot.total(),adminOffset+limit)+" / "+snapshot.total(),x,Math.max(54,height-79),MUTED,false);
             }
+        }
+        if(page==Page.ADMIN_DETAIL && admin() && selectedTeam!=null){
+            var row=selectedTeam;
+            g.drawString(font,text("Team: "+row.name(),Math.max(16,bodyWidth/6)),x,50,ACCENT,false);
+            g.drawString(font,text("UUID: "+row.id(),Math.max(16,bodyWidth/6)),x,63,MUTED,false);
+            g.drawString(font,text("Core: "+row.core()+" | "+row.location(),Math.max(16,bodyWidth/6)),x,77,TEXT,false);
+            g.drawString(font,"Mitglieder: "+row.members()+" | online: "+row.online(),x,91,MUTED,false);
+            g.drawString(font,"Punkte: "+row.score()+" | Grace: "+row.graceMinutes()+"m | Raid: "+(row.raid()?"aktiv":"aus"),
+                x,105,row.raid()?WARNING:ACCENT,false);
         }
         if((page==Page.ADMIN_AUDIT || page==Page.ADMIN_STATUS) && admin()){
             var audit=ControlCenterClient.adminData();

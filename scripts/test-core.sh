@@ -45,6 +45,7 @@ java -ea -cp build/classes dev.rogler.teamwars.core.TeamIntelPolicyTests
 java -ea -cp build/classes dev.rogler.teamwars.core.FtbMapVisibilityPolicyTests
 
 java -ea -cp build/classes dev.rogler.teamwars.core.HudPreferencesTests
+java -ea -cp build/classes dev.rogler.teamwars.core.HudPositionPolicyTests
 
 python3 scripts/check-waypoint-bridge.py
 java -ea -cp build/classes dev.rogler.teamwars.core.WaypointSyncPolicyTests
@@ -59,6 +60,8 @@ java -ea -cp build/classes dev.rogler.teamwars.core.ui.AdminActionPolicyTests
 java -ea -cp build/classes dev.rogler.teamwars.core.ui.ControlCenterPolicyTests
 python3 scripts/check-control-center.py
 python3 scripts/check-v084-control-center.py
+python3 scripts/check-v085-ui.py
+python3 scripts/test-v085-hud-screen.py
 
 python3 scripts/check-v083-safety.py
 python3 scripts/check-mod-version.py

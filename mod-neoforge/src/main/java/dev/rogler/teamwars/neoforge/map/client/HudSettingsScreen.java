@@ -32,6 +32,7 @@ public final class HudSettingsScreen extends Screen {
         button("X +8",x+78,y,72,()->set(p.withOffset(p.offsetX()+8,p.offsetY())));
         button("Y -8",x+158,y,72,()->set(p.withOffset(p.offsetX(),p.offsetY()-8)));
         button("Y +8",x+238,y,72,()->set(p.withOffset(p.offsetX(),p.offsetY()+8)));y+=25;
+        button("HUD per Ziehen positionieren",x,y,width,()->{if(minecraft!=null)minecraft.setScreen(new HudPositionScreen(this));});y+=24;
         button("Wegpunkte: Synchronisieren / Teilen",x,y,width,()->{if(minecraft!=null)minecraft.setScreen(new WaypointSettingsScreen(this));});y+=24;
         button("Zurueck",x,y,width,()->{if(minecraft!=null)minecraft.setScreen(parent);});
     }
