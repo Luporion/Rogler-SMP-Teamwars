@@ -21,6 +21,9 @@
 
 ## Release-, Planungs- und Forschungsunterlagen
 
+- [v0.8.4 Release](releases/v0.8.4.md) – Control Center 2.0, Team-/Core-/Raid-Ansichten, Audit und Aktionsschutz.
+- [v0.8.3 Release](releases/v0.8.3.md) – Create/C2ME Chunk-Speicher-Hotfix, Admin-Suche.
+
 - [v0.8.1 Release](releases/v0.8.1.md) – bestätigte Move/Delete-Behandlung und optionale lokale Metadaten-Automatik.
 
 - [v0.8.2 Release](releases/v0.8.2.md) · [v0.8.1 Release](releases/v0.8.1.md)

@@ -10,6 +10,9 @@ public final class TeamIntelNetwork {
         registrar.playToServer(dev.rogler.teamwars.neoforge.ui.ControlCenterRequestPayload.TYPE,
             dev.rogler.teamwars.neoforge.ui.ControlCenterRequestPayload.STREAM_CODEC,
             dev.rogler.teamwars.neoforge.ui.ControlCenterService::handle);
+        registrar.playToClient(dev.rogler.teamwars.neoforge.ui.ControlCenterAdminPayload.TYPE,
+            dev.rogler.teamwars.neoforge.ui.ControlCenterAdminPayload.STREAM_CODEC,
+            (payload,context)->context.enqueueWork(()->dev.rogler.teamwars.neoforge.ui.client.ControlCenterClient.onAdminState(payload)));
         registrar.playToClient(dev.rogler.teamwars.neoforge.ui.ControlCenterStatePayload.TYPE,
             dev.rogler.teamwars.neoforge.ui.ControlCenterStatePayload.STREAM_CODEC,
             (payload,context)->context.enqueueWork(()->dev.rogler.teamwars.neoforge.ui.client.ControlCenterClient.onState(payload)));

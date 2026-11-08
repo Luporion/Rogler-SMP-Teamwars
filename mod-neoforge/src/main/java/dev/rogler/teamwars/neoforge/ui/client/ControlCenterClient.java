@@ -2,6 +2,7 @@ package dev.rogler.teamwars.neoforge.ui.client;
 
 import dev.rogler.teamwars.neoforge.RoglerTeamWarsMod;
 import dev.rogler.teamwars.neoforge.ui.ControlCenterRequestPayload;
+import dev.rogler.teamwars.neoforge.ui.ControlCenterAdminPayload;
 import dev.rogler.teamwars.neoforge.ui.ControlCenterStatePayload;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.KeyMapping;
@@ -19,16 +20,29 @@ import org.lwjgl.glfw.GLFW;
 /** O key /roglerui, independent of the legacy /rogler server command. */
 public final class ControlCenterClient {
     private static ControlCenterStatePayload latest;
+    private static ControlCenterAdminPayload adminData;
     private ControlCenterClient(){}
     public static ControlCenterStatePayload latest(){return latest;}
+    public static ControlCenterAdminPayload adminData(){return adminData;}
+    public static void onAdminState(ControlCenterAdminPayload packet){
+        if(Minecraft.getInstance().player==null)return;
+        adminData=packet;
+        if(Minecraft.getInstance().screen instanceof ControlCenterScreen screen)screen.refreshAdminData();
+    }
+    public static void requestAdmin(String kind,int offset){
+        if(!kind.equals("teams") && !kind.equals("audit") && !kind.equals("status"))return;
+        adminData=null;
+        request("adminview",kind,Integer.toString(offset));
+    }
     public static void onState(ControlCenterStatePayload packet){
         if(Minecraft.getInstance().player==null)return;
         latest=packet;
+        if(packet.permission()<2)adminData=null;
         if(Minecraft.getInstance().screen instanceof ControlCenterScreen screen)screen.refreshState();
     }
     public static void open(){
         var mc=Minecraft.getInstance();if(mc.player==null || mc.level==null)return;
-        latest=null;
+        latest=null;adminData=null;
         mc.setScreen(new ControlCenterScreen());
         PacketDistributor.sendToServer(new ControlCenterRequestPayload("view","",""));
     }

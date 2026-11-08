@@ -21,10 +21,10 @@ assert 'new ControlCenterStatePayload(permission,team,message' in service
 assert 'permission>=2?snapshot(server):Map.of()' in service
 assert 'StandardCopyOption.ATOMIC_MOVE' in service
 assert 'RoglerTeamWarsLogger.info("UI admin change by ' in service
-assert 'readUtf(64)' in request and 'readUtf(32)' in state
+assert 'readUtf(96)' in request and 'readUtf(32)' in state
 assert 'Commands.literal("roglerui")' in client and 'RegisterKeyMappingsEvent' in client
 assert 'ConfirmScreen' in screen and 'ControlCenterPolicy.sensitive(field)' in screen
-assert 'sendCommand("teamwars admin "' in screen and 'matches("[A-Za-z0-9_]{1,16}")' in screen
+assert 'ControlCenterClient.request("adminrun",id,value)' in screen and 'AdminActionPolicy.command(id,value)' in screen
 assert 'Commands.literal("rogler")' in mod and 'BaseGuardService.reconcile(server)' in mod
 assert 'registrar("3")' in network
 assert 'private-waypoint-links' in read('map/client/WaypointLinkClient.java')

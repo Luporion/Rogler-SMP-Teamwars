@@ -13,14 +13,14 @@ public record ControlCenterRequestPayload(String operation, String key, String v
     public static final StreamCodec<RegistryFriendlyByteBuf, ControlCenterRequestPayload> STREAM_CODEC =
         StreamCodec.of(ControlCenterRequestPayload::write,ControlCenterRequestPayload::read);
     public ControlCenterRequestPayload {
-        if(operation==null || operation.length()>16 || key==null || key.length()>64 || value==null || value.length()>64)
+        if(operation==null || operation.length()>16 || key==null || key.length()>64 || value==null || value.length()>96)
             throw new IllegalArgumentException("Invalid UI request");
     }
     private static void write(RegistryFriendlyByteBuf b,ControlCenterRequestPayload p){
-        b.writeUtf(p.operation,16);b.writeUtf(p.key,64);b.writeUtf(p.value,64);
+        b.writeUtf(p.operation,16);b.writeUtf(p.key,64);b.writeUtf(p.value,96);
     }
     private static ControlCenterRequestPayload read(RegistryFriendlyByteBuf b){
-        return new ControlCenterRequestPayload(b.readUtf(16),b.readUtf(64),b.readUtf(64));
+        return new ControlCenterRequestPayload(b.readUtf(16),b.readUtf(64),b.readUtf(96));
     }
     @Override public Type<? extends CustomPacketPayload> type(){return TYPE;}
 }

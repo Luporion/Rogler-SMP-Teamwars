@@ -2,6 +2,7 @@ package dev.rogler.teamwars.neoforge.ui.client;
 
 import dev.rogler.teamwars.core.HudPreferences;
 import dev.rogler.teamwars.core.ui.ControlCenterPolicy;
+import dev.rogler.teamwars.core.ui.AdminActionPolicy;
 import dev.rogler.teamwars.neoforge.map.client.HudSettingsStore;
 import dev.rogler.teamwars.neoforge.map.client.HudSettingsScreen;
 import dev.rogler.teamwars.neoforge.map.client.WaypointSettingsScreen;
@@ -9,6 +10,7 @@ import dev.rogler.teamwars.neoforge.map.client.WaypointClientCommands;
 import dev.rogler.teamwars.neoforge.map.client.WaypointLinkClient;
 import dev.rogler.teamwars.neoforge.map.client.LocalWaypointBridge;
 import dev.rogler.teamwars.neoforge.ui.ControlCenterStatePayload;
+import dev.rogler.teamwars.neoforge.ui.ControlCenterAdminPayload;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -26,11 +28,11 @@ import java.util.UUID;
 /** One native, dependency-free, permission-aware entry point for all existing Rogler features. */
 public final class ControlCenterScreen extends Screen {
     private enum Page { START, HUD, WAYPOINTS, LINKS, TEAM, CORE, ADMIN_TEAMS, ADMIN_BASE,
-        ADMIN_PROTECTION, ADMIN_POWER, ADMIN_COMPAT, ADMIN_SEARCH, ADMIN_ACTIONS, ADMIN_DIAG }
+        ADMIN_PROTECTION, ADMIN_POWER, ADMIN_COMPAT, ADMIN_SEARCH, ADMIN_DIRECTORY, ADMIN_RAIDS, ADMIN_AUDIT, ADMIN_STATUS, ADMIN_ACTIONS, ADMIN_DIAG }
     private static final int BACK=0xFF111B25, PANEL=0xFF1C2B37, ACCENT=0xFF5BD4D5,
         TEXT=0xFFE5EEF0, MUTED=0xFFA4B7C3, WARNING=0xFFFFC27A;
     private Page page=Page.START;
-    private int firstSetting=0,firstAction=0,firstNav=0;
+    private int firstSetting=0,firstAction=0,firstNav=0,adminOffset=0;
     private String compatGroup="warium";
     private String settingFilter="";
     private String note="Einstellungen werden direkt gespeichert; bestehende Minecraft-Berechtigungen gelten.";
@@ -44,6 +46,7 @@ public final class ControlCenterScreen extends Screen {
         state=ControlCenterClient.latest();
         if(state!=null){note=state.message();rebuild();}
     }
+    public void refreshAdminData(){rebuild();}
     @Override protected void init(){super.init();state=ControlCenterClient.latest();rebuild();}
     private static String text(String value,int limit){return value.length()>limit?value.substring(0,limit-2)+"..":value;}
     private void button(String label,int xx,int yy,int ww,Runnable run){button(label,xx,yy,ww,run,null);}
@@ -53,7 +56,13 @@ public final class ControlCenterScreen extends Screen {
         if(help!=null)builder.tooltip(Tooltip.create(Component.literal(help)));
         addRenderableWidget(builder.build());
     }
-    private void page(Page to){saveInputs();page=to;firstSetting=0;firstAction=0;rebuild();}
+    private void page(Page to){
+        saveInputs();page=to;firstSetting=0;firstAction=0;adminOffset=0;
+        if(to==Page.ADMIN_DIRECTORY || to==Page.ADMIN_RAIDS)ControlCenterClient.requestAdmin("teams",0);
+        else if(to==Page.ADMIN_AUDIT)ControlCenterClient.requestAdmin("audit",0);
+        else if(to==Page.ADMIN_STATUS)ControlCenterClient.requestAdmin("status",0);
+        rebuild();
+    }
     private boolean admin(){return state!=null&&state.permission()>=2;}
     private void rebuild(){
         clearWidgets();fields.clear();
@@ -85,10 +94,20 @@ public final class ControlCenterScreen extends Screen {
             case ADMIN_POWER -> settings("power");
             case ADMIN_COMPAT -> settingsCompat();
             case ADMIN_SEARCH -> searchSettings();
+            case ADMIN_DIRECTORY -> adminDirectory(false);
+            case ADMIN_RAIDS -> adminDirectory(true);
+            case ADMIN_AUDIT -> adminAudit();
+            case ADMIN_STATUS -> adminStatus();
             case ADMIN_ACTIONS -> actions(false);
             case ADMIN_DIAG -> actions(true);
         }
-        button("Aktualisieren",x,Math.max(y+8,height-48),100,()->ControlCenterClient.request("view","",""));
+        button("Aktualisieren",x,Math.max(y+8,height-48),100,()->{
+            ControlCenterClient.request("view","","");
+            if(page==Page.ADMIN_AUDIT)ControlCenterClient.requestAdmin("audit",adminOffset);
+            else if(page==Page.ADMIN_STATUS)ControlCenterClient.requestAdmin("status",0);
+            else if(page==Page.ADMIN_DIRECTORY || page==Page.ADMIN_RAIDS)
+                ControlCenterClient.requestAdmin("teams",adminOffset);
+        });
         button("Schliessen",x+Math.max(110,bodyWidth-100),Math.max(y+8,height-48),100,this::onClose);
     }
     private String name(Page item){return switch(item){
@@ -97,6 +116,8 @@ public final class ControlCenterScreen extends Screen {
         case ADMIN_TEAMS -> "Admin: Teams";case ADMIN_BASE -> "Admin: Basis";
         case ADMIN_PROTECTION -> "Admin: Schutz";case ADMIN_POWER -> "Admin: Energie";
         case ADMIN_COMPAT -> "Admin: Kompat";case ADMIN_SEARCH -> "Admin: Suche";
+        case ADMIN_DIRECTORY -> "Admin: Teams/Cores";case ADMIN_RAIDS -> "Admin: Raidsteuerung";
+        case ADMIN_AUDIT -> "Admin: Audit-Log";case ADMIN_STATUS -> "Admin: Status";
         case ADMIN_ACTIONS -> "Admin: Aktionen";case ADMIN_DIAG -> "Admin: Diagnose";
     };}
     private void home(){
@@ -104,7 +125,10 @@ public final class ControlCenterScreen extends Screen {
         button("Wegpunkte & Teamfreigaben",x,y,bodyWidth,()->page(Page.WAYPOINTS));y+=23;
         button("Teamstatus",x,y,bodyWidth,()->page(Page.TEAM));y+=23;
         button("Core-Dashboard oeffnen",x,y,bodyWidth,()->sendCommand("teamwars base menu"));y+=23;
-        if(admin()){button("Server-Administration",x,y,bodyWidth,()->page(Page.ADMIN_TEAMS));y+=23;}
+        if(admin()){
+            button("Team- und Core-Verwaltung",x,y,bodyWidth,()->page(Page.ADMIN_DIRECTORY));y+=23;
+            button("Server-Administration",x,y,bodyWidth,()->page(Page.ADMIN_SEARCH));y+=23;
+        }
         button("Serverstatus (Befehl)",x,y,bodyWidth,()->sendCommand("teamwars status"));y+=23;
     }
     private void hud(){
@@ -255,53 +279,89 @@ public final class ControlCenterScreen extends Screen {
     }
     private void settingSave(ControlCenterPolicy.Field field,String value){
         Runnable apply=()->{
-            try{ControlCenterClient.request("set",field.group()+"."+field.key(),field.normalize(value));note="Server prueft: "+field.label();}
-            catch(Exception e){note="Ungueltiger Wert: "+e.getMessage();}
+            try{
+                if(state==null)throw new IllegalStateException("Serverstatus fehlt");
+                String id=field.group()+"."+field.key();
+                String before=state.settings().get(id);
+                if(before==null)throw new IllegalStateException("Einstellung nicht geladen");
+                String after=field.normalize(value);
+                if(before.equals(after)){note="Keine Aenderung: "+field.label();return;}
+                ControlCenterClient.request("cas",id,before+"|"+after);
+                note="Server prueft: "+field.label();
+            }catch(Exception e){note="Ungueltiger Wert: "+e.getMessage();}
         };
         if(ControlCenterPolicy.sensitive(field))confirm("Kritische Einstellung aendern: "+field.label()+"?",apply);
         else apply.run();
     }
-    private record AdminAction(String label,String command,String argument,boolean dangerous,int permission) {}
-    private static final List<AdminAction> ACTIONS=List.of(
-        new AdminAction("Alle Teams","teams","",false,2),
-        new AdminAction("Alle registrierten Cores","corelist","",false,2),
-        new AdminAction("Verwaiste Cores","orphanlist","",false,2),
-        new AdminAction("Team-Claim-Audit","claimaudit","TEAM",false,2),
-        new AdminAction("Grace fuer Team","graceteam","TEAM_MIN",true,2),
-        new AdminAction("Raid gegen Team starten","raidstartteam","TEAM_MIN",true,2),
-        new AdminAction("Team-Raid beenden","raidstopteam","TEAM",true,2),
-        new AdminAction("Raid gegen Spieler starten","raidstart","PLAYER_MIN",true,2),
-        new AdminAction("Spieler-Raid beenden","raidstop","PLAYER",true,2),
-        new AdminAction("Spieler-Grace setzen","grace","PLAYER_MIN",true,2),
-        new AdminAction("FTB-Claims synchronisieren","syncclaims","PLAYER",true,2),
-        new AdminAction("Core ausgeben","issuecore","PLAYER",true,2),
-        new AdminAction("Core wiederherstellen","recovercore","PLAYER",true,2),
-        new AdminAction("Vermissten Core retten","salvagemissing","PLAYER",true,2),
-        new AdminAction("Core-Token widerrufen","reclaimlost","PLAYER",true,2),
-        new AdminAction("Team-Core widerrufen","reclaimlostteam","TEAM",true,2),
-        new AdminAction("Verwaisten Core zuordnen","adoptcore","TEAM_PLAYER",true,2)
-    );
-    private static final List<AdminAction> DIAG=List.of(
-        new AdminAction("Status und FTB-Adapter","diagnostics","",false,2),
-        new AdminAction("Team-Scoreboard resync","resync","",false,2),
-        new AdminAction("Core-Integritaetsaudit","coreaudit","",false,2),
-        new AdminAction("Core-Integritaetsreparatur","corerepair apply","",true,4),
-        new AdminAction("Explosionstatistik","explosionstats","",false,4),
-        new AdminAction("Core-Konfig neu laden","reload","",true,2),
-        new AdminAction("Compat-Report","compat report","",false,4),
-        new AdminAction("Sable-Bericht","compat sable","",false,4),
-        new AdminAction("Modliste","compat mods","",false,4),
-        new AdminAction("Sable-Explosionen","compat explosions","",false,4),
-        new AdminAction("Sable-Lifecycle","compat lifecycle","",false,4),
-        new AdminAction("Sable-Konfig neu laden","compat reload","",true,4),
-        new AdminAction("Warium-Status","warium status","",false,4),
-        new AdminAction("Warium-Eintraege","warium list","",false,4),
-        new AdminAction("Warium-Kandidaten","warium candidates","",false,4),
-        new AdminAction("Warium-Konfig neu laden","warium reload","",true,4)
-    );
+    private void requestAdminPage(String kind,int nextOffset){
+        adminOffset=Math.max(0,Math.min(1000,nextOffset));
+        ControlCenterClient.requestAdmin(kind,adminOffset);rebuild();
+    }
+    private void adminDirectory(boolean raids){
+        if(!admin()){page(Page.START);return;}
+        var data=ControlCenterClient.adminData();
+        int pageSize=Math.max(1,Math.min(5,(height-y-155-(raids?27:0))/47));
+        if(raids){
+            input("minutes",minutesValue,x,y,64,5);
+            button("Start fuer Ziel",x+70,y,Math.max(70,(bodyWidth-78)/2),()->raidSelected(true));
+            button("Stopp fuer Ziel",x+76+Math.max(70,(bodyWidth-78)/2),y,Math.max(70,(bodyWidth-78)/2),()->raidSelected(false));
+            y+=27;
+        }
+        if(data!=null && data.kind().equals("teams") && data.offset()==adminOffset){
+            for(var row:data.teams().stream().limit(pageSize).toList()){
+                final String id=row.id().toString();
+                button("Auswaehlen",x+bodyWidth-92,y+9,92,()->{
+                    saveInputs();targetValue=id;note="FTB Team: "+row.name()+" ("+id+")";
+                    if(!raids)page(Page.ADMIN_ACTIONS);else rebuild();
+                },"Team-UUID ins Aktionsformular uebernehmen");
+                y+=47;
+            }
+            int total=data.total();
+            button("< Zurueck",x,y,100,()->requestAdminPage("teams",adminOffset-pageSize));
+            button("Weiter >",x+bodyWidth-100,y,100,()->requestAdminPage("teams",Math.min(1000,adminOffset+pageSize)));
+            y+=22;
+            // Preserve server action status instead of overwriting it with the selected target.
+        }else button("Daten laden",x,y,bodyWidth,()->requestAdminPage("teams",adminOffset));
+    }
+    private void raidSelected(boolean start){
+        saveInputs();
+        String id=start?"raidstartteam":"raidstopteam";
+        String args=targetValue.trim()+(start?"|"+minutesValue.trim():"");
+        adminRequest(id,args);
+    }
+    private void adminAudit(){
+        if(!admin()){page(Page.START);return;}
+        var data=ControlCenterClient.adminData();
+        int shown=Math.max(1,Math.min(5,(height-y-136)/24));
+        if(data!=null && data.kind().equals("audit") && data.offset()==adminOffset){
+            y+=shown*24;
+            button("< Zurueck",x,y,100,()->requestAdminPage("audit",adminOffset-shown));
+            button("Weiter >",x+bodyWidth-100,y,100,()->requestAdminPage("audit",Math.min(1000,adminOffset+shown)));
+        }else button("Audit laden",x,y,bodyWidth,()->requestAdminPage("audit",adminOffset));
+    }
+    private void adminStatus(){
+        if(!admin()){page(Page.START);return;}
+        var info=ControlCenterClient.adminData();
+        if(info==null || !info.kind().equals("status")){
+            button("Status laden",x,y,bodyWidth,()->requestAdminPage("status",0));
+        }else{
+            y+=Math.min(5,info.audit().size())*24;
+            button("Weitere Diagnoseaktionen",x,y,bodyWidth,()->page(Page.ADMIN_DIAG));
+        }
+    }
+    private void adminRequest(String id,String value){
+        try{
+            var action=AdminActionPolicy.require(id);
+            AdminActionPolicy.command(id,value); // client prevalidation; server repeats and is authoritative
+            Runnable run=()->{ControlCenterClient.request("adminrun",id,value);
+                note="Admin-Aktion an Server uebermittelt: "+action.label();};
+            if(action.dangerous())confirm("Admin-Aktion ausfuehren: "+action.label()+"?",run);
+            else run.run();
+        }catch(Exception problem){note="Nicht ausgefuehrt: "+problem.getMessage();rebuild();}
+    }
     private void actions(boolean diagnostics){
         if(!admin()){page(Page.START);return;}
-        List<AdminAction> list=diagnostics?DIAG:ACTIONS;
+        List<AdminActionPolicy.Action> list=diagnostics?AdminActionPolicy.DIAGNOSTICS:AdminActionPolicy.ACTIONS;
         if(!diagnostics){
             // Ziel: Spielername oder FTB-Team-UUID; zweites Feld: Minuten.
             input("target",targetValue,x,y,Math.max(70,bodyWidth-85),36);input("minutes",minutesValue,x+bodyWidth-79,y,79,5);y+=23;
@@ -310,37 +370,25 @@ public final class ControlCenterScreen extends Screen {
         int shown=Math.max(3,(height-y-86)/22);
         firstAction=Math.clamp(firstAction,0,Math.max(0,list.size()-shown));
         for(int i=firstAction;i<Math.min(firstAction+shown,list.size());i++){
-            AdminAction a=list.get(i);boolean allowed=state!=null&&state.permission()>=a.permission();
+            AdminActionPolicy.Action a=list.get(i);boolean allowed=state!=null&&state.permission()>=a.permission();
             button(allowed?a.label():a.label()+" [OP4]",x,y,bodyWidth,()->{if(allowed)adminAction(a);});y+=22;
         }
         button("<",x,y,45,()->{saveInputs();firstAction=Math.max(0,firstAction-shown);rebuild();});
         button(">",x+bodyWidth-45,y,45,()->{saveInputs();firstAction=Math.min(Math.max(0,list.size()-shown),firstAction+shown);rebuild();});
     }
-    private void adminAction(AdminAction action){
+    private void adminAction(AdminActionPolicy.Action action){
         saveInputs();
-        String args;
-        try{
-            String target=targetValue.trim(),extra=extraValue.trim(),minutes=minutesValue.trim();
-            boolean player=action.argument().startsWith("PLAYER"),team=action.argument().startsWith("TEAM");
-            if(player && !target.matches("[A-Za-z0-9_]{1,16}"))throw new IllegalArgumentException("Spielername fehlt oder ungueltig");
-            if(team && !target.matches("[a-fA-F0-9-]{36}"))throw new IllegalArgumentException("FTB Team-UUID erforderlich");
-            if(action.argument().equals("TEAM_PLAYER") && !extra.matches("[A-Za-z0-9_]{1,16}"))
-                throw new IllegalArgumentException("Neuer Spielername fehlt");
-            if(action.argument().endsWith("MIN")){
-                int m=Integer.parseInt(minutes);if(m<0||m>10080)throw new IllegalArgumentException("Minuten 0..10080");
-                if(action.command().contains("raidstart") && (m<1 || m>30))throw new IllegalArgumentException("Raid nur 1..30 Minuten");
-                minutes=Integer.toString(m);
-            }
-            args=switch(action.argument()){
-                case "" -> "";case "PLAYER","TEAM" -> " "+target;
-                case "PLAYER_MIN","TEAM_MIN" -> " "+target+" "+minutes;
-                case "TEAM_PLAYER" -> " "+target+" "+extra;
-                default -> throw new IllegalArgumentException("Unbekannte Admin-Aktion");
-            };
-        }catch(Exception invalid){note="Nicht ausgefuehrt: "+invalid.getMessage();return;}
-        Runnable task=()->sendCommand("teamwars admin "+action.command()+args);
-        if(action.dangerous())confirm("Admin-Aktion wirklich ausfuehren: "+action.label()+"?",task);
-        else task.run();
+        if(action.id().equals("teams") || action.id().equals("corelist") || action.id().equals("orphanlist")){
+            page(Page.ADMIN_DIRECTORY);return;
+        }
+        String input=switch(action.argument()){
+            case "" -> "";
+            case "PLAYER", "TEAM" -> targetValue.trim();
+            case "PLAYER_MIN", "TEAM_MIN" -> targetValue.trim()+"|"+minutesValue.trim();
+            case "TEAM_PLAYER" -> targetValue.trim()+"|"+extraValue.trim();
+            default -> "";
+        };
+        adminRequest(action.id(),input);
     }
     private void confirm(String title,Runnable accepted){
         minecraft.setScreen(new ConfirmScreen(choice->{minecraft.setScreen(this);if(choice)accepted.run();},
@@ -356,7 +404,7 @@ public final class ControlCenterScreen extends Screen {
         g.fill(left+1,14,left+panelWidth-1,height-14,BACK);
         g.fill(left+4,18,left+panelWidth-4,39,PANEL);
         g.drawString(font,"ROGLER CORE // CONTROL CENTER",left+12,25,ACCENT,false);
-        g.drawString(font,"v0.8.3",left+panelWidth-52,25,MUTED,false);
+        g.drawString(font,"v0.8.4",left+panelWidth-52,25,MUTED,false);
         g.fill(left+141,42,left+142,height-60,0xFF304653);
         g.drawString(font,name(page),x,30,TEXT,false);
         if(state==null)g.drawString(font,"Lade Serverstatus ...",x,Math.max(52,height-91),WARNING,false);
@@ -364,6 +412,42 @@ public final class ControlCenterScreen extends Screen {
             g.drawString(font,"Spieler online: "+state.online()+"  |  "+(admin()?"OP "+state.permission():"Spieler"),x,Math.max(52,height-91),MUTED,false);
             if(page==Page.START || page==Page.TEAM)
                 g.drawString(font,text("FTB: "+state.team(),Math.max(18,bodyWidth/6)),x,Math.max(63,height-79),ACCENT,false);
+        }
+        if((page==Page.ADMIN_DIRECTORY || page==Page.ADMIN_RAIDS) && admin()){
+            if(page==Page.ADMIN_RAIDS)
+                g.drawString(font,text("Ziel: "+(targetValue.isEmpty()?"bitte Team auswaehlen":targetValue),Math.max(16,bodyWidth/6)),
+                    x,Math.max(45,height-65),ACCENT,false);
+            var snapshot=ControlCenterClient.adminData();
+            int start=page==Page.ADMIN_RAIDS?73:46;
+            int limit=Math.max(1,Math.min(5,(height-46-155-(page==Page.ADMIN_RAIDS?27:0))/47));
+            if(snapshot!=null && snapshot.kind().equals("teams") && snapshot.offset()==adminOffset){
+                int i=0;
+                for(var row:snapshot.teams()){
+                    if(i>=limit)break;
+                    int yy=start+i*47;
+                    String first=row.name()+" | "+row.online()+" online / "+row.members()+" Mitglieder";
+                    String second=row.core()+" | "+row.location();
+                    String third="Punkte "+row.score()+" | Grace "+row.graceMinutes()+"m | Raid "+(row.raid()?"AKTIV":"aus");
+                    g.drawString(font,text(first,Math.max(14,(bodyWidth-98)/6)),x,yy,MUTED,false);
+                    g.drawString(font,text(second,Math.max(14,(bodyWidth-98)/6)),x,yy+12,TEXT,false);
+                    g.drawString(font,text(third,Math.max(14,(bodyWidth-98)/6)),x,yy+24,row.raid()?WARNING:ACCENT,false);
+                    i++;
+                }
+                g.drawString(font,"Teams "+(snapshot.total()==0?0:adminOffset+1)+"-"+
+                    Math.min(snapshot.total(),adminOffset+limit)+" / "+snapshot.total(),x,Math.max(54,height-79),MUTED,false);
+            }
+        }
+        if((page==Page.ADMIN_AUDIT || page==Page.ADMIN_STATUS) && admin()){
+            var audit=ControlCenterClient.adminData();
+            if(audit!=null && audit.kind().equals(page==Page.ADMIN_STATUS?"status":"audit")
+                && (page==Page.ADMIN_STATUS || audit.offset()==adminOffset)){
+                int i=0,limit=Math.max(1,Math.min(5,(height-46-136)/24));
+                for(String line:audit.audit()){
+                    if(i>=limit)break;
+                    g.drawString(font,text(line,Math.max(14,bodyWidth/6)),x,46+i*24,TEXT,false);
+                    i++;
+                }
+            }
         }
         g.drawString(font,text(note,Math.max(25,(panelWidth-18)/6)),left+10,height-25,WARNING,false);
         super.render(g,mouseX,mouseY,partial);

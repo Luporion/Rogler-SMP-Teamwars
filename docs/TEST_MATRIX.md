@@ -1,10 +1,14 @@
 # Testmatrix – verbindliche Release-Gates
 
-**Stand v0.8.2; Spalten niemals vermischen:** `Regeltest` (Java), `Build` (NeoForge CI), `Laufzeit` (Minecraft DEV mit realen Mods) und `Produktiv` (nach Freigabe). Stand der vorhandenen Evidenz: [PROJECT_STATE.md](PROJECT_STATE.md). Historischer Stand im [Archiv](archive/legacy/TEST_MATRIX_before_cleanup_2026-10-22.md).
+**Stand v0.8.4; Spalten niemals vermischen:** `Regeltest` (Java), `Build` (NeoForge CI), `Laufzeit` (Minecraft DEV mit realen Mods) und `Produktiv` (nach Freigabe). Stand der vorhandenen Evidenz: [PROJECT_STATE.md](PROJECT_STATE.md). Historischer Stand im [Archiv](archive/legacy/TEST_MATRIX_before_cleanup_2026-10-22.md).
 
 | Bereich / Akzeptanzfall | Automatisierte Tests | Minecraft-DEV-Nachweis | Freigabegate |
 |---|---|---|---|
 | CI-Abhängigkeiten/Registrate SHA-256 | Bootstrap-Test vorhanden | N/A | Bootstrap und `compileJava` grün |
+| v0.8.4 Admin Teams/Cores | 91 Admin-Action-Policychecks + statische Snapshot-Gates | Offen | Nur OP2+ sieht Team-UUID/Koordinaten, valide Team-Auswahl, keine Chunk-Ladung |
+| v0.8.4 Raid-Steuerung | Allowlist und Range-Checks | Offen | OP2 denied, OP4 mit Confirmation, echte Raid-Fenster, Restart/Teamwechsel |
+| v0.8.4 UI-Status/Audit | Netzwerk-Gates, begrenzte Pages und Loggröße | Offen | Server-Snapshot, Log-Rotation, OP2/Nicht-OP, Diagnoserueckgaben |
+| v0.8.4 CAS-Einstellungen | Serverseitige compare-and-set/Combine-Pruefung | Offen | Zwei konkurrierende OPs, Stale-Wert muss verweigert werden, Restart-Persistenz |
 | v0.8.2 UI/Keybind `/roglerui` | ControlCenterPolicyTests 107 Checks + statische Privacy-Guards | Noch offen | OP2/OP4/Nicht-OP, O-Taste, unterschiedliche GUI-Skalierungen |
 | Live-Settings/Persistenz | Server-Schema + Property-Validation, NeoForge-Integration offen | Noch offen | 24 Werte, ungültige Kreuzkombinationen, Restart, Audit, FTB Limit-Hinweis |
 | Admin-UI Aktionen | Whitelist-Pfade + Servercommand-Permissions | Noch offen | Grace, Raid, Core-Recovery, Repair-Confirm/OP4, Chat-Feedback |

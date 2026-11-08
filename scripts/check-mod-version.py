@@ -17,6 +17,9 @@ def check(content, label):
     assert match, f'{label}: missing top-level static mod version'
     assert match.group(1)==version, f'{label}: internal {match.group(1)} != Gradle {version}'
 check(plain, 'source metadata')
+java = (ROOT/'mod-neoforge/src/main/java/dev/rogler/teamwars/neoforge/RoglerTeamWarsMod.java').read_text(encoding='utf-8')
+jmatch = re.search(r'public static final String VERSION\s*=\s*"([^"]+)"', java)
+assert jmatch and jmatch.group(1)==version, 'RoglerTeamWarsMod.VERSION differs from Gradle version'
 arg = ArgumentParser()
 arg.add_argument('--jar',nargs='*',default=[])
 args=arg.parse_args()

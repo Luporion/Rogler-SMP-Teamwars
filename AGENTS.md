@@ -1,6 +1,6 @@
 # AGENTS.md – verbindliche Entwicklungsregeln für Rogler Core
 
-**Aktueller Entwicklungsstand: v0.8.3 SOURCE CANDIDATE auf v0.8.2.** Crash-Schutz für die Create-Basis-BlockEntity: Serialisierung und Speed-Getter dürfen keine Welt- oder Chunkzugriffe auslösen. [Release v0.8.3](docs/releases/v0.8.3.md).
+**Aktueller Entwicklungsstand: v0.8.4 SOURCE CANDIDATE auf v0.8.3.** Control-Center-Adminansichten und Action-Allowlist mit serverseitiger OP-Autoritaet; v0.8.3 C2ME/Create-Save-Fix darf nicht regressieren. [Release v0.8.4](docs/releases/v0.8.4.md).
 
 **Einstieg:** [Dokumentationsindex](docs/INDEX.md) → [Projektstatus](docs/PROJECT_STATE.md) → [Roadmap](docs/ROADMAP.md) → relevante [Release-Notiz](docs/releases/v0.7.7.md) und [Tests](docs/TEST_MATRIX.md). Das historische, ausführliche Regelwerk steht vollständig im [Archiv](docs/archive/legacy/AGENTS_before_cleanup_2026-10-22.md). Historische Versionsaussagen sind keine aktuellen Freigaben.
 

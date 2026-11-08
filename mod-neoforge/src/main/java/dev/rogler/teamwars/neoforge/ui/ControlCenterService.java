@@ -1,6 +1,7 @@
 package dev.rogler.teamwars.neoforge.ui;
 
 import dev.rogler.teamwars.core.ui.ControlCenterPolicy;
+import dev.rogler.teamwars.core.ui.AdminActionPolicy;
 import dev.rogler.teamwars.neoforge.RoglerTeamWarsMod;
 import dev.rogler.teamwars.neoforge.base.BaseCoreConfig;
 import dev.rogler.teamwars.neoforge.base.CorePowerConfig;
@@ -28,8 +29,10 @@ import java.util.UUID;
 public final class ControlCenterService {
     private ControlCenterService() {}
     private static final Map<UUID,Long> LAST_WRITE = new HashMap<>();
-    public static void clear(){LAST_WRITE.clear();}
-    public static void logout(UUID id){LAST_WRITE.remove(id);}
+    private static final Map<UUID,Long> LAST_ACTION = new HashMap<>();
+    private static final Map<UUID,Long> LAST_READ = new HashMap<>();
+    public static void clear(){LAST_WRITE.clear();LAST_ACTION.clear();LAST_READ.clear();}
+    public static void logout(UUID id){LAST_WRITE.remove(id);LAST_ACTION.remove(id);LAST_READ.remove(id);}
     private static int permission(ServerPlayer player){return player.createCommandSourceStack().hasPermission(4)?4:player.createCommandSourceStack().hasPermission(2)?2:0;}
     private static Path file(MinecraftServer server,String group){
         String name=switch(group){
@@ -112,13 +115,56 @@ public final class ControlCenterService {
             catch(java.nio.file.AtomicMoveNotSupportedException ignored){Files.move(temp,destination,StandardCopyOption.REPLACE_EXISTING);}
         }finally{Files.deleteIfExists(temp);}
     }
+    private static boolean reloadGroup(MinecraftServer server,String group) throws IOException {
+        return switch(group){
+            case "warium" -> dev.rogler.teamwars.neoforge.compat.WariumRecoveryGuard.reload(server);
+            case "sable" -> dev.rogler.teamwars.neoforge.compat.SableCompatibilityService.reload(server);
+            case "lifecycle" -> dev.rogler.teamwars.neoforge.compat.SableRemovedSublevelGuard.reload(server);
+            default -> {RoglerTeamWarsMod.reloadUiSettings(server);yield true;}
+        };
+    }
     public static void handle(ControlCenterRequestPayload request,IPayloadContext context){
         context.enqueueWork(()->{
             if(!(context.player() instanceof ServerPlayer viewer))return;
             MinecraftServer server=viewer.getServer();if(server==null)return;
             String message="Serverstatus aktualisiert";
             int permission=permission(viewer);
-            if(request.operation().equals("set")){
+            if(request.operation().equals("adminview")){
+                if(permission<2) message="Adminansicht nicht erlaubt";
+                else try {
+                    long now=server.getTickCount(),last=LAST_READ.getOrDefault(viewer.getUUID(),Long.MIN_VALUE);
+                    if(last!=Long.MIN_VALUE && now-last<4)throw new IllegalArgumentException("Bitte kurz warten");
+                    int offset=Integer.parseInt(request.value());
+                    if(offset<0||offset>1000)throw new IllegalArgumentException("Ungueltiger Offset");
+                    if(!request.key().equals("teams")&&!request.key().equals("audit")&&!request.key().equals("status"))
+                        throw new IllegalArgumentException("Unbekannte Ansicht");
+                    ControlCenterAdminService.send(viewer,request.key(),offset);
+                    LAST_READ.put(viewer.getUUID(),now);
+                    message="Adminansicht aktualisiert";
+                }catch(RuntimeException invalid){message="Ansicht abgelehnt: "+invalid.getMessage();}
+            }else if(request.operation().equals("adminrun")){
+                if(permission<2)message="Adminrechte erforderlich";
+                else {
+                    long now=server.getTickCount(),prior=LAST_ACTION.getOrDefault(viewer.getUUID(),Long.MIN_VALUE);
+                    if(prior!=Long.MIN_VALUE && now-prior<10)message="Bitte Adminaktionen nicht zu schnell ausfuehren";
+                    else try{
+                        LAST_ACTION.put(viewer.getUUID(),now); // throttle even denied/bad admin packets
+                        var action=AdminActionPolicy.require(request.key());
+                        if(!AdminActionPolicy.allowed(permission,action))throw new IllegalArgumentException("OP-Level "+action.permission()+" erforderlich");
+                        String command=AdminActionPolicy.command(request.key(),request.value());
+                        // Execute on the server thread, with the real player's permission context.
+                        // The client sends only an allowlisted action ID + tightly parsed arguments.
+                        // Suppress legacy chat spam: the response payload supplies operation status.
+                        int result=server.getCommands().getDispatcher().execute(command,
+                            viewer.createCommandSourceStack().withSuppressedOutput());
+                        message=action.label()+": "+(result>0?"erfolgreich ("+result+")":"kein Erfolg; Details im Serverlog");
+                        ControlCenterAdminService.audit(server,viewer.getUUID(),action.id(),result>0?"OK":"NO_SUCCESS");
+                    }catch(Exception invalid){
+                        message="Aktion abgelehnt: "+invalid.getMessage();
+                        ControlCenterAdminService.audit(server,viewer.getUUID(),"denied_"+request.key(),"DENIED");
+                    }
+                }
+            }else if(request.operation().equals("set")||request.operation().equals("cas")){
                 if(permission<2){message="Abgelehnt: Adminrechte erforderlich";}
                 else {
                     long now=server.getTickCount(), prior=LAST_WRITE.getOrDefault(viewer.getUUID(),Long.MIN_VALUE);
@@ -126,23 +172,44 @@ public final class ControlCenterService {
                     else try {
                         ControlCenterPolicy.Field field=ControlCenterPolicy.require(request.key());
                         if(!ControlCenterPolicy.allowed(permission,field))throw new IllegalArgumentException("OP-Level 4 erforderlich");
-                        String normalized=field.normalize(request.value());
                         var original=snapshot(server);
+                        String requested=request.value();
+                        if(request.operation().equals("cas")){
+                            int bar=requested.indexOf('|');
+                            if(bar<0 || !requested.substring(0,bar).equals(original.get(request.key())))
+                                throw new IllegalArgumentException("Einstellung wurde inzwischen geaendert; bitte aktualisieren");
+                            requested=requested.substring(bar+1);
+                        }
+                        String normalized=field.normalize(requested);
                         var changed=new LinkedHashMap<>(original);changed.put(request.key(),normalized);
                         validateCombined(changed);
                         if(!normalized.equals(original.get(request.key()))) {
                             // Never persist arbitrary client-supplied filenames or unlisted keys.
                             atomicSave(file(server,field.group()),field.key(),normalized);
-                            boolean active = switch(field.group()) {
-                                case "warium" -> dev.rogler.teamwars.neoforge.compat.WariumRecoveryGuard.reload(server);
-                                case "sable" -> dev.rogler.teamwars.neoforge.compat.SableCompatibilityService.reload(server);
-                                case "lifecycle" -> dev.rogler.teamwars.neoforge.compat.SableRemovedSublevelGuard.reload(server);
-                                default -> {RoglerTeamWarsMod.reloadUiSettings(server);yield true;}
-                            };
-                            if(!active)throw new IllegalStateException("Datei gespeichert, aber Spezialmodul hat Einstellung abgelehnt; bitte Logs pruefen");
+                            try {
+                                if(!reloadGroup(server,field.group()))
+                                    throw new IllegalStateException("Spezialmodul lehnt neue Konfiguration ab");
+                            }catch(Exception reloadError){
+                                // Compensating file rollback: never leave an invalid newly written
+                                // setting in the world config after a failed module reload.
+                                boolean reverted=false;
+                                try{
+                                    atomicSave(file(server,field.group()),field.key(),original.get(request.key()));
+                                    reverted=reloadGroup(server,field.group());
+                                }catch(Exception rollbackError){
+                                    RoglerTeamWarsLogger.warn("UI config rollback FAILED for "+request.key()+
+                                        " - restore serverconfig backup: "+rollbackError.getClass().getSimpleName());
+                                }
+                                ControlCenterAdminService.audit(server,viewer.getUUID(),"setting:"+request.key(),
+                                    reverted?"ROLLED_BACK":"ROLLBACK_FAILED");
+                                throw new IllegalStateException(reverted?
+                                    "Reload fehlgeschlagen; vorheriger Wert wiederhergestellt":
+                                    "Reload und Rollback fehlgeschlagen - serverconfig-Backup pruefen");
+                            }
                             LAST_WRITE.put(viewer.getUUID(),now);
                             RoglerTeamWarsLogger.info("UI admin change by "+viewer.getUUID()+" "+request.key()+
                                 " "+original.get(request.key())+" -> "+normalized);
+                            ControlCenterAdminService.audit(server,viewer.getUUID(),"setting:"+request.key(),"UPDATED");
                         }
                         message=field.label()+" gespeichert: "+normalized;
                     }catch(Exception invalid){message="Aenderung abgelehnt/ungeklaert: "+invalid.getMessage();}

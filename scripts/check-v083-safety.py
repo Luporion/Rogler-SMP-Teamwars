@@ -54,5 +54,5 @@ assert 'ADMIN_SEARCH' in screen and 'private void searchSettings()' in screen
 assert 'if(!admin()){page(Page.START);return;}' in body(screen, 'private void searchSettings()')
 assert 'ControlCenterPolicy.FIELDS.stream()' in body(screen, 'private void searchSettings()')
 assert 'renderSettings(matching,true)' in screen
-assert 'ControlCenterClient.request("set",field.group()+"."+field.key(),field.normalize(value))' in screen
+assert 'ControlCenterClient.request("cas",id,before+"|"+after)' in screen
 print('v0.8.3 C2ME async serialization, loaded-only owner and admin search guards: OK')
