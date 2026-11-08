@@ -9,6 +9,7 @@ javac --release 21 -encoding UTF-8 -d build/classes @build/sources.txt
 java -ea -cp build/classes dev.rogler.teamwars.core.CoreTests
 java -ea -cp build/classes dev.rogler.teamwars.core.teams.TeamAssignmentTests
 java -ea -cp build/classes dev.rogler.teamwars.core.base.BaseCoreLedgerTests
+java -ea -cp build/classes dev.rogler.teamwars.core.base.CoreTransportClockPolicyTests
 java -ea -cp build/classes dev.rogler.teamwars.core.base.BaseProtectionPolicyTests
 java -ea -cp build/classes dev.rogler.teamwars.core.base.RaidPolicyTests
 java -ea -cp build/classes dev.rogler.teamwars.core.base.CoreUpgradePolicyTests
@@ -61,6 +62,7 @@ java -ea -cp build/classes dev.rogler.teamwars.core.ui.ControlCenterPolicyTests
 python3 scripts/check-control-center.py
 python3 scripts/check-v084-control-center.py
 python3 scripts/check-v085-ui.py
+python3 scripts/check-v086-core-timer.py
 python3 scripts/test-v085-hud-screen.py
 
 python3 scripts/check-v083-safety.py

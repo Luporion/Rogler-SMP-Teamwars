@@ -59,6 +59,11 @@
 - Starter-/Spawn-Hub, strukturierte Zonen auf Xaero und optional Admin-Webkarte ohne versteckte Gegnerdaten.
 - Mobile Basen mit Sable/Create: Core-Position auf Schiffen, Dock/Undock/Restart, kumulativ 10 Minuten außerhalb der Zone, kontrollierte Warnung und sichere Selbstzerstörung – **nicht produktiv ohne umfangreiche Sicherheits- und Performance-Tests**.
 
+## Hotfix-Prioritaet nach v0.8.5
+
+1. **v0.8.6:** Serverautoritativen Transport-Timer bei Ender Chest, Container, Logout und Serverneustart in Minecraft pruefen. Altes Schema 1 migrieren, Carry-/Repack-Budget und abgelaufene Token durch 2 Clients und Team-Reload absichern.
+2. Fortsetzung der bestehenden Roadmap erst nach CI und DEV-Abnahme des Hotfixes.
+
 ## Reihenfolge nach v0.8.5
 
 1. v0.8.5 in NeoForge CI bauen; Teamdetail-Aktionen, HUD-Drag, Admin-Filter, CAS/Wertepersistenz und C2ME/Create-Unload mit DEV-Server pruefen. Die bislang nicht durchgefuehrte v0.8.4-Mehrspielerabnahme nachholen.

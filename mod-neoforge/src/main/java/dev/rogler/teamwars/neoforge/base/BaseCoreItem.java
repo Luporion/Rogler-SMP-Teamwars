@@ -77,6 +77,15 @@ public final class BaseCoreItem extends BlockItem {
         BaseCoreConfig config = RoglerTeamWarsMod.baseConfig();
         BlockPos target = context.getClickedPos();
         var data = BaseCoreSavedData.get(level.getServer(), config.zone(level.getServer()), config.carrySeconds());
+        // Reconcile wall-clock time first. A stored Ender Chest core cannot be placed
+        // after the deadline even if the server just restarted or no player held it.
+        var reconciled = BaseCoreService.accountIssuedTeam(level.getServer(), team);
+        if (reconciled != null && reconciled.mode() == BaseCoreLedger.Mode.ESCROW
+            && reconciled.token().equals(token)) {
+            player.displayClientMessage(Component.literal(
+                "[TeamWars] TRANSPORT TIMER EXPIRED. Use /teamwars base recover."), true);
+            return InteractionResult.FAIL;
+        }
         var reason = data.ledger().placementFailure(team, token, position(level, target));
         if (reason != BaseCoreLedger.PlacementFailure.NONE) {
             String explanation = switch (reason) {
@@ -106,6 +115,7 @@ public final class BaseCoreItem extends BlockItem {
         if (result.consumesAction() && level.getBlockState(target).is(BaseCoreRegistries.CORE_BLOCK.get())) {
             data.ledger().placed(team, token, position(level, target));
             data.changed();
+            data.clearTransportClock(team);
             // Create may initialize the block entity during super.place, before
             // TeamWars acknowledges the PLACED ledger state. Re-evaluate the
             // actual purchased drive once the ledger is authoritative.

@@ -27,6 +27,7 @@
 | Individuelles Teilen/Widerrufen, Teamaustritt | Team-Scope-/Ownership-Tests | Offen | Anzeige A, keine B, nach Widerruf/Wechsel sofort weg |
 | Geteilte Gelände-Erkundung und Cache-Widerruf | Union/Revocation-P0-Tests | **Funktion nicht fertig** | Nicht als umgesetzt markieren |
 | Core platzieren/transportieren/retten | Java-/Ledger-Tests | Teilweise | 1h, Außenrand, Lava, Escrow, Reload, Inventar voll |
+| v0.8.6 Container-/Enderchest-Timer | TransportClock-Tests, alle-ISSUED-/Save-/Place-Guards | Noch offen | Online/Offline, Enderchest, andere Container, Server-Neustart, Ablauf -> ESCROW, alter Token unplatzierbar, Recovery, 2 Spieler |
 | Claims/CoreGuard, Sprengstoffe/Sable | Regel-/Guard-Tests | Lücken | Raid-/Explosionstest inkl. anderen Mods und Weltbackup |
 | Raids und Kriegspunkte | Policytests | Nicht umfassend | Einmalige Punkte, Grace, Offline-Schutz, Ersatzcore |
 | Create FE/Kinetik/AE2/Sophisticated | Teilfunktionstests | Integration ungeprüft | Kein unerlaubter Energie- oder Inventarzugriff |

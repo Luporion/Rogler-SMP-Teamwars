@@ -120,14 +120,24 @@ public final class BaseCoreLedger {
         Entry current = entries.get(teamId);
         entries.put(teamId, new Entry(teamId, token, Mode.PLACED, current.carriedSeconds(), location, location));
     }
-    /** Called at most once per second when the genuine token is carried by an online teammate. */
+    /** Legacy bounded carrier update (also used by existing core policy tests). */
     public Entry advanceCarrier(UUID teamId, UUID token, int seconds, Location verifiedSafeLocation) {
+        if (seconds < 0 || seconds > 60) throw new IllegalArgumentException("Invalid tick interval");
+        return advanceUnplaced(teamId, token, seconds, verifiedSafeLocation);
+    }
+
+    /**
+     * Progresses an ISSUED core regardless of its physical location or whether anybody is online.
+     * A single call may account for a long server shutdown. The saved token is always checked.
+     */
+    public Entry advanceUnplaced(UUID teamId, UUID token, long seconds, Location verifiedSafeLocation) {
         Entry current = entries.get(teamId);
         if (current == null || current.mode() != Mode.ISSUED || !current.token().equals(token))
             throw new IllegalStateException("No matching issued core");
-        if (seconds < 0 || seconds > 60) throw new IllegalArgumentException("Invalid tick interval");
+        if (seconds < 0) throw new IllegalArgumentException("Negative elapsed time");
         Location safe = legal(verifiedSafeLocation) ? verifiedSafeLocation : current.lastSafe();
-        long elapsed = Math.min((long) carryLimit, current.carriedSeconds() + seconds);
+        long remaining = Math.max(0L, (long) carryLimit - current.carriedSeconds());
+        long elapsed = current.carriedSeconds() + Math.min(remaining, seconds);
         Mode nextMode = elapsed >= carryLimit ? Mode.ESCROW : Mode.ISSUED;
         Entry next = new Entry(teamId, token, nextMode, elapsed, null, safe);
         entries.put(teamId, next);

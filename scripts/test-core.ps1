@@ -36,6 +36,9 @@ if ($LASTEXITCODE -ne 0) { throw "team policy tests failed: $LASTEXITCODE" }
 & java -ea -cp build/classes dev.rogler.teamwars.core.base.BaseCoreLedgerTests
 if ($LASTEXITCODE -ne 0) { throw "base core ledger tests failed: $LASTEXITCODE" }
 
+& java -ea -cp build/classes dev.rogler.teamwars.core.base.CoreTransportClockPolicyTests
+if ($LASTEXITCODE -ne 0) { throw "transport clock policy tests failed: $LASTEXITCODE" }
+
 & java -ea -cp build/classes dev.rogler.teamwars.core.base.BaseProtectionPolicyTests
 if ($LASTEXITCODE -ne 0) { throw "protection policy tests failed: $LASTEXITCODE" }
 
@@ -131,3 +134,6 @@ if ($LASTEXITCODE -ne 0) { throw 'NeoForge mod version mismatch' }
 
 & python scripts/test-core-kinetic-save.py
 if ($LASTEXITCODE -ne 0) { throw 'Create kinetic serialization stub tests failed' }
+
+& python scripts/check-v086-core-timer.py
+if ($LASTEXITCODE -ne 0) { throw "transport timer integration test failed: $LASTEXITCODE" }

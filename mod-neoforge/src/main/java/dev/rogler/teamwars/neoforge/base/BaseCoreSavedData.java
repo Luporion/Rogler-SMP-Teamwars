@@ -2,6 +2,7 @@ package dev.rogler.teamwars.neoforge.base;
 
 import dev.rogler.teamwars.core.BaseZone;
 import dev.rogler.teamwars.core.base.BaseCoreLedger;
+import dev.rogler.teamwars.core.base.CoreTransportClockPolicy;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -10,11 +11,14 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.saveddata.SavedData;
 
 import java.util.UUID;
+import java.util.Map;
+import java.util.HashMap;
 
 /** Single authoritative save in overworld/data/roglerteamwars_basecores.dat. */
 public final class BaseCoreSavedData extends SavedData {
     private static final String SAVE_NAME = "roglerteamwars_basecores";
     private final BaseCoreLedger ledger;
+    private final Map<UUID, CoreTransportClockPolicy.Checkpoint> transportCheckpoints = new HashMap<>();
 
     private BaseCoreSavedData(BaseZone zone, int carrySeconds) {
         this.ledger = new BaseCoreLedger(zone, carrySeconds);
@@ -29,6 +33,22 @@ public final class BaseCoreSavedData extends SavedData {
     public BaseCoreLedger ledger() { return ledger; }
     public void changed() { setDirty(); }
 
+    /** Persistent wall-clock accounting for every unplaced core, including Ender Chests. */
+    public long transportSecondsDue(UUID team, UUID token, long nowMillis) {
+        var previous = transportCheckpoints.get(team);
+        var step = CoreTransportClockPolicy.advance(previous, token, nowMillis);
+        if (!step.checkpoint().equals(previous)) {
+            transportCheckpoints.put(team, step.checkpoint());
+            setDirty();
+        }
+        return step.elapsedSeconds();
+    }
+
+    /** Removal is only a storage cleanup; switching tokens also invalidates old checkpoints. */
+    public void clearTransportClock(UUID team) {
+        if (transportCheckpoints.remove(team) != null) setDirty();
+    }
+
     private static BaseCoreSavedData load(CompoundTag tag, BaseZone zone, int carrySeconds) {
         BaseCoreSavedData store = new BaseCoreSavedData(zone, carrySeconds);
         for (Tag raw : tag.getList("Cores", Tag.TAG_COMPOUND)) {
@@ -40,6 +60,18 @@ public final class BaseCoreSavedData extends SavedData {
             var lastSafe = readPosition(row, "LastSafe");
             // Crash recovery never invents a second core: reject duplicate or malformed state.
             store.ledger.restore(new BaseCoreLedger.Entry(team, token, mode, elapsed, location, lastSafe));
+        }
+        // Schema 1 saves have no checkpoint: they start accounting from first observation
+        // without retroactively guessing how long an item was kept in a container.
+        for (Tag raw : tag.getList("TransportClocks", Tag.TAG_COMPOUND)) {
+            CompoundTag row = (CompoundTag) raw;
+            if (!row.hasUUID("Team") || !row.hasUUID("Token")) continue;
+            UUID team = row.getUUID("Team");
+            var core = store.ledger.get(team);
+            if (core == null || core.mode() != BaseCoreLedger.Mode.ISSUED
+                || !core.token().equals(row.getUUID("Token"))) continue;
+            store.transportCheckpoints.put(team, new CoreTransportClockPolicy.Checkpoint(
+                row.getUUID("Token"), row.getLong("AccountedAtMillis")));
         }
         return store;
     }
@@ -57,8 +89,20 @@ public final class BaseCoreSavedData extends SavedData {
             writePosition(row, "LastSafe", entry.lastSafe());
             list.add(row);
         }
-        tag.putInt("Schema", 1);
+        ListTag timers = new ListTag();
+        for (var clock : transportCheckpoints.entrySet()) {
+            var core = ledger.get(clock.getKey());
+            if (core == null || core.mode() != BaseCoreLedger.Mode.ISSUED
+                || !core.token().equals(clock.getValue().token())) continue;
+            CompoundTag row = new CompoundTag();
+            row.putUUID("Team", clock.getKey());
+            row.putUUID("Token", clock.getValue().token());
+            row.putLong("AccountedAtMillis", clock.getValue().accountedAtMillis());
+            timers.add(row);
+        }
+        tag.putInt("Schema", 2);
         tag.put("Cores", list);
+        tag.put("TransportClocks", timers);
         return tag;
     }
 

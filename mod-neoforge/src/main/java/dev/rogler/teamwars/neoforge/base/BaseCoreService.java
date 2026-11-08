@@ -20,8 +20,9 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.tags.FluidTags;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public final class BaseCoreService {
@@ -46,6 +47,7 @@ public final class BaseCoreService {
             if (recovery) data.ledger().reissueFromEscrow(team, token);
             else data.ledger().issue(team, token);
             data.changed();
+            data.transportSecondsDue(team, token, System.currentTimeMillis());
             if (!player.getInventory().add(BaseCoreItem.authorized(team, token))) {
                 // Impossible with a free slot checked above; state persists and admin can handle if it occurs.
                 say(source,"ERROR: issued in ledger, but inventory refused item. Inspect before recovery."); return 0;
@@ -129,6 +131,7 @@ public final class BaseCoreService {
             return false;
         }
         data.changed();
+        data.transportSecondsDue(assignment.partyId(), newToken, System.currentTimeMillis());
         level.invalidateCapabilities(pos);
         dev.rogler.teamwars.neoforge.protection.BaseGuardService.packed(level, player, assignment.partyId());
         if (!player.getInventory().add(BaseCoreItem.authorized(assignment.partyId(), newToken))) {
@@ -375,47 +378,95 @@ public final class BaseCoreService {
         return false;
     }
 
+    private record Carrier(ServerPlayer player, ItemStack stack) {}
+
+    /**
+     * Called by a manual core placement before checking its token. No inventory checks:
+     * an elapsed timer remains authoritative even if the item was stored or the player
+     * was offline, and cannot be bypassed by placing immediately after a restart.
+     */
+    public static BaseCoreLedger.Entry accountIssuedTeam(MinecraftServer server, UUID team) {
+        var saved = store(server);
+        var current = saved.ledger().get(team);
+        if (current == null || current.mode() != BaseCoreLedger.Mode.ISSUED) return current;
+        long seconds = saved.transportSecondsDue(team, current.token(), System.currentTimeMillis());
+        if (seconds <= 0) return current;
+        var updated = saved.ledger().advanceUnplaced(team, current.token(), seconds, null);
+        saved.changed();
+        if (updated.mode() == BaseCoreLedger.Mode.ESCROW) {
+            saved.clearTransportClock(team);
+            RoglerTeamWarsLogger.info("CORE_TRANSPORT_EXPIRED team=" + team + " (placement check)");
+            notifyTeam(server, team, "Core transport time expired. The old token is invalid; use /teamwars base recover.");
+        }
+        return updated;
+    }
+
+    /** No item scan is required to keep time: the ledger is authoritative. */
     public static void oneSecond(MinecraftServer server) {
         BaseCoreConfig config = RoglerTeamWarsMod.baseConfig();
         var saved = store(server);
-        Set<UUID> seen = new HashSet<>();
+        Map<UUID, Carrier> inventoryCarriers = new HashMap<>();
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            var party = RoglerTeamWarsMod.assignmentFor(player);
-            if (!party.validParty()) continue;
-            UUID id = party.partyId();
-            var entry = saved.ledger().get(id);
-            if (entry == null || entry.mode() != BaseCoreLedger.Mode.ISSUED || seen.contains(id)) continue;
-            for (int slot=0; slot<player.getInventory().getContainerSize(); slot++) {
+            var assignment = RoglerTeamWarsMod.assignmentFor(player);
+            if (!assignment.validParty()) continue;
+            UUID team = assignment.partyId();
+            var entry = saved.ledger().get(team);
+            if (entry == null || entry.mode() != BaseCoreLedger.Mode.ISSUED) continue;
+            for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
                 ItemStack stack = player.getInventory().getItem(slot);
                 if (!stack.is(BaseCoreRegistries.CORE_ITEM.get())) continue;
-                if (!id.equals(BaseCoreItem.team(stack)) || !entry.token().equals(BaseCoreItem.token(stack))) continue;
-                seen.add(id);
-                var pos = BaseCoreItem.position((net.minecraft.server.level.ServerLevel) player.level(), player.blockPosition());
-                var safe = saved.ledger().legal(pos) ? pos : null;
-                if (entry.carriedSeconds() + 1 >= config.carrySeconds()
-                    && attemptSafeAutomaticPlacement(player, stack)) {
-                    player.sendSystemMessage(Component.literal("[TeamWars] The 1h transport deadline automatically placed your core."));
-                    break;
-                }
-                var update = saved.ledger().advanceCarrier(id, entry.token(), 1, safe);
-                saved.changed();
-                if (update.mode() == BaseCoreLedger.Mode.ESCROW) {
-                    // Fail closed: no forced setBlock bypassing FTB claims/placement events.
-                    stack.shrink(1);
-                    player.sendSystemMessage(Component.literal("[TeamWars] Core transport expired. Safe placement was impossible; core stored in admin escrow. Use /teamwars admin recovercore <player>."));
-                    RoglerTeamWarsMod.warn("Core entered escrow at transport timeout for team " + id
-                        + "; last in-zone location=" + update.lastSafe());
-                } else {
-                    double dist = config.zone(server).distance(pos.x(), pos.z());
-                    long secondsLeft = config.carrySeconds() - update.carriedSeconds();
-                    String border = !config.zone(server).placementAllowed(pos.x(), pos.z())
-                        ? "OUTSIDE ALLOWED BASE ZONE"
-                        : config.outerRadius() - dist <= 150 ? "ALLOWED BASE BORDER NEAR" : "INSIDE ALLOWED BASE ZONE";
-                    player.displayClientMessage(Component.literal("[TeamWars] " + border + " | spawn "
-                        + Math.round(dist) + " blocks | core " + (secondsLeft / 60) + "m "
-                        + (secondsLeft % 60) + "s"), true);
-                }
+                if (!team.equals(BaseCoreItem.team(stack)) || !entry.token().equals(BaseCoreItem.token(stack))) continue;
+                inventoryCarriers.putIfAbsent(team, new Carrier(player, stack));
                 break;
+            }
+        }
+
+        // Tick ALL unplaced cores, not just cores found in a player's inventory.
+        // An Ender Chest, another container, logout and a full server shutdown cannot pause the deadline.
+        for (var snapshot : new ArrayList<>(saved.ledger().all())) {
+            if (snapshot.mode() != BaseCoreLedger.Mode.ISSUED) {
+                saved.clearTransportClock(snapshot.teamId());
+                continue;
+            }
+            UUID team = snapshot.teamId();
+            Carrier carrier = inventoryCarriers.get(team);
+            long seconds = saved.transportSecondsDue(team, snapshot.token(), System.currentTimeMillis());
+            long remaining = Math.max(0L, (long) config.carrySeconds() - snapshot.carriedSeconds());
+            // Automatic placement only BEFORE expiration. It uses vanilla BlockItem placement,
+            // and never pulls an item from an Ender Chest or force-loads a saved base location.
+            if (carrier != null && seconds < remaining && remaining - seconds <= 1
+                && attemptSafeAutomaticPlacement(carrier.player(), carrier.stack())) {
+                saved.clearTransportClock(team);
+                carrier.player().sendSystemMessage(Component.literal(
+                    "[TeamWars] Transport deadline reached: your held core was placed safely."));
+                continue;
+            }
+            if (seconds <= 0) continue;
+            BaseCoreLedger.Location safe = null;
+            if (carrier != null && carrier.player().level() instanceof ServerLevel level) {
+                var pos = BaseCoreItem.position(level, carrier.player().blockPosition());
+                if (saved.ledger().legal(pos)) safe = pos;
+            }
+            var update = saved.ledger().advanceUnplaced(team, snapshot.token(), seconds, safe);
+            saved.changed();
+            if (update.mode() == BaseCoreLedger.Mode.ESCROW) {
+                saved.clearTransportClock(team);
+                if (carrier != null) carrier.stack().shrink(1);
+                RoglerTeamWarsLogger.info("CORE_TRANSPORT_EXPIRED team=" + team
+                    + " token=" + snapshot.token() + " lastSafe=" + update.lastSafe());
+                notifyTeam(server, team, "Core transport expired (also counts in Ender Chests and while offline)."
+                    + " Old token revoked; use /teamwars base recover.");
+            } else if (carrier != null) {
+                var player = carrier.player();
+                var pos = BaseCoreItem.position((ServerLevel) player.level(), player.blockPosition());
+                double dist = config.zone(server).distance(pos.x(), pos.z());
+                long secondsLeft = Math.max(0L, (long) config.carrySeconds() - update.carriedSeconds());
+                String border = !config.zone(server).placementAllowed(pos.x(), pos.z())
+                    ? "OUTSIDE ALLOWED BASE ZONE"
+                    : config.outerRadius() - dist <= 150 ? "ALLOWED BASE BORDER NEAR" : "INSIDE ALLOWED BASE ZONE";
+                player.displayClientMessage(Component.literal("[TeamWars] " + border + " | spawn "
+                    + Math.round(dist) + " blocks | core " + (secondsLeft / 60) + "m "
+                    + (secondsLeft % 60) + "s"), true);
             }
         }
     }
