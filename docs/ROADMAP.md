@@ -1,8 +1,16 @@
 # Rogler Core – Produktroadmap
 
-**Stand: 8. November 2026.** Die Roadmap beschreibt Ziele und Prioritäten, **nicht** automatisch freigegebene Spielmechaniken. Technischer Iststand mit Belegen: [PROJECT_STATE.md](PROJECT_STATE.md). Ursprüngliche vollständige Roadmap und ältere Milestones sind [unverändert archiviert](archive/legacy/ROADMAP_before_cleanup_2026-10-22.md).
+**Stand: 9. November 2026.** Die Roadmap beschreibt Ziele und Prioritäten, **nicht** automatisch freigegebene Spielmechaniken. Technischer Iststand mit Belegen: [PROJECT_STATE.md](PROJECT_STATE.md). Ursprüngliche vollständige Roadmap und ältere Milestones sind [unverändert archiviert](archive/legacy/ROADMAP_before_cleanup_2026-10-22.md).
 
-## Priorität 0 – v0.8.5 Control Center 2.1 abnehmen
+## Priorität 0 – v0.8.7 Performance/Claims & bestehende Features abnehmen
+
+- [x] v0.8.6: P0 Core + NeoForge CI erfolgreich (9.11., Runs `42692408480` / `42692408891`).
+- [x] v0.8.7 Quellcode: inkrementeller persönlicher Team-Erkundungsabgleich, bounded Journal mit Full-Rebuild-Fallback, reduzierter FTB-Claim-Selbstheilungsaudit, zustandsänderungsabhängiges Logging, Retry fehlgeschlagener Exploration-Snapshots, expliziter berechtigter Claim-Karten-Resync.
+- [ ] v0.8.7: P0/NeoForge/JAR-Version in CI bestätigen; DEV mit 2 Teams und OP/Nicht-OP, Privat-Claim-Darstellung, kein Gegnerdatenleck.
+- [ ] Baseline-MSPT/Allocation vor/nach Update unter ähnlicher Last messen; keine behauptete FPS/TPS-Verbesserung ohne Messung.
+- [ ] v0.8.6-Enderchest-Transportuhr, C2ME/Create-Chunksave und UI auf gesicherter DEV-Welt testen.
+
+
 
 - [x] v0.8.2 P0/NeoForge-Build erfolgreich (Runs `40389304266` / `40389304252`); Runtime weiterhin separat zu pruefen.
 - [x] v0.8.3 Quellcode: blockierungsfreie Create-NBT-Serialisierung, geladene Chunk-Pruefung, Admin-Suche, JAR-Version-CI-Guard.
@@ -64,7 +72,7 @@
 1. **v0.8.6:** Serverautoritativen Transport-Timer bei Ender Chest, Container, Logout und Serverneustart in Minecraft pruefen. Altes Schema 1 migrieren, Carry-/Repack-Budget und abgelaufene Token durch 2 Clients und Team-Reload absichern.
 2. Fortsetzung der bestehenden Roadmap erst nach CI und DEV-Abnahme des Hotfixes.
 
-## Reihenfolge nach v0.8.5
+## Reihenfolge nach v0.8.7
 
 1. v0.8.5 in NeoForge CI bauen; Teamdetail-Aktionen, HUD-Drag, Admin-Filter, CAS/Wertepersistenz und C2ME/Create-Unload mit DEV-Server pruefen. Die bislang nicht durchgefuehrte v0.8.4-Mehrspielerabnahme nachholen.
 2. FTB-Teams-Mutationen, echte tabellarische Diagnose-Detailantworten und bestaetigte Reparaturvorschauen erst nach API-/Rollenpruefung entwickeln. Fremdmod-Konfig nicht via Pseudo-Regler bearbeiten.

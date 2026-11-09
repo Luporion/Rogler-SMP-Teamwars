@@ -1,3 +1,13 @@
+## Zusätzliche v0.8.7-Abnahmefälle
+
+| Funktion | Lokale Prüfung | Gameplay-/CI-Gate |
+|---|---|---|
+| Team-Exploration inkrementell | `TeamMapIncrementalTests` mit 30k Chunks + History Overflow | No privacy regression after team change; JFR compare before/after |
+| FTB-Claim-Audit | Statischer 6000-Tick-Guard, unverändertes Logging | Zwei Teams mit je neun Claims, Selbstheilung nach Unclaim (bis 5 Min), keine unerwünschten Claims |
+| Eigene FTB-Claim-Karte | Gleiche Team-UUID, FTB 2101.1.22 API-Signatur für `syncChunksToPlayer` geprüft | NeoForge/FTB 2101.1.23, server-/clientseitige Private-Claims, OP-Kommandofeedback |
+| Snapshot-Fehlerfall | Dirty-Counter wird nach Future-Fehler wieder übernommen | DEV-I/O-Fehler, Backup, keine Datensatzeinbußen |
+| v0.8.6 Core-Transporttimer | Alte Regressionen weiterhin grün | Enderchest/Logout/Shutdown auf Weltbackup testen |
+
 # Testmatrix – verbindliche Release-Gates
 
 **Stand v0.8.5; Spalten niemals vermischen:** `Regeltest` (Java), `Build` (NeoForge CI), `Laufzeit` (Minecraft DEV mit realen Mods) und `Produktiv` (nach Freigabe). Stand der vorhandenen Evidenz: [PROJECT_STATE.md](PROJECT_STATE.md). Historischer Stand im [Archiv](archive/legacy/TEST_MATRIX_before_cleanup_2026-10-22.md).

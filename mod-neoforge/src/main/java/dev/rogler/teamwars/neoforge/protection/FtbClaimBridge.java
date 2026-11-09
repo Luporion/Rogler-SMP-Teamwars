@@ -1,10 +1,12 @@
 package dev.rogler.teamwars.neoforge.protection;
 
 import dev.rogler.teamwars.neoforge.teams.RoglerTeamWarsLogger;
+import dev.rogler.teamwars.neoforge.RoglerTeamWarsMod;
 import dev.rogler.teamwars.core.base.CoreClaimCleanupPolicy;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
 import net.neoforged.fml.ModList;
 import java.lang.reflect.*;
@@ -17,6 +19,13 @@ public final class FtbClaimBridge {
     private static final Set<String> loggedFailures=new HashSet<>();
     /** Avoid one error stack/log per server second while FTB is unavailable. */
     private static final Map<UUID,String> loggedReleaseFailures=new HashMap<>();
+    /** Log an unchanged successful baseline only once per team; avoid 9-claim spam. */
+    private static final Set<UUID> loggedExistingClaims = new HashSet<>();
+    public static void resetRuntimeState() {
+        loggedFailures.clear();
+        loggedReleaseFailures.clear();
+        loggedExistingClaims.clear();
+    }
     public record Result(int created,int existing,int failed,String detail) {}
     private record Api(Object manager,Object teamData,Object team,Class<?> chunkDimPos,Method getChunk,Method claim,Method unclaim) {}
     private static Object call(Object obj,String name,Object... args) throws ReflectiveOperationException {
@@ -125,7 +134,8 @@ public final class FtbClaimBridge {
                 if(success(outcome)) { record.createdClaims.add(k);saved.changed();created++; }
                 else failed++;
             }
-            RoglerTeamWarsLogger.info("FTB_CLAIM_SYNC team="+team+" created="+created+" existing="+existing+" rejected="+failed);
+            if (created > 0 || failed > 0 || loggedExistingClaims.add(team))
+                RoglerTeamWarsLogger.info("FTB_CLAIM_SYNC team="+team+" created="+created+" existing="+existing+" rejected="+failed);
             return new Result(created,existing,failed,"OK");
         } catch (ReflectiveOperationException | RuntimeException err) {
             Throwable cause=err instanceof InvocationTargetException ex?ex.getTargetException():err;
@@ -134,6 +144,22 @@ public final class FtbClaimBridge {
             return new Result(created,existing,failed,reason);
         }
     }
+    /** Explicit same-team packet refresh for a logged-in player.
+     * FTB Chunks owns the claim GUI/client cache; never broadcast private claim
+     * coordinates to everyone and never infer membership from a client-sent ID. */
+    public static String refreshOwnClaimView(ServerPlayer player, UUID team) {
+        var assignment = RoglerTeamWarsMod.assignmentFor(player);
+        if (!assignment.validParty() || !team.equals(assignment.partyId()))
+            return "DENIED (FTB team membership changed)";
+        try {
+            Api api = bind(team);
+            call(api.teamData(), "syncChunksToPlayer", player);
+            return "FTB resync sent to authorized member (client display still must be enabled)";
+        } catch (ReflectiveOperationException | RuntimeException error) {
+            return "FTB resync unavailable: " + error.getClass().getSimpleName();
+        }
+    }
+
     public static void release(ServerLevel level,UUID team,BaseProtectionSavedData.Record record,
                                CommandSourceStack src,BaseProtectionSavedData saved) {
         if(record==null || record.createdClaims.isEmpty() || !ModList.get().isLoaded("ftbchunks"))return;

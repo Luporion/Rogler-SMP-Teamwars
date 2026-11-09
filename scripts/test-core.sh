@@ -41,6 +41,7 @@ java -ea -cp build/classes dev.rogler.teamwars.core.compat.SableLifecyclePolicyT
 java -ea -cp build/classes dev.rogler.teamwars.core.TeamMapPrivacyTests
 
 java -ea -cp build/classes dev.rogler.teamwars.core.TeamMapSessionTests
+java -ea -cp build/classes dev.rogler.teamwars.core.TeamMapIncrementalTests
 java -ea -cp build/classes dev.rogler.teamwars.core.TeamIntelPolicyTests
 
 java -ea -cp build/classes dev.rogler.teamwars.core.FtbMapVisibilityPolicyTests
@@ -63,6 +64,7 @@ python3 scripts/check-control-center.py
 python3 scripts/check-v084-control-center.py
 python3 scripts/check-v085-ui.py
 python3 scripts/check-v086-core-timer.py
+python3 scripts/check-v087-performance.py
 python3 scripts/test-v085-hud-screen.py
 
 python3 scripts/check-v083-safety.py

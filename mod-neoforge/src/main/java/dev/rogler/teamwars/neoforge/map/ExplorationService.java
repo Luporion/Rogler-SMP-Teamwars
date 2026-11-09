@@ -40,6 +40,7 @@ public final class ExplorationService {
     private static int pending;
     private static ExecutorService writer;
     private static Future<?> runningWrite;
+    private static int inFlightChanges;
     private ExplorationService() {}
 
     public static void start(MinecraftServer server) {
@@ -56,6 +57,7 @@ public final class ExplorationService {
                 return t;
             });
             runningWrite = null;
+            inFlightChanges = 0;
             enabled = true;
             RoglerTeamWarsLogger.info("MAP_PROVENANCE loaded; personal chunk records=" + total());
         } catch (Exception problem) {
@@ -91,22 +93,24 @@ public final class ExplorationService {
 
     private static int total() {
         if (index == null) return 0;
-        return index.exportSnapshot().values().stream().mapToInt(Set::size).sum();
+        return (int)Math.min(Integer.MAX_VALUE,index.totalPersonalRecords());
     }
 
     private static void checkpoint() {
-        if (!enabled || pending == 0) return;
-        // Serialize disk writes on one worker and avoid IO stalls on the server tick.
-        // The only main-thread work is a detached, consistent snapshot of visited chunks.
+        if (!enabled) return;
+        // First collect any finished result, even if no new player has explored since.
+        // A failed write must not silently discard its dirty counter.
         if (runningWrite != null && !runningWrite.isDone()) return;
         if (runningWrite != null) finishLastWrite();
+        if (pending == 0) return;
+        // Serialize disk writes on one worker and avoid IO stalls on the server tick.
+        // The only main-thread work is a detached, consistent snapshot of visited chunks.
         var snapshot = ExplorationIndex.fromSnapshot(index.exportSnapshot());
         final Path target = path;
+        inFlightChanges = pending;
         runningWrite = writer.submit(() -> {
             try {ExplorationStore.write(target, snapshot);}
-            catch (Exception error) {
-                RoglerTeamWarsLogger.warn("MAP_PROVENANCE checkpoint failed; existing file preserved: " + error.getMessage());
-            }
+            catch (Exception error) {throw new java.util.concurrent.CompletionException(error);}
         });
         pending = 0;
     }
@@ -114,8 +118,11 @@ public final class ExplorationService {
     private static void finishLastWrite() {
         if (runningWrite == null) return;
         try {runningWrite.get();}
-        catch (Exception e) {RoglerTeamWarsLogger.warn("MAP_PROVENANCE writer failed: " + e.getMessage());}
-        finally {runningWrite = null;}
+        catch (Exception e) {
+            pending += inFlightChanges; // Retry at next checkpoint or server shutdown.
+            RoglerTeamWarsLogger.warn("MAP_PROVENANCE writer failed; pending discoveries retained: " + e.getMessage());
+        }
+        finally {runningWrite = null; inFlightChanges = 0;}
     }
 
     public static void logout(UUID player) {
@@ -137,7 +144,7 @@ public final class ExplorationService {
         if (writer != null) writer.shutdown();
         sessions.clear();
         enabled = false; index = null; trail = null; path = null;
-        writer = null; runningWrite = null; pending = 0;
+        writer = null; runningWrite = null; inFlightChanges = 0; pending = 0;
     }
 
     public static int zone(CommandSourceStack source) {

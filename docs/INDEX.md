@@ -19,8 +19,12 @@
 | [SETUP_AND_DEPLOY](SETUP_AND_DEPLOY.md) | Update-, Build-, Test- und Rollbackablauf |
 | [Registrate-CI-Guide](guides/REGISTRATE_CI_BOOTSTRAP_v0.7.6.md) | SHA-geprüfter Build-Fallback für Create/Registrate |
 
+- [FTB-Claim-Map/Configs v0.8.7](guides/FTB_CLAIM_MAP_v0.8.7.md) – exakte zu prüfende Server-/Client-Pfade, Private-Claims und Sync.
+
 ## Release-, Planungs- und Forschungsunterlagen
 
+- [v0.8.7 Release](releases/v0.8.7.md) – Team-Exploration inkrementell, Claim-Audit/Client-Resync, fehlgeschlagene Snapshots.
+- [v0.8.6 Release](releases/v0.8.6.md) – serverseitiger Core-Transporttimer unabhängig vom Lagerort.
 - [v0.8.5 Release](releases/v0.8.5.md) – HUD per Maus verschieben, Admin-Teamdetails und Aktionssuche.
 - [v0.8.4 Release](releases/v0.8.4.md) – Control Center 2.0, Team-/Core-/Raid-Ansichten, Audit und Aktionsschutz.
 - [v0.8.3 Release](releases/v0.8.3.md) – Create/C2ME Chunk-Speicher-Hotfix, Admin-Suche.

@@ -47,6 +47,7 @@ public final class BaseGuardService {
         lastSlowLogTick = Long.MIN_VALUE;
         warnedOrphans.clear();
         lastDeniedLogMillis.clear();
+        FtbClaimBridge.resetRuntimeState();
     }
     private static BaseCoreSavedData cores(MinecraftServer s) {
         BaseCoreConfig cfg=RoglerTeamWarsMod.baseConfig();
@@ -318,7 +319,8 @@ public final class BaseGuardService {
         return Command.SINGLE_SUCCESS;
     }
     private static final Set<UUID> warnedOrphans = new HashSet<>();
-    /** Rebuild missing claim ownership for worlds created under older v0.2.x versions. */
+    /** Rebuild missing claim ownership for worlds created under older v0.2.x versions.
+     * This is a periodic self-healing audit, not a per-tick map update. */
     public static void reconcile(MinecraftServer server) {
         var cfg=RoglerTeamWarsMod.protectionConfig();
         BaseProtectionSavedData saved=BaseProtectionSavedData.get(server);
@@ -478,8 +480,13 @@ public final class BaseGuardService {
         BlockPos at=new BlockPos(entry.location().x(),entry.location().y(),entry.location().z());
         var result=FtbClaimBridge.claim(src.getServer().overworld(),a.partyId(),at.getX()>>4,at.getZ()>>4,
             RoglerTeamWarsMod.protectionConfig().claimRadiusChunks(),rec,opSource(src.getServer(),at),saved);
+        // An explicit admin sync also refreshes the logged-in team member's
+        // FTB client claim view. Do not run this packet operation every audit.
+        String viewRefresh = result.failed() == 0 && "OK".equals(result.detail())
+            ? FtbClaimBridge.refreshOwnClaimView(p, a.partyId()) : "skipped (claim sync incomplete)";
         src.sendSuccess(()->Component.literal("[TeamWars] FTB claims created="+result.created()+" existing="
-            +result.existing()+" rejected="+result.failed()+" detail="+result.detail()),false);
+            +result.existing()+" rejected="+result.failed()+" detail="+result.detail()
+            +" | view="+viewRefresh),false);
         return Command.SINGLE_SUCCESS;
     }
 }

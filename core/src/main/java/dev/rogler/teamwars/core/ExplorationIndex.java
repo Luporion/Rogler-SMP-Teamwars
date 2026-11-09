@@ -6,6 +6,39 @@ import java.util.*;
 public final class ExplorationIndex {
     private final Map<UUID, Set<ChunkKey>> personal = new HashMap<>();
     private long revision;
+    /** Only retain a bounded, per-player change history. A session that falls behind
+     * the window safely falls back to a full authoritative rebuild. */
+    private static final int MAX_RECENT_CHANGES = 2048;
+    private final Map<UUID, Long> playerRevisions = new HashMap<>();
+    private final Map<UUID, ArrayDeque<Discovery>> changes = new HashMap<>();
+    private record Discovery(long revision, ChunkKey chunk) {}
+
+    public long personalRevision(UUID player) {
+        return playerRevisions.getOrDefault(player, 0L);
+    }
+
+    /** Null means the bounded journal cannot answer; caller MUST rebuild from full data.
+     * The journal is deliberately not persisted: loaded sessions build a fresh baseline. */
+    public Set<ChunkKey> discoveredSince(UUID player, long afterRevision) {
+        long latest = personalRevision(player);
+        if (afterRevision < 0 || afterRevision > latest) return null;
+        if (afterRevision == latest) return Set.of();
+        ArrayDeque<Discovery> journal = changes.get(player);
+        if (journal == null || journal.isEmpty() || afterRevision < journal.peekFirst().revision() - 1)
+            return null;
+        Set<ChunkKey> delta = new HashSet<>();
+        for (Discovery change : journal)
+            if (change.revision() > afterRevision) delta.add(change.chunk());
+        return delta;
+    }
+
+    /** For lightweight status reporting; does not clone tens of thousands of chunks. */
+    public long totalPersonalRecords() {
+        long total = 0;
+        for (Set<ChunkKey> entries : personal.values()) total += entries.size();
+        return total;
+    }
+
 
     /** Monotonic in this session: advances only for newly *personally visited* chunks. */
     public long revision() { return revision; }
@@ -15,7 +48,13 @@ public final class ExplorationIndex {
         Objects.requireNonNull(player);
         Objects.requireNonNull(chunk);
         boolean discovered = personal.computeIfAbsent(player, ignored -> new HashSet<>()).add(chunk);
-        if (discovered) revision++;
+        if (discovered) {
+            revision++;
+            long next = playerRevisions.merge(player, 1L, Long::sum);
+            ArrayDeque<Discovery> journal = changes.computeIfAbsent(player, ignored -> new ArrayDeque<>());
+            journal.addLast(new Discovery(next, chunk));
+            if (journal.size() > MAX_RECENT_CHANGES) journal.removeFirst();
+        }
         return discovered;
     }
     public Set<ChunkKey> personal(UUID player) {
