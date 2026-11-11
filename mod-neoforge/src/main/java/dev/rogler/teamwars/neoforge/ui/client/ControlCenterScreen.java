@@ -28,7 +28,7 @@ import java.util.UUID;
 
 /** One native, dependency-free, permission-aware entry point for all existing Rogler features. */
 public final class ControlCenterScreen extends Screen {
-    private enum Page { START, HUD, WAYPOINTS, LINKS, TEAM, CORE, ADMIN_TEAMS, ADMIN_BASE,
+    private enum Page { START, HUD, WAYPOINTS, LINKS, TEAM, CORE, CHUNKS, REPORT, ADMIN_TEAMS, ADMIN_BASE,
         ADMIN_PROTECTION, ADMIN_POWER, ADMIN_COMPAT, ADMIN_SEARCH, ADMIN_DIRECTORY, ADMIN_DETAIL, ADMIN_RAIDS, ADMIN_AUDIT, ADMIN_STATUS, ADMIN_ACTIONS, ADMIN_DIAG }
     private static final int BACK=0xFF111B25, PANEL=0xFF1C2B37, ACCENT=0xFF5BD4D5,
         TEXT=0xFFE5EEF0, MUTED=0xFFA4B7C3, WARNING=0xFFFFC27A;
@@ -38,6 +38,9 @@ public final class ControlCenterScreen extends Screen {
     private String settingFilter="";
     private String actionFilter="";
     private int detailActionOffset=0;
+    private String reportKind="own";
+    private UUID reportTarget;
+    private int reportOffset=0;
     private ControlCenterAdminPayload.TeamRow selectedTeam;
     private String note="Einstellungen werden direkt gespeichert; bestehende Minecraft-Berechtigungen gelten.";
     private final Map<String,EditBox> fields=new LinkedHashMap<>();
@@ -62,6 +65,14 @@ public final class ControlCenterScreen extends Screen {
         }
     }
     public void refreshAdminData(){rebuild();}
+    public void refreshReportData(){
+        saveInputs();
+        var report=ControlCenterClient.reportData();
+        if(report!=null && report.kind().equals("action")){
+            reportKind="action";reportTarget=null;reportOffset=report.offset();page=Page.REPORT;
+        }
+        rebuild();
+    }
     @Override protected void init(){super.init();state=ControlCenterClient.latest();rebuild();}
     private static String text(String value,int limit){return value.length()>limit?value.substring(0,limit-2)+"..":value;}
     private void button(String label,int xx,int yy,int ww,Runnable run){button(label,xx,yy,ww,run,null);}
@@ -72,7 +83,9 @@ public final class ControlCenterScreen extends Screen {
         addRenderableWidget(builder.build());
     }
     private void page(Page to){
-        saveInputs();page=to;firstSetting=0;firstAction=0;adminOffset=0;
+        saveInputs();page=to;
+        if(to==Page.CHUNKS){reportKind="own";reportTarget=null;reportOffset=0;requestReport();}
+        firstSetting=0;firstAction=0;adminOffset=0;
         if(to==Page.ADMIN_DIRECTORY || to==Page.ADMIN_RAIDS)ControlCenterClient.requestAdmin("teams",0);
         else if(to==Page.ADMIN_AUDIT)ControlCenterClient.requestAdmin("audit",0);
         else if(to==Page.ADMIN_STATUS)ControlCenterClient.requestAdmin("status",0);
@@ -81,11 +94,13 @@ public final class ControlCenterScreen extends Screen {
     private boolean admin(){return state!=null&&state.permission()>=2;}
     private void rebuild(){
         clearWidgets();fields.clear();
+        if(page==Page.REPORT && !reportKind.equals("own") && !admin())page=Page.START;
         int panelWidth=Math.min(670,width-14),left=(width-panelWidth)/2;
         x=left+145;bodyWidth=Math.max(156,panelWidth-158);y=46;
         int xx=left+7, navY=48;
         var pages=java.util.Arrays.stream(Page.values())
             .filter(p->!p.name().startsWith("ADMIN")||admin())
+            .filter(p->p!=Page.REPORT)
             .filter(p->p!=Page.ADMIN_DETAIL || selectedTeam!=null).toList();
         int navVisible=Math.max(4,(height-132)/21);
         firstNav=Math.clamp(firstNav,0,Math.max(0,pages.size()-navVisible));
@@ -104,6 +119,7 @@ public final class ControlCenterScreen extends Screen {
             case LINKS -> links();
             case TEAM -> team();
             case CORE -> core();
+            case CHUNKS, REPORT -> diagnosticReport();
             case ADMIN_TEAMS -> settings("teams");
             case ADMIN_BASE -> settings("base");
             case ADMIN_PROTECTION -> settings("protection");
@@ -118,19 +134,22 @@ public final class ControlCenterScreen extends Screen {
             case ADMIN_ACTIONS -> actions(false);
             case ADMIN_DIAG -> actions(true);
         }
-        button(page==Page.ADMIN_DETAIL?"Zur Teamliste":"Aktualisieren",x,height-48,110,()->{
+        int footerWidth=Math.min(100,(bodyWidth-6)/2);
+        button(page==Page.ADMIN_DETAIL?"Zur Teamliste":"Aktualisieren",x,height-48,footerWidth,()->{
             if(page==Page.ADMIN_DETAIL){page(Page.ADMIN_DIRECTORY);return;}
             ControlCenterClient.request("view","","");
+            if(page==Page.CHUNKS || page==Page.REPORT){reportOffset=0;requestReport();}
             if(page==Page.ADMIN_AUDIT)ControlCenterClient.requestAdmin("audit",adminOffset);
             else if(page==Page.ADMIN_STATUS)ControlCenterClient.requestAdmin("status",0);
             else if(page==Page.ADMIN_DIRECTORY || page==Page.ADMIN_RAIDS)
                 ControlCenterClient.requestAdmin("teams",adminOffset);
         });
-        button("Schliessen",x+Math.max(110,bodyWidth-100),height-48,100,this::onClose);
+        button("Schliessen",x+bodyWidth-footerWidth,height-48,footerWidth,this::onClose);
     }
     private String name(Page item){return switch(item){
         case START -> "Uebersicht";case HUD -> "HUD & Navigation";case WAYPOINTS -> "Wegpunkte";
         case LINKS -> "Waypoint-Links";case TEAM -> "Mein Team";case CORE -> "Mein Base-Core";
+        case CHUNKS -> "Claims & Chunkloading";case REPORT -> "Diagnosebericht";
         case ADMIN_TEAMS -> "Admin: Teams";case ADMIN_BASE -> "Admin: Basis";
         case ADMIN_PROTECTION -> "Admin: Schutz";case ADMIN_POWER -> "Admin: Energie";
         case ADMIN_COMPAT -> "Admin: Kompat";case ADMIN_SEARCH -> "Admin: Suche";
@@ -240,13 +259,55 @@ public final class ControlCenterScreen extends Screen {
         button("Core-Inventar und Upgrades oeffnen",x,y,bodyWidth,()->sendCommand("teamwars base menu"));y+=23;
         button("Meinen Core-Status anzeigen",x,y,bodyWidth,()->sendCommand("teamwars base status"));y+=23;
         button("Basisabstand",x,y,bodyWidth,()->sendCommand("teamwars base distance"));y+=23;
-        button("Schutz / Claims",x,y,bodyWidth,()->sendCommand("teamwars base protection"));y+=23;
+        button("Claims & Chunkloading",x,y,bodyWidth,()->page(Page.CHUNKS));y+=23;
         button("Energie und FE",x,y,bodyWidth,()->sendCommand("teamwars base energy"));y+=23;
         button("Raidstatus",x,y,bodyWidth,()->sendCommand("teamwars war status"));y+=23;
         button("Core einpacken (im erlaubten Bereich)",x,y,bodyWidth,
             ()->confirm("Basis-Core einpacken?",()->sendCommand("teamwars base pack")));y+=23;
         button("Eigenen Core wiederherstellen",x,y,bodyWidth,
             ()->confirm("Core-Wiederherstellung anfordern?",()->sendCommand("teamwars base recover")));
+    }
+    private int reportLimit(){return Math.clamp((height-154-(reportKind.equals("own")?23:0))/28,1,8);}
+    private void requestReport(){ControlCenterClient.requestReport(reportKind,reportTarget,reportOffset,reportLimit());}
+    private boolean matchingReport(){
+        var data=ControlCenterClient.reportData();
+        return data!=null && data.kind().equals(reportKind) && data.offset()==reportOffset
+            && (!reportKind.equals("claims") || java.util.Objects.equals(data.target(),reportTarget));
+    }
+    private void diagnosticReport(){
+        if(reportKind.equals("own")){
+            button("Eigene FTB-Kartendaten erneut senden",x,y,bodyWidth,
+                ()->ControlCenterClient.request("resyncown","",""),"Sendet nur vorhandene eigene Claims erneut; keine Claim-Reparatur oder neuen Tickets.");y+=23;
+        }
+        var data=ControlCenterClient.reportData();
+        if(matchingReport()){
+            int visible=Math.min(reportLimit(),data.rows().size());
+            for(var row:data.rows().subList(0,visible)){
+                // Native tooltip exposes full text even at small GUI scales.
+                button("",x,y,bodyWidth,()->{},row.label()+": "+row.value());y+=28;
+            }
+            int limit=reportLimit();
+            button("< Zurueck",x,y,90,()->{reportOffset=Math.max(0,reportOffset-limit);requestReport();rebuild();});
+            button("Weiter >",x+bodyWidth-90,y,90,()->{
+                if(reportOffset+visible<data.total()){
+                    reportOffset+=visible;requestReport();rebuild();
+                }
+            });
+        }else button("Bericht laden",x,y,bodyWidth,()->{requestReport();rebuild();});
+    }
+    private void renderDiagnostic(GuiGraphics g){
+        if(!matchingReport())return;
+        var report=ControlCenterClient.reportData();
+        int yy=46+(reportKind.equals("own")?23:0),i=0;
+        for(var row:report.rows()){
+            if(i++>=reportLimit())break;
+            // Drawn after native widgets by render(), so button backgrounds cannot cover the text.
+            g.drawString(font,text(row.label(),Math.max(12,bodyWidth/6)),x+3,yy+1,ACCENT,false);
+            g.drawString(font,text(row.value(),Math.max(12,bodyWidth/6)),x+3,yy+11,TEXT,false);yy+=28;
+        }
+        g.drawString(font,text("Zeilen "+(report.total()==0?0:reportOffset+1)+"-"+
+            Math.min(report.total(),reportOffset+Math.min(reportLimit(),report.rows().size()))+" / "+report.total()+" | Snapshot-Tick "+report.tick(),Math.max(12,bodyWidth/6)),
+            x,Math.max(63,height-79),MUTED,false);
     }
     private void settingsCompat(){
         settings(compatGroup);
@@ -359,7 +420,9 @@ public final class ControlCenterScreen extends Screen {
         targetValue=selectedTeam.id().toString();
         y=124;
         input("minutes",minutesValue,x,y,80,5);
-        button("Aktionen fuer gewaehltes Team",x+85,y,Math.max(70,bodyWidth-85),()->page(Page.ADMIN_ACTIONS));
+        button("Claims & Chunkloading",x+85,y,Math.max(70,bodyWidth-85),()->{
+            reportKind="claims";reportTarget=selectedTeam.id();reportOffset=0;page=Page.REPORT;requestReport();rebuild();
+        },"Nur lesender Status fuer das ausgewaehlte FTB-Team");
         y+=25;
         var permitted=List.of("claimaudit","graceteam","raidstartteam","raidstopteam","reclaimlostteam")
             .stream().map(AdminActionPolicy::require)
@@ -476,7 +539,7 @@ public final class ControlCenterScreen extends Screen {
         g.fill(left+1,14,left+panelWidth-1,height-14,BACK);
         g.fill(left+4,18,left+panelWidth-4,39,PANEL);
         g.drawString(font,"ROGLER CORE // CONTROL CENTER",left+12,25,ACCENT,false);
-        g.drawString(font,"v0.8.5",left+panelWidth-52,25,MUTED,false);
+        g.drawString(font,"v"+dev.rogler.teamwars.neoforge.RoglerTeamWarsMod.VERSION,left+panelWidth-52,25,MUTED,false);
         g.fill(left+141,42,left+142,height-60,0xFF304653);
         g.drawString(font,name(page),x,30,TEXT,false);
         if(state==null)g.drawString(font,"Lade Serverstatus ...",x,Math.max(52,height-91),WARNING,false);
@@ -532,6 +595,7 @@ public final class ControlCenterScreen extends Screen {
         }
         g.drawString(font,text(note,Math.max(25,(panelWidth-18)/6)),left+10,height-25,WARNING,false);
         super.render(g,mouseX,mouseY,partial);
+        if(page==Page.CHUNKS || page==Page.REPORT)renderDiagnostic(g);
         // Vanilla widgets carry their own focus, scrolling and input handling.
     }
     @Override public void onClose(){if(minecraft!=null)minecraft.setScreen(null);}

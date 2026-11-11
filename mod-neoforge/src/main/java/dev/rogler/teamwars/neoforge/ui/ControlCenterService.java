@@ -31,8 +31,8 @@ public final class ControlCenterService {
     private static final Map<UUID,Long> LAST_WRITE = new HashMap<>();
     private static final Map<UUID,Long> LAST_ACTION = new HashMap<>();
     private static final Map<UUID,Long> LAST_READ = new HashMap<>();
-    public static void clear(){LAST_WRITE.clear();LAST_ACTION.clear();LAST_READ.clear();}
-    public static void logout(UUID id){LAST_WRITE.remove(id);LAST_ACTION.remove(id);LAST_READ.remove(id);}
+    public static void clear(){LAST_WRITE.clear();LAST_ACTION.clear();LAST_READ.clear();ControlCenterReportService.clear();}
+    public static void logout(UUID id){LAST_WRITE.remove(id);LAST_ACTION.remove(id);LAST_READ.remove(id);ControlCenterReportService.logout(id);}
     private static int permission(ServerPlayer player){return player.createCommandSourceStack().hasPermission(4)?4:player.createCommandSourceStack().hasPermission(2)?2:0;}
     private static Path file(MinecraftServer server,String group){
         String name=switch(group){
@@ -129,7 +129,15 @@ public final class ControlCenterService {
             MinecraftServer server=viewer.getServer();if(server==null)return;
             String message="Serverstatus aktualisiert";
             int permission=permission(viewer);
-            if(request.operation().equals("adminview")){
+            if(request.operation().equals("inspect")){
+                try {message=ControlCenterReportService.inspect(viewer,request.key(),request.value());}
+                catch(RuntimeException invalid){message="Diagnose abgelehnt: "+invalid.getMessage();}
+            }else if(request.operation().equals("resyncown")){
+                try {
+                    if(!request.key().isEmpty() || !request.value().isEmpty())throw new IllegalArgumentException("Unerwartete Parameter");
+                    message=ControlCenterReportService.resyncOwn(viewer);
+                }catch(RuntimeException invalid){message="Resync abgelehnt: "+invalid.getMessage();}
+            }else if(request.operation().equals("adminview")){
                 if(permission<2) message="Adminansicht nicht erlaubt";
                 else try {
                     long now=server.getTickCount(),last=LAST_READ.getOrDefault(viewer.getUUID(),Long.MIN_VALUE);
@@ -154,9 +162,11 @@ public final class ControlCenterService {
                         String command=AdminActionPolicy.command(request.key(),request.value());
                         // Execute on the server thread, with the real player's permission context.
                         // The client sends only an allowlisted action ID + tightly parsed arguments.
-                        // Suppress legacy chat spam: the response payload supplies operation status.
+                        // Capture real bounded feedback into the report; keep the original permission/entity context.
+                        var capture=new ControlCenterReportService.CommandCapture();
                         int result=server.getCommands().getDispatcher().execute(command,
-                            viewer.createCommandSourceStack().withSuppressedOutput());
+                            viewer.createCommandSourceStack().withSource(capture));
+                        ControlCenterReportService.actionResult(viewer,action.label(),result,capture);
                         message=action.label()+": "+(result>0?"erfolgreich ("+result+")":"kein Erfolg; Details im Serverlog");
                         ControlCenterAdminService.audit(server,viewer.getUUID(),action.id(),result>0?"OK":"NO_SUCCESS");
                     }catch(Exception invalid){

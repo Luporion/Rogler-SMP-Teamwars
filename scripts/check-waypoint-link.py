@@ -25,7 +25,7 @@ assert 'filter(p->!blocked.contains(p.locationKey()))' in local
 assert 'Commands.literal("link")' in cmd and 'Commands.literal("changes")' in cmd
 assert 'Commands.literal("apply")' in cmd and 'Commands.literal("unlink")' in cmd
 assert 'Commands.literal("acknowledge")' in cmd
-assert 'registrar("3")' in (r/'mod-neoforge/src/main/java/dev/rogler/teamwars/neoforge/map/TeamIntelNetwork.java').read_text()
+assert 'registrar("4")' in (r/'mod-neoforge/src/main/java/dev/rogler/teamwars/neoforge/map/TeamIntelNetwork.java').read_text()
 assert 'dev.architectury.networking.NetworkManager' in (r/'mod-neoforge/src/main/java/dev/rogler/teamwars/neoforge/compat/ftbvisibility/FtbVisibilityPacketMixin.java').read_text()
 bridge=read('WaypointMutationBridge.java')
 assert 'PacketDistributor' not in bridge and 'WaypointMutationPayload' not in bridge

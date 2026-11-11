@@ -4,6 +4,7 @@ import dev.rogler.teamwars.neoforge.RoglerTeamWarsMod;
 import dev.rogler.teamwars.neoforge.ui.ControlCenterRequestPayload;
 import dev.rogler.teamwars.neoforge.ui.ControlCenterAdminPayload;
 import dev.rogler.teamwars.neoforge.ui.ControlCenterStatePayload;
+import dev.rogler.teamwars.neoforge.ui.ControlCenterReportPayload;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.commands.Commands;
@@ -21,9 +22,22 @@ import org.lwjgl.glfw.GLFW;
 public final class ControlCenterClient {
     private static ControlCenterStatePayload latest;
     private static ControlCenterAdminPayload adminData;
+    private static ControlCenterReportPayload reportData;
     private ControlCenterClient(){}
     public static ControlCenterStatePayload latest(){return latest;}
     public static ControlCenterAdminPayload adminData(){return adminData;}
+    public static ControlCenterReportPayload reportData(){return reportData;}
+    public static void onReport(ControlCenterReportPayload packet){
+        if(Minecraft.getInstance().player==null)return;
+        if(!packet.kind().equals("own") && (latest==null || latest.permission()<2))return;
+        reportData=packet;
+        if(Minecraft.getInstance().screen instanceof ControlCenterScreen screen)screen.refreshReportData();
+    }
+    public static void requestReport(String kind,java.util.UUID target,int offset,int limit){
+        reportData=null;
+        String value=(kind.equals("claims")?target+"|":"")+offset+"|"+limit;
+        request("inspect",kind,value);
+    }
     public static void onAdminState(ControlCenterAdminPayload packet){
         if(Minecraft.getInstance().player==null)return;
         adminData=packet;
@@ -37,12 +51,15 @@ public final class ControlCenterClient {
     public static void onState(ControlCenterStatePayload packet){
         if(Minecraft.getInstance().player==null)return;
         latest=packet;
-        if(packet.permission()<2)adminData=null;
+        if(packet.permission()<2){
+            adminData=null;
+            if(reportData!=null && !reportData.kind().equals("own"))reportData=null;
+        }
         if(Minecraft.getInstance().screen instanceof ControlCenterScreen screen)screen.refreshState();
     }
     public static void open(){
         var mc=Minecraft.getInstance();if(mc.player==null || mc.level==null)return;
-        latest=null;adminData=null;
+        latest=null;adminData=null;reportData=null;
         mc.setScreen(new ControlCenterScreen());
         PacketDistributor.sendToServer(new ControlCenterRequestPayload("view","",""));
     }
@@ -55,6 +72,9 @@ public final class ControlCenterClient {
         private static final KeyMapping OPEN = new KeyMapping("key.roglerteamwars.control_center",
             InputConstants.Type.KEYSYM,GLFW.GLFW_KEY_O,"key.categories.roglerteamwars");
         private CommandsAndKeys(){}
+        @SubscribeEvent public static void logout(net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent.LoggingOut event){
+            latest=null;adminData=null;reportData=null;
+        }
         @SubscribeEvent public static void commands(RegisterClientCommandsEvent e){
             e.getDispatcher().register(Commands.literal("roglerui").executes(c->{Minecraft.getInstance().execute(ControlCenterClient::open);return 1;}));
             e.getDispatcher().register(Commands.literal("roglerconfig").executes(c->{Minecraft.getInstance().execute(ControlCenterClient::open);return 1;}));

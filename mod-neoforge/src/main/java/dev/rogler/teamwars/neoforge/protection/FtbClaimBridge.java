@@ -152,8 +152,11 @@ public final class FtbClaimBridge {
         if (!assignment.validParty() || !team.equals(assignment.partyId()))
             return "DENIED (FTB team membership changed)";
         try {
-            Api api = bind(team);
-            call(api.teamData(), "syncChunksToPlayer", player);
+            Object manager=Class.forName("dev.ftb.mods.ftbchunks.data.ClaimedChunkManagerImpl")
+                .getMethod("getInstance").invoke(null);
+            Object data=FtbChunkStatusReader.existingData(manager,team);
+            if(data==null)return "FTB resync unavailable: existing team data not found within read limit";
+            call(data, "syncChunksToPlayer", player);
             return "FTB resync sent to authorized member (client display still must be enabled)";
         } catch (ReflectiveOperationException | RuntimeException error) {
             return "FTB resync unavailable: " + error.getClass().getSimpleName();

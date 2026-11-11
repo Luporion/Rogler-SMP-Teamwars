@@ -1,5 +1,7 @@
 # Rogler Control Center – UI- und Admin-Handbuch
 
+**Aktuell v0.8.8:** Claims & Chunkloading für das eigene Team, OP-Teamdiagnose und echte Aktionsberichte. [Bedienung und Statusbedeutung](guides/CLAIM_DIAGNOSTICS_v0.8.8.md). Client und Server gemeinsam aktualisieren (Protokoll 4).
+
 **O / `/roglerui` / `/roglerconfig`** oeffnen das Control Center. Bestehende `teamwars`-Befehle bleiben verfuegbar; das native Core-Inventar ist weiterhin separat am platzierten Core erreichbar.
 
 ## Navigation
@@ -11,6 +13,7 @@
 | Wegpunkte | Privater Sync, Teamfreigabe, sicherer Link-Abgleich und Auto Name/Farbe |
 | Waypoint-Links | UUID-/Token-geschuetzte Apply/Acknowledge/Delete/Move/Unlink-Aktionen |
 | Mein Team | Team-/War-/Explorationsstatus ueber bestehende Serverbefehle |
+| Claims & Chunkloading | Eigener serverautorisierter Snapshot: FTB-Claims, Quoten, Markierungen und residente Corezone; vorhandene eigene Kartendaten erneut senden |
 | Mein Base-Core | Core-Menue, Status, Schutz, Energie, Transport, Recovery |
 | Admin: Teams/Basis/Schutz/Energie | Live-Werte der vier bisherigen Rogler-Teamwars-Konfigdateien |
 | Admin: Kompat | Rogler-eigene Warium-Recovery, Sable-Metriken und Lifecycle-Guards (OP4) |
@@ -23,7 +26,7 @@
 
 Ab v0.8.5: Die Detailseite eines aus der OP-Liste ausgewaehlten Teams bietet Claim-Audit, Team-Grace, Raidstart/-stopp und Team-Core-Widerruf, jeweils nur mit den bestehenden serverseitigen Rechten und Bestaetigungen. Die angezeigten Daten sind ein **Snapshot**; spaetere Aktionen werden auf dem Server erneut autorisiert. Die Anzeige ist keine neue FTB-Mitgliedschaftsverwaltung.
 
-Admin-Aktionen mit Ziel verwenden im ersten Feld **Spielernamen (z. B. Alex)** oder **FTB-Team-UUID**, die Zahl daneben fuer Minuten. Fuer `adoptcore` benoetigt man zusaetzlich den neuen Spieler im zweiten Feld. Kritische Aktionen haben einen weiteren Bestaetigungsdialog. Seit v0.8.4 werden Adminaktionen mit festen IDs und streng geprueften Parametern serverseitig ausgefuehrt; die GUI zeigt Rueckgabestatus/Fehler. Die vollstaendigen Details mancher alten Diagnosebefehle sind weiterhin ueber deren CLI erreichbar. Es werden keine beliebigen Client-Befehle oder Java-Ausdruecke angenommen.
+Admin-Aktionen mit Ziel verwenden im ersten Feld **Spielernamen (z. B. Alex)** oder **FTB-Team-UUID**, die Zahl daneben fuer Minuten. Fuer `adoptcore` benoetigt man zusaetzlich den neuen Spieler im zweiten Feld. Kritische Aktionen haben einen weiteren Bestaetigungsdialog. Seit v0.8.4 werden Adminaktionen mit festen IDs und streng geprueften Parametern serverseitig ausgefuehrt; die GUI zeigt Rueckgabestatus/Fehler. v0.8.8 zeigt die echte begrenzte Textantwort; sehr lange Ausgaben bleiben vollständig über die CLI erreichbar. Es werden keine beliebigen Client-Befehle oder Java-Ausdruecke angenommen.
 
 ## Einstellungsgrenzen und Besonderheiten
 
@@ -38,7 +41,7 @@ Admin-Aktionen mit Ziel verwenden im ersten Feld **Spielernamen (z. B. Alex)** o
 
 ## Abnahme / Fehlerdiagnose
 
-Vor Produktivbetrieb: v0.8.5 CI-Lauf sowie Start/Join mit zwei gegnerischen Teams und den Create-C2ME-Chunk-Save-Pfad testen; bei GUI-Paketfehlern `latest.log` und CraftProbe-Sitzung exportieren. Bei unklarer Konfigaenderung `serverconfig/roglerteamwars*.properties` kontrollieren und Backup benutzen. Sicherheit und Autoritaet liegen stets auf dem Dedicated Server.
+Die v0.8.7-Basis und Kartenanzeige sind bestätigt. Neue v0.8.8-Berichte, Rechte und Protokoll-4-Join nach Testmatrix prüfen; bei GUI-Paketfehlern `latest.log` und CraftProbe-Sitzung exportieren. Bei unklarer Konfigaenderung `serverconfig/roglerteamwars*.properties` kontrollieren und Backup benutzen. Sicherheit und Autoritaet liegen stets auf dem Dedicated Server.
 
 ## v0.8.3 Admin-Suche
 
@@ -50,7 +53,7 @@ Admin-OP2/OP4: Im Control Center die Seite `Admin: Suche` öffnen, Schlagwort (z
 - `Admin: Raidsteuerung`: Team auswaehlen, Minuten (1-30) eingeben und `Start fuer Ziel` oder `Stopp fuer Ziel`; erforderlich OP4 sowie ausdrueckliche Bestaetigung. Aktionen werden von der bestehenden Raid-Regellogik erneut validiert.
 - `Admin: Status`: direkte, nur fuer OP2+ sichtbare Anzeigen. Das sind **keine TPS/MSPT** oder Live-Profiling-Daten.
 - `Admin: Audit-Log`: letzte Ereignisse zuerst, bis zu fuenf Zeilen je Seite. Der Server legt `world/serverconfig/roglercore-ui-audit.log` an; Rotation als `roglercore-ui-audit.previous.log`.
-- `Admin: Aktionen` und `Admin: Diagnose` pruefen IDs und Argumenttypen client- und serverseitig. Der Server erhaelt keine frei zusammengesetzten Minecraft-Befehle; er fuehrt nur explizit erlaubte Aktionen aus. Der Rueckgabecode ist nicht in jedem Drittmod-Fall eine vollstaendige Textdiagnose.
+- `Admin: Aktionen` und `Admin: Diagnose` pruefen IDs und Argumenttypen client- und serverseitig. Der Server erhaelt keine frei zusammengesetzten Minecraft-Befehle; er fuehrt nur explizit erlaubte Aktionen aus. Ab v0.8.8 werden echte begrenzte Befehlsrueckmeldungen im Diagnosebericht dargestellt. Keine Ausgabe bleibt ausdrücklich als fehlende Detailantwort erkennbar.
 
 ## v0.8.5 – HUD-Drag-and-drop und Admin-UX
 

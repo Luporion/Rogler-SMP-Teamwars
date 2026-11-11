@@ -15,7 +15,7 @@ policy=(r/'core/src/main/java/dev/rogler/teamwars/core/ui/AdminActionPolicy.java
 assert 'adminview' in service and 'adminrun' in service and 'cas' in service
 assert 'AdminActionPolicy.command(request.key(),request.value())' in service
 assert 'ControlCenterPolicy.allowed(permission,field)' in service
-assert 'withSuppressedOutput()' in service
+assert 'withSource(capture)' in service
 assert 'RoglerTeamWarsMod.assignmentFor(p)' in admin
 assert 'viewer.createCommandSourceStack().hasPermission(2)' in admin
 assert 'BaseCoreSavedData.get(' in admin and 'RaidSavedData.get(' in admin
@@ -29,5 +29,5 @@ assert 'readUtf(96)' in request and 'readUtf(180)' in proto
 assert 'getChunk(' not in admin and 'getBlockState(' not in admin
 assert 'sendCommand("teamwars admin "' not in screen
 assert 'new ControlCenterAdminPayload' in admin
-assert 'registrar("3")' in network
+assert 'registrar("4")' in network
 print('v0.8.4 UI admin snapshot, allowlist, compare-and-set, audit and privacy guards: OK')

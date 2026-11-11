@@ -7,7 +7,7 @@ read=lambda p: (pkg/p).read_text()
 net=read('map/TeamIntelNetwork.java')
 assert 'playToServer(WaypointMutationPayload.TYPE' in net
 assert 'playToClient(WaypointSnapshotPayload.TYPE' in net
-assert 'registrar("3")' in net
+assert 'registrar("4")' in net
 srv=read('map/TeamWaypointService.java')
 assert 'FTB.partyFor(self)' in srv and 'party.members().contains(self)' in srv
 assert 'FTB.partyFor' not in ''  # noop for linter

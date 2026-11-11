@@ -70,3 +70,12 @@ python3 scripts/test-v085-hud-screen.py
 python3 scripts/check-v083-safety.py
 python3 scripts/check-mod-version.py
 python3 scripts/test-core-kinetic-save.py
+
+# v0.8.8: bounded diagnostic authority and real optional FTB reflection reader.
+java -ea -cp build/classes dev.rogler.teamwars.core.ui.DiagnosticPolicyTests
+javac --release 21 -encoding UTF-8 -cp build/classes -d build/classes \
+  mod-neoforge/src/main/java/dev/rogler/teamwars/neoforge/protection/FtbChunkStatusReader.java \
+  mod-neoforge/src/test/java/dev/rogler/teamwars/neoforge/protection/FtbChunkStatusReaderTests.java
+java -ea -cp build/classes dev.rogler.teamwars.neoforge.protection.FtbChunkStatusReaderTests
+python3 scripts/check-v088-diagnostics.py
+python3 scripts/test-v088-reports.py

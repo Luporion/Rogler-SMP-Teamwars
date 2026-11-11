@@ -1,0 +1,61 @@
+## Zusätzliche v0.8.7-Abnahmefälle
+
+| Funktion | Lokale Prüfung | Gameplay-/CI-Gate |
+|---|---|---|
+| Team-Exploration inkrementell | `TeamMapIncrementalTests` mit 30k Chunks + History Overflow | No privacy regression after team change; JFR compare before/after |
+| FTB-Claim-Audit | Statischer 6000-Tick-Guard, unverändertes Logging | Zwei Teams mit je neun Claims, Selbstheilung nach Unclaim (bis 5 Min), keine unerwünschten Claims |
+| Eigene FTB-Claim-Karte | Gleiche Team-UUID, FTB 2101.1.22 API-Signatur für `syncChunksToPlayer` geprüft | NeoForge/FTB 2101.1.23, server-/clientseitige Private-Claims, OP-Kommandofeedback |
+| Snapshot-Fehlerfall | Dirty-Counter wird nach Future-Fehler wieder übernommen | DEV-I/O-Fehler, Backup, keine Datensatzeinbußen |
+| v0.8.6 Core-Transporttimer | Alte Regressionen weiterhin grün | Enderchest/Logout/Shutdown auf Weltbackup testen |
+
+# Testmatrix – verbindliche Release-Gates
+
+**Stand v0.8.5; Spalten niemals vermischen:** `Regeltest` (Java), `Build` (NeoForge CI), `Laufzeit` (Minecraft DEV mit realen Mods) und `Produktiv` (nach Freigabe). Stand der vorhandenen Evidenz: [PROJECT_STATE.md](PROJECT_STATE.md). Historischer Stand im [Archiv](archive/legacy/TEST_MATRIX_before_cleanup_2026-10-22.md).
+
+| Bereich / Akzeptanzfall | Automatisierte Tests | Minecraft-DEV-Nachweis | Freigabegate |
+|---|---|---|---|
+| v0.8.5 HUD-Drag-and-drop | 220 Geometry-/Inverse-Java-Checks + statische Local-Only-Pruefung | Offen | Alle Anker, Drag, Persistenz, Cancel/ESC, GUI-Scale, keine privaten Serverpakete |
+| v0.8.5 Teamdetails/Action-Suche | AdminActionPolicy 91 Checks + statische v0.8.5-Guards | Offen | OP2/OP4/Nicht-OP, Team-UUID-Autoritaet, sichere Button-Bestaetigungen, Filter |
+| v0.8.5 Konfig-Entwuerfe | CAS- und UI-Strukturtests | Offen | Unbestaetigte Eingabe + passives Update, CAS-Konflikt, Neustart |
+| CI-Abhängigkeiten/Registrate SHA-256 | Bootstrap-Test vorhanden | N/A | Bootstrap und `compileJava` grün |
+| v0.8.4 Admin Teams/Cores | 91 Admin-Action-Policychecks + statische Snapshot-Gates | Offen | Nur OP2+ sieht Team-UUID/Koordinaten, valide Team-Auswahl, keine Chunk-Ladung |
+| v0.8.4 Raid-Steuerung | Allowlist und Range-Checks | Offen | OP2 denied, OP4 mit Confirmation, echte Raid-Fenster, Restart/Teamwechsel |
+| v0.8.4 UI-Status/Audit | Netzwerk-Gates, begrenzte Pages und Loggröße | Offen | Server-Snapshot, Log-Rotation, OP2/Nicht-OP, Diagnoserueckgaben |
+| v0.8.4 CAS-Einstellungen | Serverseitige compare-and-set/Combine-Pruefung | Offen | Zwei konkurrierende OPs, Stale-Wert muss verweigert werden, Restart-Persistenz |
+| v0.8.2 UI/Keybind `/roglerui` | ControlCenterPolicyTests 107 Checks + statische Privacy-Guards | Noch offen | OP2/OP4/Nicht-OP, O-Taste, unterschiedliche GUI-Skalierungen |
+| Live-Settings/Persistenz | Server-Schema + Property-Validation, NeoForge-Integration offen | Noch offen | 24 Werte, ungültige Kreuzkombinationen, Restart, Audit, FTB Limit-Hinweis |
+| Admin-UI Aktionen | Whitelist-Pfade + Servercommand-Permissions | Noch offen | Grace, Raid, Core-Recovery, Repair-Confirm/OP4, Chat-Feedback |
+| Minecraft Start / Join | Compiler/Packet-Guards alleine unzureichend | v0.7.4 Join bestätigt; **v0.8.1 offen** | 2 Spieler, Serverlog ohne Encoder/Mixin-Ausnahmen |
+| FTB Party-Beitritt/Austritt/OP | Regeltests vorhanden | Unvollständig | Auch OP keine fremden Marker/Koordinaten |
+| FTB Long-Range / Claim-Marker | Konfiguration prüfbar | Offen | Gegner mit aktueller FTB-Sichtbarkeit und anderen HUDs unsichtbar |
+| HUD aus per Default; Respawn-/Worldspawn-/Basisdistanz | v0.7.5 12 Policychecks | Offen | Clientmenü, Relog, Dimension, keine Chatüberlagerung |
+| Xaero Team-/Coremarker | v0.7.5 Quellcode vorhanden | Offen | Minimap und World Map, Keine Fremdteams |
+| Waypoint Privatimport FTB→Xaero, Xaero→FTB | v0.7.6 14 Policychecks inkl. Sharing | Offen | Erstellen nur fehlender Punkte, keine Duplikate, Backup-/Reboot-Persistenz |
+| v0.7.7 Privat-Abgleich/Konflikte | 27 neue Policychecks und statische API-Guards | Offen | Vorschau read-only, korrektes Dimension-Gating, Token bei Änderung ungültig, keine unautorisierten Löschungen |
+| v0.8.0 persistente private Wegpunkt-Links | 29 Link- und 10 Journalprüfungen plus Privacy-Guards | Offen | Verknüpfen, Client-Neustart, eindeutige einseitige Änderung mit Token, keine Wiederherstellung gelöschter Links, defektes Journal blockiert Import |
+| v0.8.1 Move/Delete/Auto-Metadaten | Neue 14 Policychecks, statische Schutzchecks | Offen | FTB→Xaero / Xaero→FTB, stale Token, Ambiguität, defektes Journal, Persistenz nach Reconnect; Auto nur Name/Farbe, niemals Delete/Move |
+| Individuelles Teilen/Widerrufen, Teamaustritt | Team-Scope-/Ownership-Tests | Offen | Anzeige A, keine B, nach Widerruf/Wechsel sofort weg |
+| Geteilte Gelände-Erkundung und Cache-Widerruf | Union/Revocation-P0-Tests | **Funktion nicht fertig** | Nicht als umgesetzt markieren |
+| Core platzieren/transportieren/retten | Java-/Ledger-Tests | Teilweise | 1h, Außenrand, Lava, Escrow, Reload, Inventar voll |
+| v0.8.6 Container-/Enderchest-Timer | TransportClock-Tests, alle-ISSUED-/Save-/Place-Guards | Noch offen | Online/Offline, Enderchest, andere Container, Server-Neustart, Ablauf -> ESCROW, alter Token unplatzierbar, Recovery, 2 Spieler |
+| Claims/CoreGuard, Sprengstoffe/Sable | Regel-/Guard-Tests | Lücken | Raid-/Explosionstest inkl. anderen Mods und Weltbackup |
+| Raids und Kriegspunkte | Policytests | Nicht umfassend | Einmalige Punkte, Grace, Offline-Schutz, Ersatzcore |
+| Create FE/Kinetik/AE2/Sophisticated | Teilfunktionstests | Integration ungeprüft | Kein unerlaubter Energie- oder Inventarzugriff |
+| Chunkloading/Performance | Quoten-/Guard-Regeln | Lasttests offen | 8–12 Spieler, Flug/Chunkgeneration TPS/MSPT/Spark messen |
+
+## Nachweisvorlage für jedes Release
+
+```text
+Version / Branch / Commit:
+Modpack- und Loader-Versionen:
+Core-Regeltests (Befehl + Ergebnis):
+NeoForge Actions (Run-ID + Ergebnis):
+Dedicated-Server Join (Log-Zeitstempel):
+Client A (Team, OP): / Client B (Team):
+Gameplaytestfälle mit Screenshots/Logs:
+Fehler/Regressionsrisiken:
+Backup-/Rollback-Stand:
+Freigabe (DEV / Produktion / gesperrt):
+```
+
+Bei relevanten neuen Mod-JARs API-Signaturen an den tatsächlich installierten Versionen erneut prüfen. Keine produktive Freigabe durch einen reinen `git am`-/Java-Test.

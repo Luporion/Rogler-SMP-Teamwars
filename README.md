@@ -2,7 +2,7 @@
 
 Minecraft **1.21.1 · NeoForge 21.1.249** — eigener TeamWars-Mod für ein teamorientiertes Rogler-SMP.
 
-> **Entwicklungsstand v0.8.7 (Quellcodekandidat):** gezielte Performance- und Stabilitätskorrekturen nach der Serverdiagnose vom 9.11.2026. Team-Erkundung wird für stabile FTB-Mitgliedschaften inkrementell abgeglichen statt vollständig neu aufgebaut; der FTB-Auto-Claim-Audit läuft alle fünf Minuten statt jede Minute und protokolliert unveränderte Ergebnisse nur einmal. Fehlgeschlagene Exploration-Snapshots behalten ausstehende Änderungen. Ein expliziter Admin-Claim-Sync aktualisiert jetzt zusätzlich die FTB-Claim-Ansicht **des berechtigten Spielers** (FTB-API, kein garantierter Client-Bugfix). v0.8.6 ist am 9.11.2026 in CI erfolgreich gebaut worden (P0 `42692408480`, NeoForge `42692408891`, Commit `cc5a5b86`); v0.8.7 benötigt eigenen NeoForge-Build und Minecraft-Laufzeittest. Keine neuen Pflichtmods, kein Save-Schemawechsel. [Release](docs/releases/v0.8.7.md) · [FTB-Claim-Karten-Guide](docs/guides/FTB_CLAIM_MAP_v0.8.7.md) · [Status](docs/PROJECT_STATE.md).
+> **Entwicklungsstand v0.8.8:** autorisierte Claim-/Chunkloading-Berichte im bestehenden Control Center, FTB-Quoten soweit verlässlich lesbar, begrenzte Corezonen-Abfrage ohne Chunkladen und tatsächliche Admin-Befehlsrückmeldungen. v0.8.7 ist erfolgreich gebaut/gestartet; der Nutzer bestätigt Claims und Chunkloading-Markierungen auf beiden Karten. Keine neuen Pflichtmods oder Save-Schemaänderungen. **Client und Server gemeinsam aktualisieren: Netzwerkprotokoll 4.** [Release](docs/releases/v0.8.8.md) · [Diagnoseguide](docs/guides/CLAIM_DIAGNOSTICS_v0.8.8.md) · [Status](docs/PROJECT_STATE.md).
 
 ## Hier beginnen
 
@@ -34,4 +34,4 @@ Minecraft **1.21.1 · NeoForge 21.1.249** — eigener TeamWars-Mod für ein team
 
 `PATCH.cmd` nur **einmal** pro neuem Git-Update-Patch und **nur auf dem angegebenen Ausgangsbranch** ausführen. Ein bereits vorhandener Feature-Branch ist kein Grund, denselben Patch erneut anzuwenden. Ein grüner CI-Build ersetzt keinen Test mit einem Dedicated Server und mehreren Clients.
 
-Die ältere Versionsdokumentation und die ursprüngliche ausführliche README sind unverändert unter [Archiv](docs/archive/legacy/README_before_cleanup_2026-10-22.md) zugänglich. Diese Version ändert kein Server-SavedData-Schema und keine FTB-Team-/Core-Eigentumsdaten; die neuen privaten Wegpunktaktionen sind vor produktiver Nutzung im DEV-Profil zu testen.
+Die ältere Versionsdokumentation und die ursprüngliche ausführliche README sind unverändert unter [Archiv](docs/archive/legacy/README_before_cleanup_2026-10-22.md) zugänglich. Diese Version ändert kein Server-SavedData-Schema und keine FTB-Team-/Core-Eigentumsdaten; neue v0.8.8-Berichte und der gemeinsame Client-/Server-Join sind nach der aktuellen Testmatrix zu prüfen.

@@ -21,7 +21,11 @@
 
 - [FTB-Claim-Map/Configs v0.8.7](guides/FTB_CLAIM_MAP_v0.8.7.md) – exakte zu prüfende Server-/Client-Pfade, Private-Claims und Sync.
 
+- [Claim-/Chunkloading-Diagnose v0.8.8](guides/CLAIM_DIAGNOSTICS_v0.8.8.md) – eigene/OP-Berichte, Grenzen und FTB-Statussemantik.
+
 ## Release-, Planungs- und Forschungsunterlagen
+
+- [v0.8.8 Release](releases/v0.8.8.md) – begrenzte Statusseiten und tatsächliche Befehlsrückmeldungen.
 
 - [v0.8.7 Release](releases/v0.8.7.md) – Team-Exploration inkrementell, Claim-Audit/Client-Resync, fehlgeschlagene Snapshots.
 - [v0.8.6 Release](releases/v0.8.6.md) – serverseitiger Core-Transporttimer unabhängig vom Lagerort.

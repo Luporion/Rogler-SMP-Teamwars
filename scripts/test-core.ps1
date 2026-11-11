@@ -137,3 +137,32 @@ if ($LASTEXITCODE -ne 0) { throw 'Create kinetic serialization stub tests failed
 
 & python scripts/check-v086-core-timer.py
 if ($LASTEXITCODE -ne 0) { throw "transport timer integration test failed: $LASTEXITCODE" }
+
+# Keep Windows VERIFY aligned with the existing CI regression coverage.
+foreach ($test in @(
+  'dev.rogler.teamwars.core.TeamMapIncrementalTests',
+  'dev.rogler.teamwars.core.HudPositionPolicyTests',
+  'dev.rogler.teamwars.core.ui.AdminActionPolicyTests',
+  'dev.rogler.teamwars.core.ui.DiagnosticPolicyTests'
+)) {
+  & java -ea -cp build/classes $test
+  if ($LASTEXITCODE -ne 0) { throw "$test failed" }
+}
+& javac --release 21 -encoding UTF-8 -cp build/classes -d build/classes `
+  mod-neoforge/src/main/java/dev/rogler/teamwars/neoforge/protection/FtbChunkStatusReader.java `
+  mod-neoforge/src/test/java/dev/rogler/teamwars/neoforge/protection/FtbChunkStatusReaderTests.java
+if ($LASTEXITCODE -ne 0) { throw 'FTB diagnostics adapter compile failed' }
+& java -ea -cp build/classes dev.rogler.teamwars.neoforge.protection.FtbChunkStatusReaderTests
+if ($LASTEXITCODE -ne 0) { throw 'FTB diagnostics adapter tests failed' }
+foreach ($guard in @(
+  'scripts/check-ftb-xaero-compat.py',
+  'scripts/check-v084-control-center.py',
+  'scripts/check-v085-ui.py',
+  'scripts/check-v087-performance.py',
+  'scripts/check-v088-diagnostics.py',
+  'scripts/test-v085-hud-screen.py',
+  'scripts/test-v088-reports.py'
+)) {
+  & python $guard
+  if ($LASTEXITCODE -ne 0) { throw "$guard failed" }
+}
