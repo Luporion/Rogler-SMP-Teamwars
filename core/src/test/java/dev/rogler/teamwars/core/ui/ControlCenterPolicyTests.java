@@ -5,7 +5,7 @@ public final class ControlCenterPolicyTests {
     static void yes(boolean result){if(!result)throw new AssertionError("Check " + checks);checks++;}
     static void reject(Runnable work){boolean threw=false;try{work.run();}catch(IllegalArgumentException ok){threw=true;}yes(threw);}
     public static void main(String[] args){
-        yes(ControlCenterPolicy.FIELDS.size()==24);
+        yes(ControlCenterPolicy.FIELDS.size()==25);
         for(var field:ControlCenterPolicy.FIELDS){
             yes(ControlCenterPolicy.require(field.group()+"."+field.key())==field);
             yes(ControlCenterPolicy.allowed(4,field));
@@ -29,7 +29,11 @@ public final class ControlCenterPolicyTests {
         reject(()->ControlCenterPolicy.require("../../config"));
         reject(()->ControlCenterPolicy.require("teams.."));
         yes(ControlCenterPolicy.sensitive(ControlCenterPolicy.require("protection.base_guard_enabled")));
-        yes(!ControlCenterPolicy.sensitive(ControlCenterPolicy.require("teams.max_parties")));
+        for(String key : new String[]{"max_parties","max_team_members","enforce_team_limits"}) {
+            var field=ControlCenterPolicy.require("teams."+key);
+            yes(ControlCenterPolicy.sensitive(field));
+            yes(!ControlCenterPolicy.allowed(2,field));
+        }
         System.out.println("v0.8.2 ControlCenterPolicyTests: "+checks+" checks OK");
     }
 }

@@ -7,9 +7,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 
-/** Server-world-specific settings. FTB max_party_size must be configured separately. */
+/** Server-world-specific settings. FTB retains its independent max_party_size rule. */
 public record TeamWarsSettings(int maxTeamMembers, int maxParties, int refreshIntervalTicks,
-                               boolean nametagsForTeammatesOnly, boolean friendlyFire) {
+                               boolean nametagsForTeammatesOnly, boolean friendlyFire, boolean enforceTeamLimits) {
+    public TeamWarsSettings(int maxTeamMembers, int maxParties, int refreshIntervalTicks,
+                            boolean nametagsForTeammatesOnly, boolean friendlyFire) {
+        this(maxTeamMembers, maxParties, refreshIntervalTicks, nametagsForTeammatesOnly, friendlyFire, false);
+    }
     public static final TeamWarsSettings RECOMMENDED = new TeamWarsSettings(4,4,20,true,false);
 
     public TeamWarsSettings {
@@ -28,8 +32,9 @@ public record TeamWarsSettings(int maxTeamMembers, int maxParties, int refreshIn
             defaults.setProperty("refresh_interval_ticks", "20");
             defaults.setProperty("nametags_for_teammates_only", "true");
             defaults.setProperty("friendly_fire", "false");
+            defaults.setProperty("enforce_team_limits", "false");
             try (OutputStream out = Files.newOutputStream(file)) {
-                defaults.store(out, "Rogler TeamWars v0.1.0. FTB Teams is the membership authority. Change /ftbteams max_party_size separately.");
+                defaults.store(out, "Rogler Core. Enable enforce_team_limits to apply the Core party limits.");
             }
         }
         Properties properties = new Properties();
@@ -40,7 +45,8 @@ public record TeamWarsSettings(int maxTeamMembers, int maxParties, int refreshIn
                 Integer.parseInt(properties.getProperty("max_parties", "4")),
                 Integer.parseInt(properties.getProperty("refresh_interval_ticks", "20")),
                 parseBool(properties.getProperty("nametags_for_teammates_only", "true")),
-                parseBool(properties.getProperty("friendly_fire", "false")));
+                parseBool(properties.getProperty("friendly_fire", "false")),
+                parseBool(properties.getProperty("enforce_team_limits", "false")));
         } catch (IllegalArgumentException ex) {
             throw new IOException("Invalid TeamWars config: " + ex.getMessage(), ex);
         }

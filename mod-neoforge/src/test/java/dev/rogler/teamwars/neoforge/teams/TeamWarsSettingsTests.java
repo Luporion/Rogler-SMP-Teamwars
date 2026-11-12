@@ -18,12 +18,17 @@ public final class TeamWarsSettingsTests {
             var loaded = TeamWarsSettings.load(file);
             check(Files.exists(file), "creates world-specific config");
             check(loaded.maxTeamMembers() == 4, "default max 4");
+            check(!loaded.enforceTeamLimits(), "default limits disabled");
             check(loaded.refreshIntervalTicks() == 20, "default 1 second refresh");
             check(loaded.nametagsForTeammatesOnly(), "default names are private");
             check(!loaded.friendlyFire(), "default no friendly fire");
             Files.writeString(file, "max_team_members=8\nmax_parties=4\nrefresh_interval_ticks=40\nnametags_for_teammates_only=true\nfriendly_fire=true\n");
             var custom = TeamWarsSettings.load(file);
             check(custom.maxTeamMembers()==8 && custom.friendlyFire(), "valid override");
+            check(!custom.enforceTeamLimits(), "old config does not activate limits");
+            Files.writeString(file, "enforce_team_limits=true\nmax_team_members=2\n");
+            var enforced = TeamWarsSettings.load(file);
+            check(enforced.enforceTeamLimits() && enforced.maxTeamMembers()==2, "explicit limit activation");
             Files.writeString(file, "max_team_members=-5\n");
             boolean refused = false;
             try { TeamWarsSettings.load(file); } catch(IOException expected) { refused = true; }

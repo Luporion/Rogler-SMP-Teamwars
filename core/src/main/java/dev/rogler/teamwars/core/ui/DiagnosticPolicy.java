@@ -14,14 +14,16 @@ public final class DiagnosticPolicy {
         }
     }
     public record Request(String kind,UUID target,int offset,int limit) {}
+    public static boolean isOwn(String kind) { return "own".equals(kind) || "team".equals(kind); }
+    public static boolean isTargeted(String kind) { return "claims".equals(kind) || "teamadm".equals(kind); }
     public static Request parse(String kind,String value,int permission,UUID ownTeam) {
         if(kind==null || value==null || value.length()>96)throw new IllegalArgumentException("Ungueltige Diagnose");
-        if(!List.of("own","claims","action").contains(kind))throw new IllegalArgumentException("Unbekannte Diagnose");
-        if(!kind.equals("own") && permission<2)throw new IllegalArgumentException("Adminrechte erforderlich");
+        if(!List.of("own","claims","action","team","teamadm").contains(kind))throw new IllegalArgumentException("Unbekannte Diagnose");
+        if(!isOwn(kind) && permission<2)throw new IllegalArgumentException("Adminrechte erforderlich");
         String[] parts=value.split("\\|",-1);
-        int expected=kind.equals("claims")?3:2;
+        int expected=isTargeted(kind)?3:2;
         if(parts.length!=expected)throw new IllegalArgumentException("Ungueltige Diagnoseparameter");
-        UUID target=kind.equals("claims")?UUID.fromString(parts[0]):kind.equals("own")?ownTeam:null;
+        UUID target=isTargeted(kind)?UUID.fromString(parts[0]):isOwn(kind)?ownTeam:null;
         int offset=Integer.parseInt(parts[expected-2]),limit=Integer.parseInt(parts[expected-1]);
         if(offset<0 || offset>=MAX_ROWS || limit<1 || limit>MAX_PAGE)
             throw new IllegalArgumentException("Ungueltige Diagnoseseite");

@@ -41,7 +41,10 @@ import java.nio.file.Path;
 @Mod(RoglerTeamWarsMod.MOD_ID)
 public final class RoglerTeamWarsMod {
     public static final String MOD_ID = "roglerteamwars";
-    public static final String VERSION = "0.8.8";
+    public static final String VERSION = "0.8.9";
+    private static final java.util.concurrent.atomic.AtomicBoolean TEAM_CHANGED = new java.util.concurrent.atomic.AtomicBoolean();
+
+    public static void teamMembershipChanged() { TEAM_CHANGED.set(true); }
     private static RoglerTeamWarsMod INSTANCE;
     private BaseCoreConfig baseConfig = BaseCoreConfig.DEFAULT;
     private dev.rogler.teamwars.neoforge.base.CorePowerConfig powerConfig = dev.rogler.teamwars.neoforge.base.CorePowerConfig.DEFAULT;
@@ -107,6 +110,8 @@ public final class RoglerTeamWarsMod {
         dev.rogler.teamwars.neoforge.map.TeamIntelService.reset();
         dev.rogler.teamwars.neoforge.map.TeamWaypointService.clear();
         dev.rogler.teamwars.neoforge.ui.ControlCenterService.clear();
+        dev.rogler.teamwars.neoforge.teams.FtbTeamManagement.clear();
+        TEAM_CHANGED.set(false);
         dev.rogler.teamwars.neoforge.compat.SableCompatibilityService.initialize(activeServer);
         dev.rogler.teamwars.neoforge.compat.SableRemovedSublevelGuard.initialize(activeServer);
         reloadSettings(activeServer);
@@ -135,6 +140,8 @@ public final class RoglerTeamWarsMod {
         dev.rogler.teamwars.neoforge.map.TeamIntelService.reset();
         dev.rogler.teamwars.neoforge.map.TeamWaypointService.clear();
         dev.rogler.teamwars.neoforge.ui.ControlCenterService.clear();
+        dev.rogler.teamwars.neoforge.teams.FtbTeamManagement.clear();
+        TEAM_CHANGED.set(false);
         dev.rogler.teamwars.neoforge.protection.BaseGuardService.resetRuntimeState();
         dev.rogler.teamwars.neoforge.compat.WariumRecoveryGuard.shutdown();
         dev.rogler.teamwars.neoforge.compat.SableCompatibilityService.shutdown();
@@ -158,17 +165,20 @@ public final class RoglerTeamWarsMod {
             dev.rogler.teamwars.neoforge.map.TeamIntelService.logout(player.getUUID());
             dev.rogler.teamwars.neoforge.map.TeamWaypointService.logout(player.getUUID());
             dev.rogler.teamwars.neoforge.ui.ControlCenterService.logout(player.getUUID());
+            dev.rogler.teamwars.neoforge.teams.FtbTeamManagement.logout(player.getUUID());
         }
     }
 
     @SubscribeEvent
     public void tick(ServerTickEvent.Post event) {
         if (activeServer == null) return;
-        dev.rogler.teamwars.neoforge.map.ExplorationService.tick(activeServer);
-        dev.rogler.teamwars.neoforge.map.TeamIntelService.tick(activeServer);
-        dev.rogler.teamwars.neoforge.map.TeamWaypointService.tick(activeServer);
+        boolean teamChanged = TEAM_CHANGED.getAndSet(false);
+        dev.rogler.teamwars.neoforge.map.ExplorationService.tick(activeServer, teamChanged);
+        dev.rogler.teamwars.neoforge.map.TeamIntelService.tick(activeServer, teamChanged);
+        dev.rogler.teamwars.neoforge.map.TeamWaypointService.tick(activeServer, teamChanged);
+        if (teamChanged) dev.rogler.teamwars.neoforge.ui.ControlCenterReportService.invalidateChangedTeams(activeServer);
         dev.rogler.teamwars.neoforge.base.CoreInfrastructureService.tick(activeServer);
-        if (activeServer.getTickCount() % settings.refreshIntervalTicks() == 0)
+        if (teamChanged || activeServer.getTickCount() % settings.refreshIntervalTicks() == 0)
             scoreboard.refresh(activeServer, settings);
         if (activeServer.getTickCount() % 20 == 0)
             BaseCoreService.oneSecond(activeServer);
@@ -278,6 +288,7 @@ public final class RoglerTeamWarsMod {
                 .then(Commands.literal("session").executes(ctx -> dev.rogler.teamwars.neoforge.map.ExplorationService.sessionStatus(ctx.getSource())))
                 .executes(ctx -> dev.rogler.teamwars.neoforge.map.ExplorationService.status(ctx.getSource())))
             .then(Commands.literal("team")
+                .then(dev.rogler.teamwars.neoforge.teams.FtbTeamManagement.command())
                 .executes(ctx -> ownTeam(ctx.getSource()))
                 .then(Commands.literal("info").executes(ctx -> ownTeam(ctx.getSource())))
                 .then(Commands.literal("help").executes(ctx -> teamHelp(ctx.getSource()))))
@@ -500,8 +511,8 @@ public final class RoglerTeamWarsMod {
     }
 
     private int teamHelp(net.minecraft.commands.CommandSourceStack source) {
-        source.sendSuccess(() -> Component.literal("Manage memberships/invites using FTB Teams GUI or /ftbteams party. "
-            + "Rogler Core mirrors FTB and applies nametag rules."), false);
+        source.sendSuccess(() -> Component.literal("Teamverwaltung: /roglerui → Mein Team → Teamverwaltung "
+            + "oder /teamwars team manage. FTB Teams verwaltet die Mitgliedschaften."), false);
         return Command.SINGLE_SUCCESS;
     }
 }

@@ -43,8 +43,9 @@ public final class ControlCenterPolicy {
 
     // All implemented Rogler Core *.properties settings; unrelated FTB mod settings stay FTB-owned.
     public static final List<Field> FIELDS = List.of(
-        new Field("teams", "max_team_members", "Teamgroesse (Anzeige)", 1, 64, false, 2, "FTB max_party_size muss separat geaendert werden"),
-        new Field("teams", "max_parties", "Teamanzahl (Anzeige)", 2, 32, false, 2, "Der Wert allein erzwingt kein FTB-Erstellungslimit"),
+        new Field("teams", "enforce_team_limits", "Core-Teamlimits aktiv", 0, 0, true, 4, "Begrenzt neue Teams und Beitritte. Bestehende Mitglieder bleiben."),
+        new Field("teams", "max_team_members", "Max. Mitglieder", 1, 64, false, 4, "Gilt bei aktiven Core-Teamlimits. Das FTB-Limit gilt zusätzlich."),
+        new Field("teams", "max_parties", "Max. Party-Teams", 2, 32, false, 4, "Gilt bei aktiven Core-Teamlimits. Zählt auch Offline-Teams."),
         new Field("teams", "refresh_interval_ticks", "Team-Sync-Ticks", 1, 1200, false, 2, "Interval fuer Scoreboard-Synchronisierung"),
         new Field("teams", "nametags_for_teammates_only", "Nur Team-Nametags", 0, 0, true, 2, "Fremde HUD-Mods separat pruefen"),
         new Field("teams", "friendly_fire", "Friendly Fire", 0, 0, true, 2, "FTB-/Vanilla-PvP-Regeln gesondert pruefen"),
@@ -82,7 +83,8 @@ public final class ControlCenterPolicy {
     }
     public static boolean allowed(int permission, Field field) { return permission >= field.permission(); }
     public static boolean sensitive(Field field) {
-        return field.group().equals("warium") || field.group().equals("lifecycle") ||
+        return field.key().equals("enforce_team_limits") || field.key().equals("max_team_members")
+            || field.key().equals("max_parties") || field.group().equals("warium") || field.group().equals("lifecycle") ||
             (field.group().equals("protection") &&
             (field.key().equals("base_guard_enabled") || field.key().equals("raids_enabled") ||
              field.key().equals("auto_ftb_claims") || field.key().equals("claim_radius_chunks")));

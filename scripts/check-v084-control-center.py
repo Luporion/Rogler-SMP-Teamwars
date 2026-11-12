@@ -29,5 +29,5 @@ assert 'readUtf(96)' in request and 'readUtf(180)' in proto
 assert 'getChunk(' not in admin and 'getBlockState(' not in admin
 assert 'sendCommand("teamwars admin "' not in screen
 assert 'new ControlCenterAdminPayload' in admin
-assert 'registrar("4")' in network
+assert 'registrar("5")' in network
 print('v0.8.4 UI admin snapshot, allowlist, compare-and-set, audit and privacy guards: OK')

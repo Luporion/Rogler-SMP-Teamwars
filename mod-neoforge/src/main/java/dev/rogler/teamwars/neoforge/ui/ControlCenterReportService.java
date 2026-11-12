@@ -1,6 +1,8 @@
 package dev.rogler.teamwars.neoforge.ui;
 
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dev.rogler.teamwars.core.base.BaseCoreLedger;
+import dev.rogler.teamwars.neoforge.teams.FtbTeamManagement;
 import dev.rogler.teamwars.core.ui.DiagnosticPolicy;
 import dev.rogler.teamwars.neoforge.RoglerTeamWarsMod;
 import dev.rogler.teamwars.neoforge.base.BaseCoreSavedData;
@@ -54,21 +56,55 @@ public final class ControlCenterReportService {
         if(kind.equals("action")) {
             if(!same)throw new IllegalArgumentException("Keine Aktionsdetails vorhanden");
         }else if(request.offset()==0 || !same || viewer.getServer().getTickCount()-snapshot.tick()>200) {
-            snapshot=claims(viewer,kind,request.target());REPORTS.put(viewer.getUUID(),snapshot);
+            snapshot=kind.equals("team") || kind.equals("teamadm")
+                ? team(viewer,kind,request.target()) : claims(viewer,kind,request.target());
+            REPORTS.put(viewer.getUUID(),snapshot);
         }
         send(viewer,snapshot,request.offset(),request.limit());
         return "Diagnose aktualisiert";
     }
     private static void send(ServerPlayer viewer,Snapshot report,int offset,int limit) {
         // Recheck authority even for a previously cached/paginated report.
-        if(report==null || (!report.kind().equals("own") && permission(viewer)<2))
+        if(report==null || (!DiagnosticPolicy.isOwn(report.kind()) && permission(viewer)<2))
             throw new IllegalArgumentException("Diagnose nicht erlaubt");
-        if(report.kind().equals("own") && !Objects.equals(report.target(),ownTeam(viewer))) {
+        if(DiagnosticPolicy.isOwn(report.kind()) && !Objects.equals(report.target(),ownTeam(viewer))) {
             REPORTS.remove(viewer.getUUID());throw new IllegalArgumentException("Team hat sich geaendert; bitte aktualisieren");
         }
         PacketDistributor.sendToPlayer(viewer,new ControlCenterReportPayload(report.kind(),report.target(),report.title(),
             offset,report.rows().size(),report.tick(),DiagnosticPolicy.page(report.rows(),offset,limit)));
     }
+    private static Snapshot team(ServerPlayer viewer, String kind, UUID target) {
+        try {
+            List<DiagnosticPolicy.Row> rows=FtbTeamManagement.report(viewer,kind.equals("teamadm")?target:null);
+            return new Snapshot(kind,target,"Teamverwaltung",viewer.getServer().getTickCount(),rows);
+        } catch (CommandSyntaxException failure) {
+            throw new IllegalArgumentException(failure.getMessage(),failure);
+        }
+    }
+
+    public static void refreshOwnTeam(ServerPlayer viewer) {
+        try {
+            Snapshot updated=team(viewer,"team",ownTeam(viewer));
+            REPORTS.put(viewer.getUUID(),updated);
+            send(viewer,updated,0,DiagnosticPolicy.MAX_PAGE);
+        } catch (RuntimeException failure) {
+            // An already completed FTB operation remains successful even if its report fails.
+            REPORTS.remove(viewer.getUUID());
+            dev.rogler.teamwars.neoforge.teams.RoglerTeamWarsLogger.warn("Teambericht konnte nicht aktualisiert werden: "+failure.getMessage());
+        }
+    }
+
+    public static void invalidateChangedTeams(MinecraftServer server) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            Snapshot previous=REPORTS.get(player.getUUID());
+            if (previous==null || !DiagnosticPolicy.isOwn(previous.kind())) continue;
+            if (Objects.equals(previous.target(),ownTeam(player))) continue;
+            REPORTS.remove(player.getUUID());
+            PacketDistributor.sendToPlayer(player,new ControlCenterReportPayload(previous.kind(),null,
+                "Team geändert",0,0,server.getTickCount(),List.of()));
+        }
+    }
+
     public static String resyncOwn(ServerPlayer player) {
         throttle(LAST_RESYNC,player,40);
         UUID own=ownTeam(player);

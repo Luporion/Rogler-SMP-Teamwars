@@ -1,0 +1,8 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "compatibilityLevel": "JAVA_21",
+  "package": "dev.rogler.teamwars.neoforge.compat.ftbmanagement",
+  "mixins": ["PartyCreationMixin", "PartyMembershipMixin", "TeamChangeMixin"],
+  "injectors": {"defaultRequire": 1}
+}

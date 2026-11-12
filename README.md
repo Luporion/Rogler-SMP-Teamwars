@@ -2,7 +2,7 @@
 
 Minecraft **1.21.1 · NeoForge 21.1.249** — eigener TeamWars-Mod für ein teamorientiertes Rogler-SMP.
 
-> **Entwicklungsstand v0.8.8:** autorisierte Claim-/Chunkloading-Berichte im bestehenden Control Center, FTB-Quoten soweit verlässlich lesbar, begrenzte Corezonen-Abfrage ohne Chunkladen und tatsächliche Admin-Befehlsrückmeldungen. v0.8.7 ist erfolgreich gebaut/gestartet; der Nutzer bestätigt Claims und Chunkloading-Markierungen auf beiden Karten. Keine neuen Pflichtmods oder Save-Schemaänderungen. **Client und Server gemeinsam aktualisieren: Netzwerkprotokoll 4.** [Release](docs/releases/v0.8.8.md) · [Diagnoseguide](docs/guides/CLAIM_DIAGNOSTICS_v0.8.8.md) · [Status](docs/PROJECT_STATE.md).
+> **v0.8.9** ergänzt die FTB-Teamverwaltung im Control Center, passende Befehle und optional durchgesetzte Teamlimits. Client und Server verwenden Protokoll 5. [Release](docs/releases/v0.8.9.md) · [Status](docs/PROJECT_STATE.md).
 
 ## Hier beginnen
 
@@ -34,4 +34,4 @@ Minecraft **1.21.1 · NeoForge 21.1.249** — eigener TeamWars-Mod für ein team
 
 `PATCH.cmd` nur **einmal** pro neuem Git-Update-Patch und **nur auf dem angegebenen Ausgangsbranch** ausführen. Ein bereits vorhandener Feature-Branch ist kein Grund, denselben Patch erneut anzuwenden. Ein grüner CI-Build ersetzt keinen Test mit einem Dedicated Server und mehreren Clients.
 
-Die ältere Versionsdokumentation und die ursprüngliche ausführliche README sind unverändert unter [Archiv](docs/archive/legacy/README_before_cleanup_2026-10-22.md) zugänglich. Diese Version ändert kein Server-SavedData-Schema und keine FTB-Team-/Core-Eigentumsdaten; neue v0.8.8-Berichte und der gemeinsame Client-/Server-Join sind nach der aktuellen Testmatrix zu prüfen.
+Die ältere Versionsdokumentation und die ursprüngliche ausführliche README sind unverändert unter [Archiv](docs/archive/legacy/README_before_cleanup_2026-10-22.md) zugänglich. Diese Version ändert kein Server-SavedData-Schema und keine FTB-Team-/Core-Eigentumsdaten; die Abnahme erfolgt nach der aktuellen Testmatrix.

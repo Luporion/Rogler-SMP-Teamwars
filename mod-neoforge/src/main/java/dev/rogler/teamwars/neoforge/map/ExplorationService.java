@@ -66,15 +66,19 @@ public final class ExplorationService {
         }
     }
 
-    public static void tick(MinecraftServer server) {
-        if (!enabled || server.getTickCount() % 5 != 0) return;
+    public static void tick(MinecraftServer server, boolean teamChanged) {
+        if (!enabled) return;
+        if (server.getTickCount() % 5 != 0) {
+            if (teamChanged) reconcileSessions(server);
+            return;
+        }
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             ChunkKey position = ChunkKey.fromBlock(player.level().dimension().location().toString(), player.blockPosition().getX(), player.blockPosition().getZ());
             pending += trail.sample(player.getUUID(),position);
         }
         // Re-evaluate only on personal discovery changes or FTB membership changes.
         // This holds authorization state server-side but does NOT send Xaero textures.
-        if (server.getTickCount() % 40 == 0) reconcileSessions(server);
+        if (teamChanged || server.getTickCount() % 40 == 0) reconcileSessions(server);
         // Save at most once every 10 minutes, avoid writing every player movement.
         if (pending > 0 && server.getTickCount() % 12000 == 0) checkpoint();
     }

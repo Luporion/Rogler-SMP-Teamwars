@@ -1,6 +1,6 @@
-# Modanforderungen – Rogler Core v0.8.8
+# Modanforderungen – Rogler Core v0.8.9
 
-**Minecraft 1.21.1, NeoForge 21.1.249; Client und Server benötigen dieselbe Rogler-Core-Version 0.8.8.** Der neue Report-Payload verwendet Netzwerkprotokoll **4**. Ein gemischtes 0.8.7/0.8.8-Setup ist nicht vorgesehen.
+**Minecraft 1.21.1, NeoForge 21.1.249, Rogler Core 0.8.9 auf Client und Server.** Teamberichte verwenden Netzwerkprotokoll **5**. Die Team-Hooks wurden mit der FTB Teams NeoForge JAR 2101.1.11 getestet.
 
 Keine neuen Drittanbieter-Pflichtmods und keine Änderung bestehender Abhängigkeitsversionen durch dieses Release.
 

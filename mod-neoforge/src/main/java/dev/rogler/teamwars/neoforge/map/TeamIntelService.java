@@ -29,8 +29,8 @@ public final class TeamIntelService {
     public static void reset() { SEQUENCES.clear(); }
     public static void logout(UUID viewer) { SEQUENCES.remove(viewer); }
 
-    public static void tick(MinecraftServer server) {
-        if (server.getTickCount() % 40 != 0) return;
+    public static void tick(MinecraftServer server, boolean teamChanged) {
+        if (!teamChanged && server.getTickCount() % 40 != 0) return;
         var players=server.getPlayerList().getPlayers();
         if (players.isEmpty()) return;
         Map<UUID, TeamAssignmentPolicy.Party> verified=new HashMap<>();

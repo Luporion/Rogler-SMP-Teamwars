@@ -37,8 +37,8 @@ public final class TeamWaypointService {
             player.sendSystemMessage(Component.literal("[Rogler] Team-Wegpunkt "+(ok?(req.revoke()?"zurueckgezogen":"freigegeben"):"abgelehnt (Limit oder Berechtigung)")));
         });
     }
-    public static void tick(MinecraftServer server){
-        if(server.getTickCount()%20!=0)return;
+    public static void tick(MinecraftServer server, boolean teamChanged){
+        if(!teamChanged && server.getTickCount()%20!=0)return;
         var storage=TeamWaypointSavedData.get(server);
         Map<UUID,TeamAssignmentPolicy.Party> cache=new HashMap<>();
         // Each destination is evaluated independently. OP and public FTB modes do not bypass membership.

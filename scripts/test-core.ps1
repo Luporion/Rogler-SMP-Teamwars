@@ -122,6 +122,8 @@ if ($LASTEXITCODE -ne 0) { throw "WaypointLinkJournalTests failed: $LASTEXITCODE
 & python scripts/check-waypoint-link.py
 if ($LASTEXITCODE -ne 0) { throw "Waypoint link privacy guards failed: $LASTEXITCODE" }
 
+& java -ea -cp build/classes dev.rogler.teamwars.core.teams.TeamManagementPolicyTests
+if ($LASTEXITCODE -ne 0) { throw 'TeamManagementPolicyTests failed' }
 & java -ea -cp build/classes dev.rogler.teamwars.core.ui.ControlCenterPolicyTests
 if ($LASTEXITCODE -ne 0) { throw 'ControlCenterPolicyTests failed' }
 & python scripts/check-control-center.py

@@ -1,6 +1,15 @@
 # Rogler Core – aktueller Projektstatus
 
-Stand: **11. November 2026**. Aktueller Entwicklungsstand: **v0.8.8**, Basis: exaktes v0.8.7-Quellarchiv des Nutzers.
+Stand: **12. November 2026**. **v0.8.9** basiert auf dem erfolgreichen v0.8.8-Commit `dc4053c0`. Der Terminalexport zeigt erfolgreiche P0- und NeoForge-Workflows für v0.8.8.
+
+## v0.8.9
+
+- FTB-Teamverwaltung im Control Center und über `/teamwars team manage`. Teamleitung, Offiziere und Mitglieder erhalten ihre jeweiligen Aktionen. OP2 kann Mitglieder und Rollen anderer Teams einsehen, auch wenn kein Mitglied online ist.
+- OP4 kann die Core-Teamlimits aktivieren. FTB prüft die Grenzen bei Erstellung, Einladung und Beitritt. Eine Limitsenkung lässt bestehende Partys und Mitglieder bestehen.
+- Die FTB-Mitgliedschaftsänderung löst beim nächsten Server-Tick den Abgleich von Scoreboard, Core-Markern, Teamwegpunkten und Core-Erkundungsberechtigungen aus.
+- Client und Server verwenden **Protokoll 5**. Der lokale Dedicated-Server-Test mit FTB Teams 2101.1.11 bestätigt Start, Limits und Persistenz. Tests mit verbundenen Clients und dem vollständigen Rogler-Alpha-Pack stehen aus.
+
+[Release v0.8.9](releases/v0.8.9.md) · [Testmatrix](TEST_MATRIX.md)
 
 ## Bestätigte Ausgangsbasis v0.8.7
 
@@ -27,6 +36,6 @@ Build, automatisierte Prüfungen und Minecraft-Abnahme werden in [Release v0.8.8
 
 Ein eigener Core-Chunkloading-Adapter mit unabhängigen Quoten, echtes integriertes AE2-ME-Terminal/Drive und Sophisticated-Modulslots sind noch nicht implementiert. FE/Create-Basis und das Control Center sind vorhanden. FTB bleibt Claim-/Ticket-Autorität; FTB Teams bleibt Mitgliedschaftsquelle.
 
-Nächste Versionen: **0.8.9 Teamverwaltung**, **0.9.0 Kartenintegration mit vorhandenem XMMP konsolidieren**; danach Funk, Core-Ticketquoten und Technikmodule gemäß [Roadmap](ROADMAP.md).
+Nächste Version: **0.9.0 Kartenintegration mit vorhandenem XMMP konsolidieren**; danach Funk, Core-Ticketquoten und Technikmodule gemäß [Roadmap](ROADMAP.md).
 
 Historischer Dokumentstand: [Archiv vor 0.8.8](archive/legacy/PROJECT_STATE_before_v088_2026-11-11.md). Er enthält damalige offene Build-/Kartenpunkte und ist keine aktuelle Aufgabenliste.

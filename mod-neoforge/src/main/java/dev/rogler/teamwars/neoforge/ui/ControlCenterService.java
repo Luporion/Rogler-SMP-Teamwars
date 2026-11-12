@@ -1,6 +1,8 @@
 package dev.rogler.teamwars.neoforge.ui;
 
 import dev.rogler.teamwars.core.ui.ControlCenterPolicy;
+import dev.rogler.teamwars.core.teams.TeamManagementPolicy.Action;
+import dev.rogler.teamwars.neoforge.teams.FtbTeamManagement;
 import dev.rogler.teamwars.core.ui.AdminActionPolicy;
 import dev.rogler.teamwars.neoforge.RoglerTeamWarsMod;
 import dev.rogler.teamwars.neoforge.base.BaseCoreConfig;
@@ -53,6 +55,7 @@ public final class ControlCenterService {
         BaseCoreConfig base=RoglerTeamWarsMod.baseConfig();
         BaseProtectionConfig protection=RoglerTeamWarsMod.protectionConfig();
         CorePowerConfig power=RoglerTeamWarsMod.powerConfig();
+        result.put("teams.enforce_team_limits",Boolean.toString(teams.enforceTeamLimits()));
         result.put("teams.max_team_members",Integer.toString(teams.maxTeamMembers()));
         result.put("teams.max_parties",Integer.toString(teams.maxParties()));
         result.put("teams.refresh_interval_ticks",Integer.toString(teams.refreshIntervalTicks()));
@@ -92,7 +95,7 @@ public final class ControlCenterService {
         new TeamWarsSettings(
             parse(values,"teams.max_team_members"),parse(values,"teams.max_parties"),
             parse(values,"teams.refresh_interval_ticks"), bool(values,"teams.nametags_for_teammates_only"),
-            bool(values,"teams.friendly_fire"));n++;
+            bool(values,"teams.friendly_fire"),bool(values,"teams.enforce_team_limits"));n++;
         new BaseCoreConfig(parse(values,"base.min_radius"),parse(values,"base.max_radius"),parse(values,"base.carry_seconds"));n++;
         new BaseProtectionConfig(parse(values,"protection.claim_radius_chunks"),
             parse(values,"protection.new_team_grace_hours"),bool(values,"protection.auto_ftb_claims"),
@@ -132,6 +135,17 @@ public final class ControlCenterService {
             if(request.operation().equals("inspect")){
                 try {message=ControlCenterReportService.inspect(viewer,request.key(),request.value());}
                 catch(RuntimeException invalid){message="Diagnose abgelehnt: "+invalid.getMessage();}
+            }else if(request.operation().equals("teamaction")){
+                try {
+                    String[] args=request.value().split("\\|",-1);
+                    if(args.length!=2)throw new IllegalArgumentException("Ungültige Teamaktion");
+                    Action action=Action.valueOf(request.key());
+                    int result=FtbTeamManagement.execute(viewer,action,FtbTeamManagement.parseUuid(args[0]),args[1]);
+                    message=result>0?"Teamaktion ausgeführt":"Teamaktion ohne Änderung";
+                    ControlCenterReportService.refreshOwnTeam(viewer);
+                }catch(com.mojang.brigadier.exceptions.CommandSyntaxException | RuntimeException invalid){
+                    message="Teamaktion abgelehnt: "+invalid.getMessage();
+                }
             }else if(request.operation().equals("resyncown")){
                 try {
                     if(!request.key().isEmpty() || !request.value().isEmpty())throw new IllegalArgumentException("Unerwartete Parameter");

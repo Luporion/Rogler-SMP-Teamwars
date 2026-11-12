@@ -4,11 +4,11 @@ license="MIT"
 
 [[mods]]
 modId="roglerteamwars"
-version="0.8.8"
+version="0.8.9"
 displayName="Rogler Core"
 authors="Rogler Core contributors"
 description='''
-Rogler Core v0.8.8: server-authorized claim and chunkloading reports, bounded read-only FTB status and real administrative command feedback. Existing team, base core, Create, HUD and waypoint functions remain available. Client and server must both use v0.8.8 (network protocol 4). No SavedData migration or new third-party mod requirement.
+Rogler Core v0.8.9: FTB party management, role and roster views, and opt-in party and member limits. Client and server use network protocol 5.
 '''
 
 [[mixins]]
@@ -16,6 +16,9 @@ config="roglercore-sable-lifecycle.mixins.json"
 
 [[mixins]]
 config="roglercore-ftb-visibility.mixins.json"
+
+[[mixins]]
+config="roglercore-ftb-management.mixins.json"
 
 [[dependencies.roglerteamwars]]
 modId="neoforge"

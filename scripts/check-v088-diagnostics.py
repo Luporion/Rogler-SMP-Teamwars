@@ -11,11 +11,11 @@ client=read('ui/client/ControlCenterClient.java')
 screen=read('ui/client/ControlCenterScreen.java')
 payload=read('ui/ControlCenterReportPayload.java')
 ui=read('ui/ControlCenterService.java')
-assert 'registrar("4")' in network and 'ControlCenterReportPayload.STREAM_CODEC' in network
+assert 'registrar("5")' in network and 'ControlCenterReportPayload.STREAM_CODEC' in network
 assert 'party.members().contains(p.getUUID())' in service
 assert 'DiagnosticPolicy.parse(kind,value,permission(viewer),own)' in service
 assert 'Objects.equals(report.target(),ownTeam(viewer))' in service
-assert '!report.kind().equals("own") && permission(viewer)<2' in service
+assert '!DiagnosticPolicy.isOwn(report.kind()) && permission(viewer)<2' in service
 assert 'getChunkNow(x,z)!=null' in service and '.getChunk(' not in service and 'getBlockState(' not in service
 assert 'getOrCreateData' not in reader.split('public final class',1)[1]
 assert 'MAX_CLAIM_SCAN' in reader and 'MAX_TEAM_SCAN' in reader

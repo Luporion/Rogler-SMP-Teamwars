@@ -29,13 +29,13 @@ public final class ControlCenterClient {
     public static ControlCenterReportPayload reportData(){return reportData;}
     public static void onReport(ControlCenterReportPayload packet){
         if(Minecraft.getInstance().player==null)return;
-        if(!packet.kind().equals("own") && (latest==null || latest.permission()<2))return;
+        if(!dev.rogler.teamwars.core.ui.DiagnosticPolicy.isOwn(packet.kind()) && (latest==null || latest.permission()<2))return;
         reportData=packet;
         if(Minecraft.getInstance().screen instanceof ControlCenterScreen screen)screen.refreshReportData();
     }
     public static void requestReport(String kind,java.util.UUID target,int offset,int limit){
         reportData=null;
-        String value=(kind.equals("claims")?target+"|":"")+offset+"|"+limit;
+        String value=(dev.rogler.teamwars.core.ui.DiagnosticPolicy.isTargeted(kind)?target+"|":"")+offset+"|"+limit;
         request("inspect",kind,value);
     }
     public static void onAdminState(ControlCenterAdminPayload packet){
@@ -53,7 +53,7 @@ public final class ControlCenterClient {
         latest=packet;
         if(packet.permission()<2){
             adminData=null;
-            if(reportData!=null && !reportData.kind().equals("own"))reportData=null;
+            if(reportData!=null && !dev.rogler.teamwars.core.ui.DiagnosticPolicy.isOwn(reportData.kind()))reportData=null;
         }
         if(Minecraft.getInstance().screen instanceof ControlCenterScreen screen)screen.refreshState();
     }

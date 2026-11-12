@@ -73,6 +73,14 @@ public final class ControlCenterAdminService {
             var party=reader.partyFor(p.getUUID());
             if(party!=null && party.id().equals(id))members.put(id,party.members().size());
         }
+        try {
+            for(var party : dev.rogler.teamwars.neoforge.teams.FtbTeamManagement.parties()){
+                names.put(party.id(),party.name());
+                members.put(party.id(),Math.min(1000,party.members()));
+            }
+        } catch(com.mojang.brigadier.exceptions.CommandSyntaxException unavailable) {
+            // The existing online and saved Core rows remain usable during FTB API failure.
+        }
         var cfg=RoglerTeamWarsMod.baseConfig();
         Map<UUID,BaseCoreLedger.Entry> bases=new HashMap<>();
         for(var e:BaseCoreSavedData.get(server,cfg.zone(server),cfg.carrySeconds()).ledger().all())bases.put(e.teamId(),e);

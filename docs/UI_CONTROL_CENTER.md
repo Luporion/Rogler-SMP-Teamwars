@@ -1,6 +1,6 @@
 # Rogler Control Center – UI- und Admin-Handbuch
 
-**Aktuell v0.8.8:** Claims & Chunkloading für das eigene Team, OP-Teamdiagnose und echte Aktionsberichte. [Bedienung und Statusbedeutung](guides/CLAIM_DIAGNOSTICS_v0.8.8.md). Client und Server gemeinsam aktualisieren (Protokoll 4).
+**v0.8.9** verwendet Protokoll 5. Unter **Mein Team → Teamverwaltung** stehen Teamleitung, Rollen, Mitglieder und Einladungen. OP2 findet auch Offline-Teams unter **Admin: Teams/Cores → Mitglieder**. OP4 kann unter **Admin: Teams** die Core-Teamlimits einschalten. [Teamverwaltung](releases/v0.8.9.md).
 
 **O / `/roglerui` / `/roglerconfig`** oeffnen das Control Center. Bestehende `teamwars`-Befehle bleiben verfuegbar; das native Core-Inventar ist weiterhin separat am platzierten Core erreichbar.
 
@@ -41,7 +41,7 @@ Admin-Aktionen mit Ziel verwenden im ersten Feld **Spielernamen (z. B. Alex)** o
 
 ## Abnahme / Fehlerdiagnose
 
-Die v0.8.7-Basis und Kartenanzeige sind bestätigt. Neue v0.8.8-Berichte, Rechte und Protokoll-4-Join nach Testmatrix prüfen; bei GUI-Paketfehlern `latest.log` und CraftProbe-Sitzung exportieren. Bei unklarer Konfigaenderung `serverconfig/roglerteamwars*.properties` kontrollieren und Backup benutzen. Sicherheit und Autoritaet liegen stets auf dem Dedicated Server.
+Die v0.8.7-Basis und Kartenanzeige sind bestätigt. Die Teamverwaltung und den Protokoll-5-Join nach Testmatrix prüfen; bei GUI-Paketfehlern `latest.log` und CraftProbe-Sitzung exportieren. Bei unklarer Konfigaenderung `serverconfig/roglerteamwars*.properties` kontrollieren und Backup benutzen. Sicherheit und Autoritaet liegen stets auf dem Dedicated Server.
 
 ## v0.8.3 Admin-Suche
 

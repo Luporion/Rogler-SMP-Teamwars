@@ -18,7 +18,7 @@ public interface CommandSource {void sendSystemMessage(net.minecraft.network.cha
 'net/minecraft/commands/CommandSourceStack.java': '''package net.minecraft.commands;
 public record CommandSourceStack(int permission){public boolean hasPermission(int n){return permission>=n;}}''',
 'net/minecraft/server/MinecraftServer.java': '''package net.minecraft.server;
-public class MinecraftServer {public int tick=100;public int getTickCount(){return tick;}public net.minecraft.server.level.ServerLevel overworld(){return new net.minecraft.server.level.ServerLevel();}}''',
+public class MinecraftServer {public int tick=100;public int getTickCount(){return tick;}public Players getPlayerList(){return new Players();}public static class Players {public java.util.List<net.minecraft.server.level.ServerPlayer> getPlayers(){return java.util.List.of();}}public net.minecraft.server.level.ServerLevel overworld(){return new net.minecraft.server.level.ServerLevel();}}''',
 'net/minecraft/server/level/ServerLevel.java': '''package net.minecraft.server.level;
 public class ServerLevel {public static int probes;public ServerLevel getChunkSource(){return this;}public Object getChunkNow(int x,int z){probes++;return null;}public net.minecraft.resources.ResourceKey dimension(){return new net.minecraft.resources.ResourceKey();}}''',
 'net/minecraft/server/level/ServerPlayer.java': '''package net.minecraft.server.level;
@@ -54,6 +54,12 @@ public class BaseCoreSavedData {public static BaseCoreSavedData get(Object s,Obj
 public class BaseProtectionSavedData {public static class Record {public java.util.Set<Long> createdClaims=new java.util.HashSet<>();}public static BaseProtectionSavedData get(Object s){return new BaseProtectionSavedData();}public Record team(java.util.UUID id){return null;}}''',
 'dev/rogler/teamwars/neoforge/protection/FtbClaimBridge.java': '''package dev.rogler.teamwars.neoforge.protection;
 public class FtbClaimBridge {public static java.util.UUID resynced;public static String refreshOwnClaimView(Object p,java.util.UUID team){resynced=team;return "FTB resync sent to authorized member";}}''',
+'com/mojang/brigadier/exceptions/CommandSyntaxException.java': 'package com.mojang.brigadier.exceptions; public class CommandSyntaxException extends Exception {}',
+'dev/rogler/teamwars/neoforge/teams/RoglerTeamWarsLogger.java': 'package dev.rogler.teamwars.neoforge.teams; public class RoglerTeamWarsLogger {public static void warn(String text){}}',
+'dev/rogler/teamwars/neoforge/teams/FtbTeamManagement.java': '''package dev.rogler.teamwars.neoforge.teams;
+public class FtbTeamManagement {
+public static java.util.List<dev.rogler.teamwars.core.ui.DiagnosticPolicy.Row> report(net.minecraft.server.level.ServerPlayer p,java.util.UUID target) throws com.mojang.brigadier.exceptions.CommandSyntaxException {return java.util.List.of();}
+}''',
 'dev/rogler/teamwars/neoforge/teams/FtbPartyReader.java': '''package dev.rogler.teamwars.neoforge.teams;
 public class FtbPartyReader {public record Party(java.util.UUID id,java.util.Set<java.util.UUID> members){}public static Party current;public static int calls;public static int revokeAt=-1;
 public Party partyFor(java.util.UUID player){calls++;if(calls==revokeAt)current=null;return current;}}''',

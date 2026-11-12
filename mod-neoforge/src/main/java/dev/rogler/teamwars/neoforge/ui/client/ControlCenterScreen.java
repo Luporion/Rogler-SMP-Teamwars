@@ -1,6 +1,9 @@
 package dev.rogler.teamwars.neoforge.ui.client;
 
 import dev.rogler.teamwars.core.HudPreferences;
+import dev.rogler.teamwars.core.teams.TeamManagementPolicy.Action;
+import dev.rogler.teamwars.core.teams.TeamManagementPolicy.Role;
+import dev.rogler.teamwars.core.ui.DiagnosticPolicy;
 import dev.rogler.teamwars.core.ui.ControlCenterPolicy;
 import dev.rogler.teamwars.core.ui.AdminActionPolicy;
 import dev.rogler.teamwars.neoforge.map.client.HudSettingsStore;
@@ -41,6 +44,9 @@ public final class ControlCenterScreen extends Screen {
     private String reportKind="own";
     private UUID reportTarget;
     private int reportOffset=0;
+    private Action teamAction=Action.INVITE;
+    private Role teamRole=Role.NONE;
+    private String teamTarget="";
     private ControlCenterAdminPayload.TeamRow selectedTeam;
     private String note="Einstellungen werden direkt gespeichert; bestehende Minecraft-Berechtigungen gelten.";
     private final Map<String,EditBox> fields=new LinkedHashMap<>();
@@ -70,6 +76,17 @@ public final class ControlCenterScreen extends Screen {
         var report=ControlCenterClient.reportData();
         if(report!=null && report.kind().equals("action")){
             reportKind="action";reportTarget=null;reportOffset=report.offset();page=Page.REPORT;
+        } else if(report!=null && report.kind().equals(reportKind) && report.offset()==0) {
+            reportOffset=0;
+            if(reportKind.equals("team")){
+                teamRole=report.rows().stream().filter(row->row.label().equals("Deine Rolle"))
+                    .findFirst().map(row->switch(row.value()){
+                        case "Leitung" -> Role.OWNER;
+                        case "Offizier" -> Role.OFFICER;
+                        case "Mitglied" -> Role.MEMBER;
+                        default -> Role.NONE;
+                    }).orElse(Role.NONE);
+            }
         }
         rebuild();
     }
@@ -94,7 +111,7 @@ public final class ControlCenterScreen extends Screen {
     private boolean admin(){return state!=null&&state.permission()>=2;}
     private void rebuild(){
         clearWidgets();fields.clear();
-        if(page==Page.REPORT && !reportKind.equals("own") && !admin())page=Page.START;
+        if(page==Page.REPORT && !DiagnosticPolicy.isOwn(reportKind) && !admin())page=Page.START;
         int panelWidth=Math.min(670,width-14),left=(width-panelWidth)/2;
         x=left+145;bodyWidth=Math.max(156,panelWidth-158);y=46;
         int xx=left+7, navY=48;
@@ -149,7 +166,7 @@ public final class ControlCenterScreen extends Screen {
     private String name(Page item){return switch(item){
         case START -> "Uebersicht";case HUD -> "HUD & Navigation";case WAYPOINTS -> "Wegpunkte";
         case LINKS -> "Waypoint-Links";case TEAM -> "Mein Team";case CORE -> "Mein Base-Core";
-        case CHUNKS -> "Claims & Chunkloading";case REPORT -> "Diagnosebericht";
+        case CHUNKS -> "Claims & Chunkloading";case REPORT -> reportKind.equals("team") || reportKind.equals("teamadm") ? "Teamverwaltung" : "Diagnosebericht";
         case ADMIN_TEAMS -> "Admin: Teams";case ADMIN_BASE -> "Admin: Basis";
         case ADMIN_PROTECTION -> "Admin: Schutz";case ADMIN_POWER -> "Admin: Energie";
         case ADMIN_COMPAT -> "Admin: Kompat";case ADMIN_SEARCH -> "Admin: Suche";
@@ -216,6 +233,7 @@ public final class ControlCenterScreen extends Screen {
         indexValue=val("index",indexValue);index2Value=val("index2",index2Value);
         actionFilter=val("actionFilter",actionFilter);
         settingFilter=val("filter",settingFilter);
+        teamTarget=val("teamTarget",teamTarget);
     }
     private void links(){
         input("index",indexValue,x,y,(bodyWidth-6)/2,8);input("index2",index2Value,x+(bodyWidth+6)/2,y,(bodyWidth-6)/2,8);y+=23;
@@ -249,7 +267,7 @@ public final class ControlCenterScreen extends Screen {
         else execute.run();
     }
     private void team(){
-        button("FTB-Team-Status anzeigen",x,y,bodyWidth,()->sendCommand("teamwars team info"));y+=23;
+        button("Teamverwaltung",x,y,bodyWidth,()->openTeamReport("team",null));y+=23;
         button("FTB-Teams-Berechtigungen (Hilfe)",x,y,bodyWidth,()->sendCommand("teamwars team help"));y+=23;
         button("Kriegspunkte ansehen",x,y,bodyWidth,()->sendCommand("teamwars war scores"));y+=23;
         button("Team-Marker und Wegpunkte",x,y,bodyWidth,()->page(Page.WAYPOINTS));y+=23;
@@ -267,14 +285,95 @@ public final class ControlCenterScreen extends Screen {
         button("Eigenen Core wiederherstellen",x,y,bodyWidth,
             ()->confirm("Core-Wiederherstellung anfordern?",()->sendCommand("teamwars base recover")));
     }
-    private int reportLimit(){return Math.clamp((height-154-(reportKind.equals("own")?23:0))/28,1,8);}
+    private void openTeamReport(String kind, UUID target){
+        saveInputs();
+        reportKind=kind;reportTarget=target;reportOffset=0;page=Page.REPORT;
+        teamAction=Action.INVITE;teamRole=Role.NONE;teamTarget="";
+        requestReport();rebuild();
+    }
+
+    private int reportControlsHeight(){
+        if(reportKind.equals("team")) return 42;
+        return reportKind.equals("own")?23:0;
+    }
+    private int reportLimit(){return Math.clamp((height-154-reportControlsHeight())/28,1,8);}
     private void requestReport(){ControlCenterClient.requestReport(reportKind,reportTarget,reportOffset,reportLimit());}
     private boolean matchingReport(){
         var data=ControlCenterClient.reportData();
         return data!=null && data.kind().equals(reportKind) && data.offset()==reportOffset
-            && (!reportKind.equals("claims") || java.util.Objects.equals(data.target(),reportTarget));
+            && (!DiagnosticPolicy.isTargeted(reportKind) || java.util.Objects.equals(data.target(),reportTarget));
     }
+    private static String actionLabel(Action action){
+        return switch(action){
+            case INVITE -> "Einladen";
+            case JOIN -> "Beitreten";
+            case LEAVE -> "Austreten";
+            case KICK -> "Entfernen";
+            case PROMOTE -> "Befördern";
+            case DEMOTE -> "Zurückstufen";
+            case TRANSFER -> "Leitung übertragen";
+        };
+    }
+
+    private List<Action> teamActions(){
+        return switch(teamRole){
+            case OWNER -> List.of(Action.INVITE,Action.KICK,Action.PROMOTE,Action.DEMOTE,Action.TRANSFER,Action.LEAVE);
+            case OFFICER -> List.of(Action.INVITE,Action.KICK,Action.LEAVE);
+            case MEMBER -> List.of(Action.LEAVE);
+            default -> List.of(Action.JOIN);
+        };
+    }
+
+    private void teamControls(){
+        int half=(bodyWidth-6)/2;
+        List<Action> actions=teamActions();
+        if(!actions.contains(teamAction))teamAction=actions.getFirst();
+        button(actionLabel(teamAction),x,y,half,()->{
+            saveInputs();
+            teamAction=actions.get((actions.indexOf(teamAction)+1)%actions.size());
+            rebuild();
+        },actions.size()>1?"Aktion wechseln":"Aktion für deine aktuelle Teamrolle");
+        button("Ausführen",x+half+6,y,half,this::submitTeamAction);
+        y+=21;
+        if(teamAction!=Action.LEAVE){
+            EditBox target=input("teamTarget",teamTarget,x,y,bodyWidth,36);
+            String hint=teamAction==Action.JOIN?"Einladung auswählen oder Team-ID":"Spielername";
+            target.setHint(Component.literal(hint));
+        }
+        y+=21;
+    }
+
+    private void submitTeamAction(){
+        if(!matchingReport() || ControlCenterClient.reportData().total()==0){
+            note="Teamansicht zuerst aktualisieren";
+            return;
+        }
+        saveInputs();
+        UUID current=ControlCenterClient.reportData().target();
+        UUID scope=current==null?new UUID(0,0):current;
+        Action action=teamAction;
+        String argument=action==Action.LEAVE?"":teamTarget.trim();
+        Runnable send=()->ControlCenterClient.request("teamaction",action.name(),scope+"|"+argument);
+        if(action==Action.LEAVE) confirm("Team verlassen? FTB löst ein Team ohne Mitglieder auf.",send);
+        else if(action==Action.KICK || action==Action.TRANSFER)
+            confirm(actionLabel(action)+" für "+argument+"?",send);
+        else send.run();
+    }
+
+    private void selectTeamReportRow(DiagnosticPolicy.Row row){
+        if(!reportKind.equals("team")) return;
+        if(row.label().equals("Einladung") && row.value().length()>=36){
+            teamTarget=row.value().substring(0,36);
+            teamAction=Action.JOIN;
+        } else if(row.label().equals("Mitglied") && row.value().length()>=36 && teamActions().contains(Action.KICK)) {
+            teamTarget=row.value().substring(row.value().length()-36);
+            if(teamAction==Action.INVITE || teamAction==Action.LEAVE) teamAction=Action.KICK;
+        } else return;
+        rebuild();
+    }
+
     private void diagnosticReport(){
+        if(reportKind.equals("team"))teamControls();
         if(reportKind.equals("own")){
             button("Eigene FTB-Kartendaten erneut senden",x,y,bodyWidth,
                 ()->ControlCenterClient.request("resyncown","",""),"Sendet nur vorhandene eigene Claims erneut; keine Claim-Reparatur oder neuen Tickets.");y+=23;
@@ -284,7 +383,7 @@ public final class ControlCenterScreen extends Screen {
             int visible=Math.min(reportLimit(),data.rows().size());
             for(var row:data.rows().subList(0,visible)){
                 // Native tooltip exposes full text even at small GUI scales.
-                button("",x,y,bodyWidth,()->{},row.label()+": "+row.value());y+=28;
+                button("",x,y,bodyWidth,()->selectTeamReportRow(row),row.label()+": "+row.value());y+=28;
             }
             int limit=reportLimit();
             button("< Zurueck",x,y,90,()->{reportOffset=Math.max(0,reportOffset-limit);requestReport();rebuild();});
@@ -298,12 +397,17 @@ public final class ControlCenterScreen extends Screen {
     private void renderDiagnostic(GuiGraphics g){
         if(!matchingReport())return;
         var report=ControlCenterClient.reportData();
-        int yy=46+(reportKind.equals("own")?23:0),i=0;
+        int yy=46+reportControlsHeight(),i=0;
         for(var row:report.rows()){
             if(i++>=reportLimit())break;
             // Drawn after native widgets by render(), so button backgrounds cannot cover the text.
             g.drawString(font,text(row.label(),Math.max(12,bodyWidth/6)),x+3,yy+1,ACCENT,false);
-            g.drawString(font,text(row.value(),Math.max(12,bodyWidth/6)),x+3,yy+11,TEXT,false);yy+=28;
+            String value=row.value();
+            if(reportKind.equals("team") && row.label().equals("Einladung") && value.length()>37)
+                value=value.substring(37);
+            else if((reportKind.equals("team") || reportKind.equals("teamadm")) && row.label().equals("Mitglied") && value.length()>39)
+                value=value.substring(0,value.length()-39);
+            g.drawString(font,text(value,Math.max(12,bodyWidth/6)),x+3,yy+11,TEXT,false);yy+=28;
         }
         g.drawString(font,text("Zeilen "+(report.total()==0?0:reportOffset+1)+"-"+
             Math.min(report.total(),reportOffset+Math.min(reportLimit(),report.rows().size()))+" / "+report.total()+" | Snapshot-Tick "+report.tick(),Math.max(12,bodyWidth/6)),
@@ -361,7 +465,7 @@ public final class ControlCenterScreen extends Screen {
             button(">",x+bodyWidth-42,y,42,()->{firstSetting=Math.min(matching.size()-visible,firstSetting+visible);rebuild();});y+=22;
         }
         if(!showGroup && matching.stream().anyMatch(f->f.group().equals("teams")) && note.startsWith("Einstellungen werden"))
-            note="Teamgroesse/Anzahl sind nur Rogler-Beobachtungswerte. FTB-Teamlimits separat konfigurieren.";
+            note="Core-Teamlimits wirken nach Aktivierung. Das FTB-Limit gilt zusätzlich.";
     }
     private void settingSave(ControlCenterPolicy.Field field,String value){
         Runnable apply=()->{
@@ -419,10 +523,12 @@ public final class ControlCenterScreen extends Screen {
         // The full UUID is server-provided; no player-entered command strings.
         targetValue=selectedTeam.id().toString();
         y=124;
-        input("minutes",minutesValue,x,y,80,5);
-        button("Claims & Chunkloading",x+85,y,Math.max(70,bodyWidth-85),()->{
+        input("minutes",minutesValue,x,y,45,5);
+        int half=(bodyWidth-57)/2;
+        button("Claims",x+51,y,half,()->{
             reportKind="claims";reportTarget=selectedTeam.id();reportOffset=0;page=Page.REPORT;requestReport();rebuild();
-        },"Nur lesender Status fuer das ausgewaehlte FTB-Team");
+        },"Claims und Chunkloading dieses Teams");
+        button("Mitglieder",x+57+half,y,half,()->openTeamReport("teamadm",selectedTeam.id()));
         y+=25;
         var permitted=List.of("claimaudit","graceteam","raidstartteam","raidstopteam","reclaimlostteam")
             .stream().map(AdminActionPolicy::require)

@@ -1,6 +1,6 @@
 # Rogler Core – Roadmap und Versionsplan
 
-Stand: 11. November 2026 · Laufzeitbasis: **0.8.7** · Entwicklung: **0.8.8**
+Stand: 12. November 2026 · Buildbasis: **0.8.8** · Aktuelles Release: **0.8.9**
 
 Diese Roadmap ersetzt die inhaltlich überholte Planung vom 9. November. Sie beschreibt den aktuellen Projektstand und die geplanten nächsten Releases. Die ersten drei Releases sind konkret zugeschnitten; die späteren Versionen sind Zielzuordnungen, die bei neuen Befunden angepasst werden können. Es werden keine Kalendertermine zugesagt.
 
@@ -8,7 +8,7 @@ Diese Roadmap ersetzt die inhaltlich überholte Planung vom 9. November. Sie bes
 
 | Bereich | Aktueller Stand | Konsequenz für die Planung |
 |---|---|---|
-| Build und Installation | v0.8.7: Core-Tests und NeoForge-Build erfolgreich; Commit `e22eecb9`; installierte JAR und Start im Serverlog bestätigt | v0.8.7 ist die aktuelle Arbeitsbasis. Alte Einzelversionen müssen nicht erneut separat gebaut werden. |
+| Build und Installation | v0.8.8: Beide GitHub-Workflows für `dc4053c0` erfolgreich. v0.8.9: lokaler Build und Testserver erfolgreich. | Die Prüfung mit verbundenen Clients und dem vollständigen Modpack steht für v0.8.9 noch aus. |
 | Claim- und Chunkloading-Anzeige | Nutzer bestätigt am 10.11.: geclaimte und gechunkloadete Chunks auf beiden Karten sichtbar | Das bisherige Anzeigeproblem ist gelöst. Kein erneuter Karten-Hotfix ohne neuen Fehler. |
 | FTB-Claims | Im ausgewerteten Lauf zwei Teams mit jeweils neun bestehenden Claims, keine abgewiesenen Claims | Bestehende Claims erhalten; keine Neuanlage oder Datenbereinigung als Standardmaßnahme. |
 | Weitere Funktionstests | Nutzer bestätigt: „Die anderen Sachen haben auch soweit funktioniert.“ | Grundfunktionen als im Alltag grundsätzlich erfolgreich behandeln. Diese Rückmeldung ersetzt kein detailliertes Protokoll jedes Sonderfalls. |
@@ -22,7 +22,7 @@ Diese Roadmap ersetzt die inhaltlich überholte Planung vom 9. November. Sie bes
 
 **Wichtig:** Claim, Forceload-Markierung, tatsächlich geladener Chunk und laufende Maschinensimulation sind unterschiedliche Zustände. Die Anzeige ist jetzt bestätigt. Das ist keine Behauptung, dass weiterhin ein Chunkloading-Fehler besteht; die Unterscheidung soll künftige Diagnosen verständlicher machen.
 
-## 2. Nächste drei Releases
+## 2. v0.8.8 bis v0.9.0
 
 ### v0.8.8 – Claim-/Chunkloading-Status und verständliche Diagnose
 
@@ -45,19 +45,7 @@ Geplanter Umfang:
 
 ### v0.8.9 – Teamverwaltung und wirksame Teamregeln
 
-**Ziel:** Bestehende Team-/Adminansichten um ausgewählte echte Verwaltungsaktionen erweitern und die Bedeutung der Limits klar machen.
-
-Geplanter Umfang:
-
-- Eigene Rolle, Teamleitung, Mitglieder und relevante Rechte verständlich anzeigen; Daten außerhalb der erlaubten Sicht bleiben serverseitig gesperrt.
-- Einladungen, Austritt und ausgewählte Leitungs-/Mitgliederaktionen über die tatsächlichen FTB-Teams-Schnittstellen anbinden, sofern die installierte Version diese verlässlich unterstützt. Dieselben Regeln gelten für Menü und Befehle.
-- Teamgrößen- und Teamanzahllimits nach API-Prüfung wirklich durchsetzen. Werte, die bisher nur dokumentieren oder anzeigen, dürfen nicht als wirksame Begrenzung erscheinen.
-- Bestehende Teams bei Aktivierung neuer Limits erhalten. Überschreitungen anzeigen; keine automatischen Ausschlüsse oder Teamlöschungen.
-- Änderungen an Teamzugehörigkeit sauber an Karten-, Marker- und spätere Funkmodule weitergeben; Aktionen und Ablehnungen nachvollziehbar protokollieren.
-
-**Abnahme:** Leiter, Mitglied, Außenstehender und Admin erhalten genau ihre vorgesehenen Aktionen. Gleichzeitige Einladungen umgehen Limits nicht. Austritt, Teamwechsel, Logout und Neustart erzeugen keine widersprüchlichen Mitgliedschaften.
-
-**Noch zu entscheiden:** Die konkrete Spielregel für Teamgröße und Teamanzahl. Die bisherigen Zielwerte 2–4 Teams und typischerweise 3–4 Mitglieder werden nicht ungefragt als neue harte Live-Limits aktiviert. Gebühren für Umbenennungen folgen erst mit einer konsistenten Wirtschaftslösung.
+Umgesetzt sind Rollen, Einladungen, Mitgliederaktionen und lesende Admin-Ansichten für alle FTB-Party-Teams. Die optionalen Core-Grenzen werden bei Teamerstellung, Einladung und Beitritt in FTB durchgesetzt. Standardmäßig sind sie aus. Ein lokaler NeoForge-Serverlauf hat die Grenzen und den Fortbestand bestehender Mitglieder nach einer Limitsenkung bestätigt. Der Client-Test steht noch aus. [Release v0.8.9](releases/v0.8.9.md).
 
 ### v0.9.0 – Kartenintegration konsolidieren
 
@@ -120,7 +108,7 @@ Diese Punkte bleiben relevant, sind aber keine automatisch erforderlichen Core-F
 
 ## 6. Entwicklungs- und Abnahmeregeln
 
-1. **Aktuelle Basis erhalten:** v0.8.7 als Ausgangspunkt; funktionierende Claims, Karten und Speicherstände nicht zur vermeintlichen Reparatur zurücksetzen.
+1. **Aktuelle Basis erhalten:** Vom zuletzt bestätigten Stand aus weiterarbeiten. Bestehende Claims, Karten und Speicherstände erhalten.
 2. **FTB Teams bleibt Autorität:** Mitgliedschaft und Rechte werden serverseitig anhand der tatsächlichen IDs geprüft. Neue Menüs sind kein zweites Teamsystem.
 3. **Pro Release ein Hauptziel:** Modell-/Regressionstests, NeoForge-Build und relevante Minecraft-Abnahme separat festhalten. Vorhandene Nutzerbestätigungen erhalten und nicht bei jedem Release pauschal wieder öffnen.
 4. **Aufwand begrenzen:** Diagnose und Abgleich dürfen keine unnötigen Chunkladungen, großen globalen Scans oder unbeschränkten Netzwerkpakete verursachen.
@@ -131,6 +119,7 @@ Diese Punkte bleiben relevant, sind aber keine automatisch erforderlichen Core-F
 ## 7. Quellen und Statusgrenzen
 
 - Exakter bereitgestellter v0.8.7-Quellstand: `Rogler-Core-v0.8.7-full-source-exact.zip`, insbesondere `docs/ROADMAP.md`, `docs/PROJECT_STATE.md`, `docs/UI_CONTROL_CENTER.md`, `docs/CORE_DASHBOARD_ARCHITECTURE.md`, `ChunkLoadingBudget` und die Core-/FTB-Adapter.
+- Terminalexport vom 12.11.2026: beide Workflows für Commit `dc4053c0` erfolgreich.
 - Terminalexport vom 10.11.2026: erfolgreiche Workflows für Commit `e22eecb9`, heruntergeladenes v0.8.7-Artefakt.
 - Ausgewertete CraftProbe-Sitzung: 09.11.2026, 23:44 Uhr bis 10.11.2026, 00:30 Uhr, einschließlich Modliste, Logs und JFR. Dieser Export ist kein Live-Abzug des späteren Serverstands.
 - Nutzerbestätigung vom 10.11.2026: Claim-/Chunkloading-Markierungen auf beiden Karten sichtbar; weitere Tests grundsätzlich erfolgreich.

@@ -1,6 +1,17 @@
-# Testmatrix – aktueller Stand v0.8.8
+# Testmatrix – aktueller Stand v0.8.9
 
-Stand: 11. November 2026. Java-/Adaptertests, vollständiger NeoForge-Build und Minecraft-Laufzeit bleiben getrennte Nachweise.
+Stand: 12. November 2026.
+
+## v0.8.9 Teamverwaltung
+
+| Prüfung | Ergebnis |
+|---|---|
+| Rollen, Zielrollen, Anfragegrenzen und Fremdteam-Bericht | Java-Regressionssuite einschließlich TeamManagementPolicyTests |
+| Bestehende Konfig ohne Aktivierung, Opt-in | TeamWarsSettingsTests |
+| Native FTB-Erstellung, Einladung und Beitritt am Limit | Lokaler NeoForge Dedicated Server, FTB Teams 2101.1.11 |
+| Persistenz und Bestand nach Senkung der Mitgliedergrenze | Lokaler Server-Neustart mit derselben Testwelt |
+| Sichtbarkeit und Bedienung mit zwei verbundenen Clients, XMMP und Live-Modpack | Offen |
+
 
 ## Bereits bestätigte Basis
 

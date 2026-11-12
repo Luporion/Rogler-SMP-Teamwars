@@ -1,6 +1,6 @@
 # AGENTS.md – verbindliche Entwicklungsregeln für Rogler Core
 
-**Aktueller Entwicklungsstand: v0.8.8 auf dem bestätigten v0.8.7-Stand.** Autorisierte Claim-/Chunkloading-Diagnose, echte Aktionsberichte, Protokoll 4 (Client/Server gemeinsam). Bestehende v0.8.3-C2ME/Create-Sicherheit und v0.8.4-OP-Autorität erhalten. [Release](docs/releases/v0.8.8.md).
+**Aktueller Entwicklungsstand: v0.8.9 auf v0.8.8.** FTB-Teamverwaltung mit Rollen, opt-in Teamlimits und Protokoll 5. [Release](docs/releases/v0.8.9.md).
 
 **Einstieg:** [Dokumentationsindex](docs/INDEX.md) → [Projektstatus](docs/PROJECT_STATE.md) → [Roadmap](docs/ROADMAP.md) → relevante [Release-Notiz](docs/releases/v0.7.7.md) und [Tests](docs/TEST_MATRIX.md). Das historische, ausführliche Regelwerk steht vollständig im [Archiv](docs/archive/legacy/AGENTS_before_cleanup_2026-10-22.md). Historische Versionsaussagen sind keine aktuellen Freigaben.
 

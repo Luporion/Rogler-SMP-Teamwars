@@ -6,7 +6,7 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 public final class TeamIntelNetwork {
     private TeamIntelNetwork() {}
     public static void register(RegisterPayloadHandlersEvent event) {
-        var registrar=event.registrar("4");
+        var registrar=event.registrar("5");
         registrar.playToClient(dev.rogler.teamwars.neoforge.ui.ControlCenterReportPayload.TYPE,
             dev.rogler.teamwars.neoforge.ui.ControlCenterReportPayload.STREAM_CODEC,
             (payload,context)->context.enqueueWork(()->dev.rogler.teamwars.neoforge.ui.client.ControlCenterClient.onReport(payload)));

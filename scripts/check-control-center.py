@@ -26,6 +26,6 @@ assert 'Commands.literal("roglerui")' in client and 'RegisterKeyMappingsEvent' i
 assert 'ConfirmScreen' in screen and 'ControlCenterPolicy.sensitive(field)' in screen
 assert 'ControlCenterClient.request("adminrun",id,value)' in screen and 'AdminActionPolicy.command(id,value)' in screen
 assert 'Commands.literal("rogler")' in mod and 'BaseGuardService.reconcile(server)' in mod
-assert 'registrar("4")' in network
+assert 'registrar("5")' in network
 assert 'private-waypoint-links' in read('map/client/WaypointLinkClient.java')
 print('v0.8.2 Control Center network, policy, UI and admin authority guards: OK')
