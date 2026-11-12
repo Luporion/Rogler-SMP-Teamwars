@@ -180,10 +180,20 @@ public final class ExplorationService {
             + session.members() + " current FTB members, generation " + session.generation() + "."),false);
         source.sendSuccess(()->Component.literal("Last calculated delta: +" + change.revealed().size()
             + " / -" + change.revoked().size() + "; roster changed: " + change.membershipChanged()),false);
-        source.sendSuccess(()->Component.literal("Xaero terrain rendering and cache revocation are NOT implemented. "
-            + "Never install global shared-map mods on a secret-team server."),false);
+        source.sendSuccess(()->Component.literal("Diese Werte stammen aus Core. Xaero-Geländekacheln synchronisiert XMMP."),false);
         return 1;
     }
+
+    /** Read the existing reconciliation result; opening the UI must not rebuild the map union. */
+    public static Summary summary(UUID player, UUID currentParty) {
+        if (!enabled) return null;
+        var session = sessions.get(player);
+        if (session == null || !java.util.Objects.equals(session.partyId(),currentParty))
+            return new Summary(index.personalCount(player),null,null);
+        return new Summary(index.personalCount(player),session.visibleCount(),session.members());
+    }
+
+    public record Summary(int personal, Integer teamVisible, Integer members) {}
 
     public static int status(CommandSourceStack source) {
         if (!enabled) {
@@ -192,14 +202,13 @@ public final class ExplorationService {
         }
         ServerPlayer player;
         try {player=source.getPlayerOrException();}catch(Exception ex) {source.sendFailure(Component.literal("Player required")); return 0;}
-        Set<UUID> members = new HashSet<>();
-        var party = new FtbPartyReader().partyFor(player.getUUID());
-        if (party != null && party.members().contains(player.getUUID())) members.addAll(party.members());
-        else members.add(player.getUUID());
-        int personal=index.personal(player.getUUID()).size();
-        int merged=index.visibleTo(members).size();
-        source.sendSuccess(()->Component.literal("Rogler map provenance: " + personal + " personally visited chunks; " + merged + " currently in team union (" + members.size() + " member(s))."),false);
-        source.sendSuccess(()->Component.literal("Map rendering NOT yet synchronized to Xaero. This is safe server data collection only."),false);
+        UUID viewer = player.getUUID();
+        var party = ftb.partyFor(viewer);
+        var summary = summary(viewer,party != null && party.members().contains(viewer) ? party.id() : null);
+        String team = summary.teamVisible() == null ? "Teamabgleich ausstehend."
+            : summary.teamVisible() + " Chunks im letzten Teamabgleich (" + summary.members() + " Mitglieder).";
+        source.sendSuccess(()->Component.literal("Core-Erkundung: " + summary.personal() + " eigene Chunks. " + team),false);
+        source.sendSuccess(()->Component.literal("XMMP-Verbindungsstatus unter O → Kartenabgleich."),false);
         return 1;
     }
 }

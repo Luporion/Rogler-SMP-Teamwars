@@ -2,7 +2,7 @@
 
 Minecraft **1.21.1 · NeoForge 21.1.249** — eigener TeamWars-Mod für ein teamorientiertes Rogler-SMP.
 
-> **v0.8.9** ergänzt die FTB-Teamverwaltung im Control Center, passende Befehle und optional durchgesetzte Teamlimits. Client und Server verwenden Protokoll 5. [Release](docs/releases/v0.8.9.md) · [Status](docs/PROJECT_STATE.md).
+> **v0.9.0** zeigt den Kartenabgleich und die wirksame XMMP-Freigabe im Control Center. Client und Server verwenden Protokoll 5. [Release](docs/releases/v0.9.0.md) · [Status](docs/PROJECT_STATE.md).
 
 ## Hier beginnen
 

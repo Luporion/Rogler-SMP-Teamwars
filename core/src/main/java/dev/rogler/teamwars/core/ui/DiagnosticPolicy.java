@@ -14,11 +14,14 @@ public final class DiagnosticPolicy {
         }
     }
     public record Request(String kind,UUID target,int offset,int limit) {}
-    public static boolean isOwn(String kind) { return "own".equals(kind) || "team".equals(kind); }
+    public static boolean isReport(String kind) {
+        return kind != null && List.of("own","claims","action","team","teamadm","map").contains(kind);
+    }
+    public static boolean isOwn(String kind) { return "own".equals(kind) || "team".equals(kind) || "map".equals(kind); }
     public static boolean isTargeted(String kind) { return "claims".equals(kind) || "teamadm".equals(kind); }
     public static Request parse(String kind,String value,int permission,UUID ownTeam) {
         if(kind==null || value==null || value.length()>96)throw new IllegalArgumentException("Ungueltige Diagnose");
-        if(!List.of("own","claims","action","team","teamadm").contains(kind))throw new IllegalArgumentException("Unbekannte Diagnose");
+        if(!isReport(kind))throw new IllegalArgumentException("Unbekannte Diagnose");
         if(!isOwn(kind) && permission<2)throw new IllegalArgumentException("Adminrechte erforderlich");
         String[] parts=value.split("\\|",-1);
         int expected=isTargeted(kind)?3:2;

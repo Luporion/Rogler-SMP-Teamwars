@@ -3,6 +3,7 @@ package dev.rogler.teamwars.neoforge.ui;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dev.rogler.teamwars.core.base.BaseCoreLedger;
 import dev.rogler.teamwars.neoforge.teams.FtbTeamManagement;
+import dev.rogler.teamwars.neoforge.map.ExplorationService;
 import dev.rogler.teamwars.core.ui.DiagnosticPolicy;
 import dev.rogler.teamwars.neoforge.RoglerTeamWarsMod;
 import dev.rogler.teamwars.neoforge.base.BaseCoreSavedData;
@@ -56,8 +57,11 @@ public final class ControlCenterReportService {
         if(kind.equals("action")) {
             if(!same)throw new IllegalArgumentException("Keine Aktionsdetails vorhanden");
         }else if(request.offset()==0 || !same || viewer.getServer().getTickCount()-snapshot.tick()>200) {
-            snapshot=kind.equals("team") || kind.equals("teamadm")
-                ? team(viewer,kind,request.target()) : claims(viewer,kind,request.target());
+            snapshot=switch (kind) {
+                case "team", "teamadm" -> team(viewer,kind,request.target());
+                case "map" -> map(viewer,request.target());
+                default -> claims(viewer,kind,request.target());
+            };
             REPORTS.put(viewer.getUUID(),snapshot);
         }
         send(viewer,snapshot,request.offset(),request.limit());
@@ -114,6 +118,20 @@ public final class ControlCenterReportService {
         if(result.startsWith("DENIED"))throw new IllegalArgumentException("FTB-Teamzuordnung hat sich geaendert");
         return "FTB-Kartendaten nicht gesendet: vorhandene Teamdaten oder API nicht verfuegbar";
     }
+    private static Snapshot map(ServerPlayer viewer, UUID target) {
+        var rows=new ArrayList<DiagnosticPolicy.Row>();
+        var xmmp=ModList.get().getModContainerById("xmmp");
+        row(rows,"XMMP auf dem Server",xmmp.map(mod -> mod.getModInfo().getVersion().toString()).orElse("Nicht installiert"));
+        row(rows,"FTB-Zuordnung",target == null ? "Keine bestätigte Party" : "Eigene Party bestätigt");
+        var provenance=ExplorationService.summary(viewer.getUUID(),target);
+        row(rows,"Core · persönlich besucht",provenance == null ? "Erfassung nicht verfügbar" : provenance.personal()+" Chunks");
+        row(rows,"Core · letzter Teamabgleich",provenance == null || provenance.teamVisible() == null
+            ? "Noch kein Snapshot" : provenance.teamVisible()+" Chunks · "+provenance.members()+" Mitglieder");
+        row(rows,"Zuständigkeit","Teams: FTB Teams · Claims: FTB Chunks · Gelände: XMMP");
+        row(rows,"Xaero-Cache","Bereits gespeicherte fremde Kacheln können sichtbar bleiben.");
+        return new Snapshot("map",target,"Kartenabgleich",viewer.getServer().getTickCount(),rows);
+    }
+
     private static Snapshot claims(ServerPlayer viewer,String kind,UUID target) {
         MinecraftServer server=viewer.getServer();var rows=new ArrayList<DiagnosticPolicy.Row>();
         row(rows,"Quelle","Server-Snapshot / Rogler Core "+RoglerTeamWarsMod.VERSION);

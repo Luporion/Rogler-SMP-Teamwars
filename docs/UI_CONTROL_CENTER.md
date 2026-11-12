@@ -1,6 +1,6 @@
 # Rogler Control Center – UI- und Admin-Handbuch
 
-**v0.8.9** verwendet Protokoll 5. Unter **Mein Team → Teamverwaltung** stehen Teamleitung, Rollen, Mitglieder und Einladungen. OP2 findet auch Offline-Teams unter **Admin: Teams/Cores → Mitglieder**. OP4 kann unter **Admin: Teams** die Core-Teamlimits einschalten. [Teamverwaltung](releases/v0.8.9.md).
+**v0.9.0** verwendet Protokoll 5. Die Seite **Kartenabgleich** zeigt den serverbestätigten XMMP-Status und öffnet das vorhandene XMMP-Menü. Unter **Mein Team → Teamverwaltung** stehen Teamleitung, Rollen, Mitglieder und Einladungen. OP2 findet auch Offline-Teams unter **Admin: Teams/Cores → Mitglieder**. OP4 kann unter **Admin: Teams** die Core-Teamlimits einschalten. [Teamverwaltung](releases/v0.8.9.md).
 
 **O / `/roglerui` / `/roglerconfig`** oeffnen das Control Center. Bestehende `teamwars`-Befehle bleiben verfuegbar; das native Core-Inventar ist weiterhin separat am platzierten Core erreichbar.
 
@@ -12,7 +12,8 @@
 | HUD & Navigation | Schalter, Marker, HUD-Bereiche; ab v0.8.5 frei positionierbar per Drag-and-drop |
 | Wegpunkte | Privater Sync, Teamfreigabe, sicherer Link-Abgleich und Auto Name/Farbe |
 | Waypoint-Links | UUID-/Token-geschuetzte Apply/Acknowledge/Delete/Move/Unlink-Aktionen |
-| Mein Team | Team-/War-/Explorationsstatus ueber bestehende Serverbefehle |
+| Mein Team | Teamverwaltung, Kriegspunkte, Wegpunkte und Kartenabgleich |
+| Kartenabgleich | XMMP-Verbindung, wirksame Freigabe, Client-/Serverversion und Core-Erkundungszähler |
 | Claims & Chunkloading | Eigener serverautorisierter Snapshot: FTB-Claims, Quoten, Markierungen und residente Corezone; vorhandene eigene Kartendaten erneut senden |
 | Mein Base-Core | Core-Menue, Status, Schutz, Energie, Transport, Recovery |
 | Admin: Teams/Basis/Schutz/Energie | Live-Werte der vier bisherigen Rogler-Teamwars-Konfigdateien |
@@ -30,7 +31,7 @@ Admin-Aktionen mit Ziel verwenden im ersten Feld **Spielernamen (z. B. Alex)** o
 
 ## Einstellungsgrenzen und Besonderheiten
 
-- `max_team_members` und `max_parties` sind nicht die tatsaechlich von FTB Teams erzwungenen Limits. `max_party_size` und FTB-Party-Grants muessen weiterhin in FTB verwaltet werden.
+- `max_team_members` und `max_parties` greifen in FTB, wenn OP4 die Core-Teamlimits einschaltet. FTB prüft zusätzlich sein eigenes `max_party_size`.
 - Core-Radien muessen `0 <= min_radius < max_radius` erfuellen; Transportzeit 60 bis 86400 Sekunden.
 - FE-Leistung folgt `0 <= base <= tier1 <= tier2 <= 256`. Beim Erhoehen zuerst die hoechste Stufe anpassen, beim Senken umgekehrt.
 - `claim_radius_chunks`, `auto_ftb_claims`, `base_guard_enabled` und `raids_enabled` setzen OP4 voraus und duerfen erst nach Backup/Datenschutzpruefung geaendert werden. Bereits vorhandene Welt-/Core-Daten werden durch Werte-Aenderung nicht migriert.

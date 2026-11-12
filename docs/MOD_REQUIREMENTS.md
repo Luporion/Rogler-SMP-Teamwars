@@ -11,7 +11,7 @@ Keine neuen Drittanbieter-Pflichtmods und keine Änderung bestehender Abhängigk
 | FTB Chunks | 2101.1.23 im Nutzerexport; Metadaten weiterhin mindestens 2101.1.22 | Claims, Markierungen und Quoten; fehlende API-Werte werden unbekannt |
 | FTB Library / Architectury | Kompatible bestehende Versionen laut Modpack | FTB-Abhängigkeiten und bestehender Paketpfad |
 | Xaero Minimap / World Map | Bisheriger Referenzstand 26.4.2 / 1.45.0 | Bestehende Kartenintegration; nicht durch 0.8.8 aktualisiert |
-| XMMP-FTBTeams | 0.4.2 im Nutzerexport | Separater vorhandener Gelände-Sharing-Fork; keine neue Pflicht durch Core-Diagnose |
+| XMMP-FTBTeams | 0.4.2 oder 0.4.3 | Optional. Für den automatischen Neuabgleich bei Freigabewechsel 0.4.3 auf beiden Seiten einsetzen. |
 
 Die Reflection-Verträge der Diagnose wurden an der offiziellen FTB-Chunks-Quelle `1.21.1/main`, Commit `1093f3392e42a28b69184061dfa0b5b3d22fb4b9`, mit `mod_version=2101.1.23` geprüft. Quellen und Semantik: [Diagnoseguide](guides/CLAIM_DIAGNOSTICS_v0.8.8.md). Das ist kein Ersatz für den Laufzeittest mit den tatsächlichen Modpack-JARs.
 

@@ -31,7 +31,7 @@ import java.util.UUID;
 
 /** One native, dependency-free, permission-aware entry point for all existing Rogler features. */
 public final class ControlCenterScreen extends Screen {
-    private enum Page { START, HUD, WAYPOINTS, LINKS, TEAM, CORE, CHUNKS, REPORT, ADMIN_TEAMS, ADMIN_BASE,
+    private enum Page { START, HUD, WAYPOINTS, LINKS, TEAM, MAP, CORE, CHUNKS, REPORT, ADMIN_TEAMS, ADMIN_BASE,
         ADMIN_PROTECTION, ADMIN_POWER, ADMIN_COMPAT, ADMIN_SEARCH, ADMIN_DIRECTORY, ADMIN_DETAIL, ADMIN_RAIDS, ADMIN_AUDIT, ADMIN_STATUS, ADMIN_ACTIONS, ADMIN_DIAG }
     private static final int BACK=0xFF111B25, PANEL=0xFF1C2B37, ACCENT=0xFF5BD4D5,
         TEXT=0xFFE5EEF0, MUTED=0xFFA4B7C3, WARNING=0xFFFFC27A;
@@ -42,6 +42,7 @@ public final class ControlCenterScreen extends Screen {
     private String actionFilter="";
     private int detailActionOffset=0;
     private String reportKind="own";
+    private String mapServerVersion;
     private UUID reportTarget;
     private int reportOffset=0;
     private Action teamAction=Action.INVITE;
@@ -78,6 +79,10 @@ public final class ControlCenterScreen extends Screen {
             reportKind="action";reportTarget=null;reportOffset=report.offset();page=Page.REPORT;
         } else if(report!=null && report.kind().equals(reportKind) && report.offset()==0) {
             reportOffset=0;
+            if(reportKind.equals("map")){
+                mapServerVersion=report.rows().stream().filter(row->row.label().equals("XMMP auf dem Server"))
+                    .findFirst().map(DiagnosticPolicy.Row::value).orElse(null);
+            }
             if(reportKind.equals("team")){
                 teamRole=report.rows().stream().filter(row->row.label().equals("Deine Rolle"))
                     .findFirst().map(row->switch(row.value()){
@@ -101,7 +106,7 @@ public final class ControlCenterScreen extends Screen {
     }
     private void page(Page to){
         saveInputs();page=to;
-        if(to==Page.CHUNKS){reportKind="own";reportTarget=null;reportOffset=0;requestReport();}
+        if(to==Page.CHUNKS || to==Page.MAP){reportKind=to==Page.MAP?"map":"own";reportTarget=null;reportOffset=0;requestReport();}
         firstSetting=0;firstAction=0;adminOffset=0;
         if(to==Page.ADMIN_DIRECTORY || to==Page.ADMIN_RAIDS)ControlCenterClient.requestAdmin("teams",0);
         else if(to==Page.ADMIN_AUDIT)ControlCenterClient.requestAdmin("audit",0);
@@ -136,7 +141,7 @@ public final class ControlCenterScreen extends Screen {
             case LINKS -> links();
             case TEAM -> team();
             case CORE -> core();
-            case CHUNKS, REPORT -> diagnosticReport();
+            case CHUNKS, MAP, REPORT -> diagnosticReport();
             case ADMIN_TEAMS -> settings("teams");
             case ADMIN_BASE -> settings("base");
             case ADMIN_PROTECTION -> settings("protection");
@@ -155,7 +160,7 @@ public final class ControlCenterScreen extends Screen {
         button(page==Page.ADMIN_DETAIL?"Zur Teamliste":"Aktualisieren",x,height-48,footerWidth,()->{
             if(page==Page.ADMIN_DETAIL){page(Page.ADMIN_DIRECTORY);return;}
             ControlCenterClient.request("view","","");
-            if(page==Page.CHUNKS || page==Page.REPORT){reportOffset=0;requestReport();}
+            if(page==Page.CHUNKS || page==Page.MAP || page==Page.REPORT){reportOffset=0;requestReport();}
             if(page==Page.ADMIN_AUDIT)ControlCenterClient.requestAdmin("audit",adminOffset);
             else if(page==Page.ADMIN_STATUS)ControlCenterClient.requestAdmin("status",0);
             else if(page==Page.ADMIN_DIRECTORY || page==Page.ADMIN_RAIDS)
@@ -166,7 +171,7 @@ public final class ControlCenterScreen extends Screen {
     private String name(Page item){return switch(item){
         case START -> "Uebersicht";case HUD -> "HUD & Navigation";case WAYPOINTS -> "Wegpunkte";
         case LINKS -> "Waypoint-Links";case TEAM -> "Mein Team";case CORE -> "Mein Base-Core";
-        case CHUNKS -> "Claims & Chunkloading";case REPORT -> reportKind.equals("team") || reportKind.equals("teamadm") ? "Teamverwaltung" : "Diagnosebericht";
+        case MAP -> "Kartenabgleich";case CHUNKS -> "Claims & Chunkloading";case REPORT -> reportKind.equals("team") || reportKind.equals("teamadm") ? "Teamverwaltung" : "Diagnosebericht";
         case ADMIN_TEAMS -> "Admin: Teams";case ADMIN_BASE -> "Admin: Basis";
         case ADMIN_PROTECTION -> "Admin: Schutz";case ADMIN_POWER -> "Admin: Energie";
         case ADMIN_COMPAT -> "Admin: Kompat";case ADMIN_SEARCH -> "Admin: Suche";
@@ -271,7 +276,7 @@ public final class ControlCenterScreen extends Screen {
         button("FTB-Teams-Berechtigungen (Hilfe)",x,y,bodyWidth,()->sendCommand("teamwars team help"));y+=23;
         button("Kriegspunkte ansehen",x,y,bodyWidth,()->sendCommand("teamwars war scores"));y+=23;
         button("Team-Marker und Wegpunkte",x,y,bodyWidth,()->page(Page.WAYPOINTS));y+=23;
-        button("Meine Karte / Team-Exploration",x,y,bodyWidth,()->sendCommand("teamwars map status"));y+=23;
+        button("Kartenabgleich",x,y,bodyWidth,()->page(Page.MAP));y+=23;
     }
     private void core(){
         button("Core-Inventar und Upgrades oeffnen",x,y,bodyWidth,()->sendCommand("teamwars base menu"));y+=23;
@@ -294,6 +299,7 @@ public final class ControlCenterScreen extends Screen {
 
     private int reportControlsHeight(){
         if(reportKind.equals("team")) return 42;
+        if(reportKind.equals("map")) return 46;
         return reportKind.equals("own")?23:0;
     }
     private int reportLimit(){return Math.clamp((height-154-reportControlsHeight())/28,1,8);}
@@ -372,8 +378,27 @@ public final class ControlCenterScreen extends Screen {
         rebuild();
     }
 
+    private void mapControls(){
+        var status=XmmpMapStatus.read(mapServerVersion);
+        String connection=status.connection()+(status.version().isEmpty()?"":" · "+status.version());
+        String details=status.details().isEmpty()?connection:connection+" | "+status.details();
+        int settingsWidth=status.settings()?110:0;
+        button(connection,x,y,bodyWidth-settingsWidth,()->{requestReport();rebuild();},details);
+        if(status.settings())button("XMMP-Einstellungen",x+bodyWidth-settingsWidth+3,y,settingsWidth-3,()->{
+            var screen=XmmpMapStatus.settings(this);
+            if(screen!=null && minecraft!=null)minecraft.setScreen(screen);
+            else note="XMMP-Einstellungen nicht verfügbar";
+        });
+        y+=23;
+        String sharing=status.sharing().isEmpty()?"Freigabestatus ausstehend":status.sharing();
+        button(sharing,x,y,bodyWidth,()->{requestReport();rebuild();},
+            sharing+" | GLOBAL kann erkundete Basen und Routen an andere Teams verraten.");
+        y+=23;
+    }
+
     private void diagnosticReport(){
         if(reportKind.equals("team"))teamControls();
+        if(reportKind.equals("map"))mapControls();
         if(reportKind.equals("own")){
             button("Eigene FTB-Kartendaten erneut senden",x,y,bodyWidth,
                 ()->ControlCenterClient.request("resyncown","",""),"Sendet nur vorhandene eigene Claims erneut; keine Claim-Reparatur oder neuen Tickets.");y+=23;
@@ -701,7 +726,7 @@ public final class ControlCenterScreen extends Screen {
         }
         g.drawString(font,text(note,Math.max(25,(panelWidth-18)/6)),left+10,height-25,WARNING,false);
         super.render(g,mouseX,mouseY,partial);
-        if(page==Page.CHUNKS || page==Page.REPORT)renderDiagnostic(g);
+        if(page==Page.CHUNKS || page==Page.MAP || page==Page.REPORT)renderDiagnostic(g);
         // Vanilla widgets carry their own focus, scrolling and input handling.
     }
     @Override public void onClose(){if(minecraft!=null)minecraft.setScreen(null);}

@@ -41,7 +41,7 @@ import java.nio.file.Path;
 @Mod(RoglerTeamWarsMod.MOD_ID)
 public final class RoglerTeamWarsMod {
     public static final String MOD_ID = "roglerteamwars";
-    public static final String VERSION = "0.8.9";
+    public static final String VERSION = "0.9.0";
     private static final java.util.concurrent.atomic.AtomicBoolean TEAM_CHANGED = new java.util.concurrent.atomic.AtomicBoolean();
 
     public static void teamMembershipChanged() { TEAM_CHANGED.set(true); }

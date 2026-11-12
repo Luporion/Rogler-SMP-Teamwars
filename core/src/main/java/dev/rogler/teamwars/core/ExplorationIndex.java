@@ -57,6 +57,9 @@ public final class ExplorationIndex {
         }
         return discovered;
     }
+    public int personalCount(UUID player) {
+        return personal.getOrDefault(player, Set.of()).size();
+    }
     public Set<ChunkKey> personal(UUID player) {
         return Set.copyOf(personal.getOrDefault(player, Set.of()));
     }

@@ -18,7 +18,7 @@ public record ControlCenterReportPayload(String kind,UUID target,String title,in
     public static final StreamCodec<RegistryFriendlyByteBuf,ControlCenterReportPayload> STREAM_CODEC=
         StreamCodec.of(ControlCenterReportPayload::write,ControlCenterReportPayload::read);
     public ControlCenterReportPayload {
-        if(!List.of("own","claims","action","team","teamadm").contains(kind) || title==null || title.length()>64
+        if(!DiagnosticPolicy.isReport(kind) || title==null || title.length()>64
             || offset<0 || offset>=DiagnosticPolicy.MAX_ROWS || total<0 || total>DiagnosticPolicy.MAX_ROWS
             || tick<0 || rows==null || rows.size()>DiagnosticPolicy.MAX_PAGE
             || rows.size()>Math.max(0,total-offset))throw new IllegalArgumentException("Invalid report");

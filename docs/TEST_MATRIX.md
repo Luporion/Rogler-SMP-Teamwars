@@ -1,6 +1,17 @@
-# Testmatrix – aktueller Stand v0.8.9
+# Testmatrix – aktueller Stand v0.9.0
 
 Stand: 12. November 2026.
+
+## v0.9.0 Kartenabgleich
+
+| Prüfung | Status |
+|---|---|
+| Eigener Kartenstatus, Abweisung fremder Teamziele, begrenzte Reportseiten | Service-Regressionslauf |
+| Core-Kompilierung für Minecraft 1.21.1 / NeoForge 21.1.249 | Lokaler Gradle-Build |
+| Dedicated-Server mit FTB und ohne XMMP | Start und leerer Erkundungsstatus für neue Spieler-ID erfolgreich |
+| XMMP-Verbindung, Versionshinweis und Einstellungsmenü im Client | Zwei verbundene DEV-Clients ausstehend |
+| Teamwechsel, Dimension, Rejoin und Neustart in beiden Karten | Mehrspielerprüfung ausstehend. Bereits im nativen Cache gespeicherte fremde Kacheln können sichtbar bleiben. |
+| Vergleich der Serverlast mit gleicher Spielerzahl und demselben Kartendatenstand | Ausstehend |
 
 ## v0.8.9 Teamverwaltung
 

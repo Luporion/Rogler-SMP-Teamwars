@@ -4,11 +4,11 @@ license="MIT"
 
 [[mods]]
 modId="roglerteamwars"
-version="0.8.9"
+version="0.9.0"
 displayName="Rogler Core"
 authors="Rogler Core contributors"
 description='''
-Rogler Core v0.8.9: FTB party management, role and roster views, and opt-in party and member limits. Client and server use network protocol 5.
+Rogler Core v0.9.0: Control Center map status and optional XMMP integration. Client and server use network protocol 5.
 '''
 
 [[mixins]]

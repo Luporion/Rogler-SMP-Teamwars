@@ -27,7 +27,7 @@ public java.util.UUID getUUID(){return id;}public net.minecraft.server.Minecraft
 'net/minecraft/world/level/ChunkPos.java': 'package net.minecraft.world.level; public record ChunkPos(int x,int z){}',
 'net/minecraft/resources/ResourceKey.java': 'package net.minecraft.resources; public class ResourceKey {}',
 'net/minecraft/resources/ResourceLocation.java': '''package net.minecraft.resources;public record ResourceLocation(String ns,String path){public static ResourceLocation fromNamespaceAndPath(String ns,String path){return new ResourceLocation(ns,path);}}''',
-'net/neoforged/fml/ModList.java': '''package net.neoforged.fml;public class ModList {public static ModList get(){return new ModList();}public boolean isLoaded(String s){return false;}}''',
+'net/neoforged/fml/ModList.java': '''package net.neoforged.fml;public class ModList {public static ModList get(){return new ModList();}public boolean isLoaded(String s){return false;}public record ModInfo(){public String getVersion(){return "0.4.3+1.21.1-neoforge";}}public record Mod(){public ModInfo getModInfo(){return new ModInfo();}}public java.util.Optional<Mod> getModContainerById(String id){return java.util.Optional.of(new Mod());}}''',
 'net/neoforged/neoforge/network/PacketDistributor.java': '''package net.neoforged.neoforge.network;
 public class PacketDistributor {public static Object last;public static int sends;public static void sendToPlayer(net.minecraft.server.level.ServerPlayer p,Object payload){last=payload;sends++;}}''',
 'net/minecraft/network/protocol/common/custom/CustomPacketPayload.java': '''package net.minecraft.network.protocol.common.custom;
@@ -60,6 +60,9 @@ public class FtbClaimBridge {public static java.util.UUID resynced;public static
 public class FtbTeamManagement {
 public static java.util.List<dev.rogler.teamwars.core.ui.DiagnosticPolicy.Row> report(net.minecraft.server.level.ServerPlayer p,java.util.UUID target) throws com.mojang.brigadier.exceptions.CommandSyntaxException {return java.util.List.of();}
 }''',
+'dev/rogler/teamwars/neoforge/map/ExplorationService.java': '''package dev.rogler.teamwars.neoforge.map;
+public class ExplorationService {public record Summary(int personal,Integer teamVisible,Integer members){}
+public static Summary summary(java.util.UUID viewer,java.util.UUID party){return new Summary(5,party==null?null:12,2);}}''',
 'dev/rogler/teamwars/neoforge/teams/FtbPartyReader.java': '''package dev.rogler.teamwars.neoforge.teams;
 public class FtbPartyReader {public record Party(java.util.UUID id,java.util.Set<java.util.UUID> members){}public static Party current;public static int calls;public static int revokeAt=-1;
 public Party partyFor(java.util.UUID player){calls++;if(calls==revokeAt)current=null;return current;}}''',
@@ -76,6 +79,10 @@ var p=new ServerPlayer();UUID own=UUID.randomUUID(),other=UUID.randomUUID();
 FtbPartyReader.current=new FtbPartyReader.Party(own,Set.of(p.id));
 ControlCenterReportService.inspect(p,"own","0|8");check(packet().target().equals(own));check(packet().rows().size()<=8);
 advance(p);deny(()->ControlCenterReportService.inspect(p,"claims",other+"|0|3"));
+advance(p);ControlCenterReportService.inspect(p,"map","0|8");check(packet().kind().equals("map"));check(packet().target().equals(own));
+check(packet().rows().stream().anyMatch(r->r.value().equals("0.4.3+1.21.1-neoforge")));
+check(packet().rows().stream().anyMatch(r->r.value().startsWith("5 Chunks")));
+advance(p);deny(()->ControlCenterReportService.inspect(p,"map",other+"|0|8"));
 advance(p);deny(()->ControlCenterReportService.inspect(p,"own",other+"|0|3"));
 advance(p);FtbPartyReader.current=new FtbPartyReader.Party(other,Set.of(p.id));
 ControlCenterReportService.inspect(p,"own","1|3");check(packet().target().equals(other));

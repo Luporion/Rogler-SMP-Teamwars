@@ -1,6 +1,6 @@
 # Rogler Core – Roadmap und Versionsplan
 
-Stand: 12. November 2026 · Buildbasis: **0.8.8** · Aktuelles Release: **0.8.9**
+Stand: 12. November 2026 · Buildbasis: **0.8.9** · Aktuelles Release: **0.9.0**
 
 Diese Roadmap ersetzt die inhaltlich überholte Planung vom 9. November. Sie beschreibt den aktuellen Projektstand und die geplanten nächsten Releases. Die ersten drei Releases sind konkret zugeschnitten; die späteren Versionen sind Zielzuordnungen, die bei neuen Befunden angepasst werden können. Es werden keine Kalendertermine zugesagt.
 
@@ -8,7 +8,7 @@ Diese Roadmap ersetzt die inhaltlich überholte Planung vom 9. November. Sie bes
 
 | Bereich | Aktueller Stand | Konsequenz für die Planung |
 |---|---|---|
-| Build und Installation | v0.8.8: Beide GitHub-Workflows für `dc4053c0` erfolgreich. v0.8.9: lokaler Build und Testserver erfolgreich. | Die Prüfung mit verbundenen Clients und dem vollständigen Modpack steht für v0.8.9 noch aus. |
+| Build und Installation | v0.8.9: Beide GitHub-Workflows für `a04bfe22` erfolgreich. v0.9.0: lokaler Core-Build erfolgreich. | Die Prüfung mit verbundenen Clients und dem vollständigen Modpack steht für v0.9.0 noch aus. |
 | Claim- und Chunkloading-Anzeige | Nutzer bestätigt am 10.11.: geclaimte und gechunkloadete Chunks auf beiden Karten sichtbar | Das bisherige Anzeigeproblem ist gelöst. Kein erneuter Karten-Hotfix ohne neuen Fehler. |
 | FTB-Claims | Im ausgewerteten Lauf zwei Teams mit jeweils neun bestehenden Claims, keine abgewiesenen Claims | Bestehende Claims erhalten; keine Neuanlage oder Datenbereinigung als Standardmaßnahme. |
 | Weitere Funktionstests | Nutzer bestätigt: „Die anderen Sachen haben auch soweit funktioniert.“ | Grundfunktionen als im Alltag grundsätzlich erfolgreich behandeln. Diese Rückmeldung ersetzt kein detailliertes Protokoll jedes Sonderfalls. |
@@ -49,20 +49,9 @@ Umgesetzt sind Rollen, Einladungen, Mitgliederaktionen und lesende Admin-Ansicht
 
 ### v0.9.0 – Kartenintegration konsolidieren
 
-**Ziel:** Die bereits vorhandenen Kartenfunktionen aus Rogler Core und XMMP als zusammenhängendes System bedienen und warten können.
+Das Control Center zeigt den Core-Erkundungsstand sowie den vom XMMP-Server bestätigten Freigabe- und Verbindungsstatus. XMMP v0.4.3 wird separat versioniert und ergänzt Neuabgleich bei Team-/Freigabewechsel sowie begrenzte Verarbeitung des Index und der Nachlieferung. [Release v0.9.0](releases/v0.9.0.md)
 
-Geplanter Umfang:
-
-- Vorhandenen XMMP-FTBTeams-Fork weiterführen. XMMP-Versionen werden separat nummeriert; eine Core-Version bedeutet nicht automatisch eine gleichnamige Fork-Version.
-- Zuständigkeiten eindeutig festlegen: FTB Teams für Mitgliedschaft, FTB Chunks für Claims/Tickets, Core für eigene Team-/Core-Regeln, XMMP für den tatsächlichen Geländeabgleich in Xaero.
-- Im Control Center den autoritativen Freigabemodus, Verbindungs-/Abgleichstatus und relevante Versionskonflikte anzeigen. Keine zweite unabhängige Einstellung für denselben Freigabemodus einführen.
-- Doppelte Team-/Basis-/Wegpunktmarker und widersprüchliche Synchronisierungspfade gezielt beseitigen, falls sie reproduzierbar auftreten.
-- Globale Geländeweitergabe wegen des PvP-Ziels deutlich kenntlich machen und als bewusste Adminentscheidung behandeln; Teamfreigabe bleibt der vorgesehene Standard.
-- Startabgleich und Nachlieferung vorhandener Daten mit Mengen- und Zeitbudgets begrenzen. Vorher-/Nachher-Messung mit vergleichbarer Spielerlast aufnehmen.
-
-**Abnahme:** Zwei Teams, überlappende und getrennte Erkundung, Austritt, Wechsel, Rejoin, Dimensionswechsel und Neustart. Eigene sowie später selbst erkundete Bereiche bleiben erhalten; ausschließlich fremde Bereiche werden gemäß Freigaberegel entzogen. Beide Xaero-Oberflächen bleiben konsistent. Vorhandene persönliche Kartendaten werden nicht blind überschrieben.
-
-Bereits funktionierende Grundabläufe gelten als Ausgangspunkt. Der Schwerpunkt liegt auf klaren Zuständigkeiten, Statusanzeigen und verbleibenden Randfällen, nicht auf einem Neustart des Kartenprojekts.
+Für die vollständige Kartenabnahme fehlen der widerrufbare Renderer für bereits gecachte fremde Kacheln und der Test mit zwei Teams, Dimensionswechsel, Rejoin, Neustart und vergleichbarer Spielerlast. Für doppelte Wegpunktmarker bleibt ein reproduzierbarer Fall die Grundlage einer Korrektur.
 
 ## 3. Weitere Versionen
 

@@ -1,6 +1,14 @@
 # Rogler Core – aktueller Projektstatus
 
-Stand: **12. November 2026**. **v0.8.9** basiert auf dem erfolgreichen v0.8.8-Commit `dc4053c0`. Der Terminalexport zeigt erfolgreiche P0- und NeoForge-Workflows für v0.8.8.
+Stand: **12. November 2026**. **v0.9.0** basiert auf dem v0.8.9-Commit `a04bfe22`. Der Terminalexport bestätigt beide v0.8.9-GitHub-Workflows.
+
+## v0.9.0
+
+- **Kartenabgleich** zeigt XMMP-Verbindung, wirksame Freigabe, Versionsstand und Core-Erkundungszähler. XMMP bleibt optional.
+- Der separate XMMP-Fork v0.4.3 stößt bei Freigabeänderungen einen neuen Abgleich an. Server-ACL, Abgleich-Generation und Upload-Freigabe werden beim Nachliefern geprüft.
+- Bereits gespeicherte fremde Xaero-Kacheln können nach einem Teamwechsel sichtbar bleiben. Die vollständige Karten- und Lastabnahme steht aus.
+
+[Release v0.9.0](releases/v0.9.0.md) · [Testmatrix](TEST_MATRIX.md)
 
 ## v0.8.9
 
